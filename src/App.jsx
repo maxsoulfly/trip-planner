@@ -3,6 +3,7 @@ import { getAllPlaces, deletePlace } from './db/repo.js';
 import { PLACE_TYPES, STATUSES } from './db/constants.js';
 import PlaceCard from './components/PlaceCard.jsx';
 import PlaceForm from './components/PlaceForm.jsx';
+import CsvImport from './components/CsvImport.jsx';
 import './App.css';
 
 // modal state shapes:
@@ -17,6 +18,7 @@ export default function App() {
   const [filterType,   setFilterType]   = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [modal,        setModal]        = useState(null);
+  const [showImport,   setShowImport]   = useState(false);
 
   async function loadPlaces() {
     setPlaces(await getAllPlaces());
@@ -125,6 +127,9 @@ export default function App() {
         <button className="btn-add" onClick={() => setModal({ mode: 'add' })}>
           + ADD CACHE
         </button>
+        <button className="btn-import" onClick={() => setShowImport(true)}>
+          IMPORT CSV
+        </button>
       </div>
 
       {/* ── Cards grid ─────────────────────────────────────────────── */}
@@ -152,6 +157,14 @@ export default function App() {
           initialData={modal.mode === 'edit' ? modal.place : null}
           onSave={handleSaved}
           onClose={() => setModal(null)}
+        />
+      )}
+
+      {/* ── CSV import modal ───────────────────────────────────────── */}
+      {showImport && (
+        <CsvImport
+          onDone={() => { setShowImport(false); loadPlaces(); }}
+          onClose={() => setShowImport(false)}
         />
       )}
     </div>

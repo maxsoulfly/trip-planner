@@ -55,6 +55,65 @@
 }
 .modal-close:hover { color: var(--ink); }
 
+/* ===== PREFILL STRIP ===== */
+
+.prefill-strip {
+  background: var(--panel2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 11px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.prefill-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .18em;
+  color: var(--steel);
+}
+.prefill-row {
+  display: flex;
+  gap: 7px;
+}
+.prefill-input {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  flex: 1;
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 9px;
+  outline: none;
+  transition: border-color .15s;
+}
+.prefill-input:focus   { border-color: var(--amber); }
+.prefill-input::placeholder { color: var(--dim); opacity: .6; }
+.prefill-btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  background: transparent;
+  color: var(--amber);
+  border: 1px solid var(--amber);
+  border-radius: 6px;
+  padding: 6px 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s, color .15s;
+}
+.prefill-btn:hover { background: var(--amber); color: var(--bg); }
+.prefill-msg {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .04em;
+}
+.prefill-msg--ok   { color: var(--amber); }
+.prefill-msg--warn { color: var(--steel); }
+
 /* ===== FORM LAYOUT ===== */
 
 .place-form {

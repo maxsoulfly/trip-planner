@@ -4,26 +4,22 @@ Local-first, **beer-first (but general)** trip planner for Maxx & Yana,
 built around a **Place** as the core object. Full plan and roadmap: **`SPEC.md`**.
 
 ## How to work with Maxx
-
 - Direct, practical. Honest uncertainty over confident guessing. Actionable over theory.
 - Loop: **discuss → implement → test → commit.** Medium steps, no huge rewrites.
   Show the plan before any big change; wait for "go."
 - Maxx reads the code. Hard constraints below are non-negotiable.
 
 ## Hard constraints
-
 - **Plain JavaScript — NO TypeScript.** JS + JSX only.
 - **Standard CSS** (or CSS Modules). **No Tailwind** unless explicitly asked.
 - **React via Vite.** Minimal, well-commented, few dependencies.
 - **Local-first, no backend in v1.** All data in the browser.
 
 ## Stack
-
 Vite + React (JS) · Dexie (IndexedDB) · Papaparse (CSV) · SheetJS (importer only) ·
 state via React Context (no Redux).
 
 ## Architecture & conventions
-
 - `src/db/db.js` — Dexie schema = the data model. Tables: `places`, `trips`,
   `scheduleItems`. `BudgetEntry` is deferred to a future `version(2)`.
   **Full record shapes are documented in the comments here** — read them.
@@ -33,19 +29,23 @@ state via React Context (no Redux).
 - `src/db/constants.js` — controlled vocabularies (`PLACE_TYPES`, `BLOCKS`,
   `STATUSES`, `WEEKDAYS`) with emoji. Use these everywhere; don't hardcode.
 - `src/utils/hours.js` — `openingHours` helpers.
+- **`openingHours` semantics (DATA CONTRACT):** for each weekday key —
+  **absent key = hours UNKNOWN** (renders `—`); explicit **`null` = CLOSED**
+  (renders `CLOSED`); `{ open, close }` = open. Importers, CSV mapping, and any
+  prefill MUST preserve this: leave unknown days absent — never write `null` to
+  mean "we don't know." Auto-suggest must treat unknown ≠ closed.
 - **Model:** a Place is stored **once, globally**; "a city's places" is just a
   filter. A Trip references places and schedules them into `date × block` slots
   via ScheduleItem. Time blocks: `morning / noon / late_afternoon / evening / night`.
 
 ## Build sequence (status)
-
 1. **DONE (committed)** — Scaffold + Dexie schema + dummy-data round-trip.
-   `src/App.jsx` is a throwaway smoke-test screen.
-2. **NEXT →** Place library UI: list; search; filter by city / type / status;
-   add / edit / delete with a full Place form **including an opening-hours
-   editor**; "Open in Google Maps" per place. This replaces the smoke-test App.
-3. Add-a-place: paste-Google-Maps-link best-effort prefill + CSV import.
-4. Trips: the `date × block` grid — assign places, flights, accommodation
+2. **DONE (committed)** — Place library UI: list, search, filter by
+   city / type / status, add / edit / delete with opening-hours editor,
+   Open-in-Maps. Real UI replaced the smoke-test App; data layer untouched.
+3. **DONE (committed)** — Maps-link prefill in PlaceForm + CSV import modal
+   (upload → map columns → preview/counts → confirm).
+4. **NEXT →** Trips: the `date × block` grid — assign places, flights, accommodation
    (address + map link), ad-hoc items.
 5. **HTML day-sheet export** — offline, tap-to-Maps. The phone deliverable.
 6. Importer → seed the library from `Travel_Plans_Yana.xlsx` (best-effort).
@@ -54,7 +54,6 @@ state via React Context (no Redux).
    already supports it.
 
 ## Design language — "post-apocalyptic field terminal"
-
 A salvaged-tech / amber-CRT / survival-field-manual feel. NOT neon cyberpunk and
 NOT the near-black + acid-green AI default. Reference mock: `design-mock.html`.
 
@@ -96,12 +95,10 @@ NOT the near-black + acid-green AI default. Reference mock: `design-mock.html`.
   Don't bake any product name in until Maxx picks one.
 
 ## Don't
-
 No TypeScript. No Tailwind unless asked. No backend in v1. Don't bypass
 `repo.js`. Don't wholesale-rewrite working code — medium steps only.
 
 ## Worklog protocol
-
 At the end of every work step, append an entry to `WORKLOG.md` (create it if
 missing). Keep it short and factual — it's a handoff for the planning Claude in
 the chat, who cannot see this repo. Each entry:
@@ -113,4 +110,4 @@ the chat, who cannot see this repo. Each entry:
 - **Schema/contract changes:** any change to db.js, repo.js, or constants.js.
 - **Known issues / TODO:** bugs, shortcuts, things left for later.
 - **Next:** what step or task comes next.
-  Do not rewrite earlier entries — only append.
+Do not rewrite earlier entries — only append.

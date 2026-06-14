@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { addPlace, putPlace } from '../db/repo.js';
 import { PLACE_TYPES, STATUSES, WEEKDAYS } from '../db/constants.js';
+import { parseMapsUrl } from '../utils/mapsParser.js';
 import './PlaceForm.css';
 
 function buildHoursState(openingHours) {
@@ -33,6 +34,8 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
   const [hours,        setHours]        = useState(() => buildHoursState(initialData?.openingHours));
   const [busy,         setBusy]         = useState(false);
   const [error,        setError]        = useState('');
+  const [prefillUrl,   setPrefillUrl]   = useState('');
+  const [prefillMsg,   setPrefillMsg]   = useState(null); // { ok, text } | null
 
   const firstRef = useRef(null);
 
@@ -43,6 +46,38 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
+
+  function handlePrefill(url) {
+    const parsed = parseMapsUrl(url);
+
+    if (parsed.short) {
+      setPrefillMsg({ ok: false, text: 'Short link detected. Open it in your browser, then copy the URL from the address bar.' });
+      return;
+    }
+
+    const filled = [];
+    if (parsed.name)                           { setName(parsed.name);         filled.push('name'); }
+    if (parsed.lat != null && parsed.lng != null) {
+      setLat(String(parsed.lat));
+      setLng(String(parsed.lng));
+      filled.push('coordinates');
+    }
+    setGoogleMapsUrl(url);
+
+    setPrefillMsg(
+      filled.length > 0
+        ? { ok: true,  text: `Prefilled: ${filled.join(' · ')} · maps URL` }
+        : { ok: false, text: 'URL stored — name and coordinates not found in this link.' }
+    );
+  }
+
+  function handlePrefillPaste(e) {
+    const text = e.clipboardData?.getData('text/plain') || '';
+    if (!text) return;
+    e.preventDefault();
+    setPrefillUrl(text);
+    handlePrefill(text);
+  }
 
   function setDayOpen(key, open) {
     setHours((h) => ({
@@ -114,6 +149,36 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
 
         <form className="place-form" onSubmit={handleSubmit} noValidate>
           {error && <div className="form-error" role="alert">{error}</div>}
+
+          {/* ---- Prefill strip (add mode only) ---- */}
+          {!isEdit && (
+            <div className="prefill-strip">
+              <span className="prefill-label">PREFILL FROM MAPS LINK</span>
+              <div className="prefill-row">
+                <input
+                  className="prefill-input"
+                  type="url"
+                  value={prefillUrl}
+                  onChange={(e) => setPrefillUrl(e.target.value)}
+                  onPaste={handlePrefillPaste}
+                  placeholder="Paste a Google Maps URL…"
+                  aria-label="Google Maps URL for prefill"
+                />
+                <button
+                  type="button"
+                  className="prefill-btn"
+                  onClick={() => handlePrefill(prefillUrl)}
+                >
+                  PARSE
+                </button>
+              </div>
+              {prefillMsg && (
+                <span className={`prefill-msg ${prefillMsg.ok ? 'prefill-msg--ok' : 'prefill-msg--warn'}`}>
+                  {prefillMsg.ok ? '✓' : '⚠'} {prefillMsg.text}
+                </span>
+              )}
+            </div>
+          )}
 
           {/* ---- Identity ---- */}
           <fieldset className="form-section">
