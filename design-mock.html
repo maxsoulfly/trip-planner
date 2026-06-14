@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Trip Planner — Aesthetic Direction</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{ color-scheme: dark light; }
+  html,body{ margin:0; }
+  body{
+    font-family:'IBM Plex Sans', system-ui, sans-serif;
+    background:#08080a; min-height:100vh;
+    display:flex; align-items:flex-start; justify-content:center;
+    padding:32px 16px;
+  }
+
+  /* ===== THEME TOKENS ===== */
+  .stage[data-theme="dark"]{
+    --bg:#0E0E0F; --panel:#161518; --panel2:#1E1C20; --line:#2C2A2E;
+    --ink:#E7E1D4; --dim:#948C80; --amber:#FFB000; --amber-soft:rgba(255,176,0,.14);
+    --rust:#CC4B2E; --steel:#74808C; --scan:.05;
+  }
+  .stage[data-theme="light"]{
+    --bg:#E7E0D0; --panel:#F1EBDC; --panel2:#E2DAC6; --line:#C5B99E;
+    --ink:#211D15; --dim:#6B6354; --amber:#9C5A12; --amber-soft:rgba(156,90,18,.12);
+    --rust:#9A2E15; --steel:#5A6066; --scan:0;
+  }
+
+  .stage{
+    width:100%; max-width:760px;
+    background:var(--bg); color:var(--ink);
+    border:1px solid var(--line); border-radius:14px;
+    padding:20px; position:relative; overflow:hidden;
+    transition:background .25s ease, color .25s ease;
+  }
+  .stage::after{
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background:repeating-linear-gradient(0deg, rgba(255,255,255,.6) 0 1px, transparent 1px 3px);
+    opacity:var(--scan); mix-blend-mode:overlay;
+  }
+
+  .bar{ display:flex; align-items:center; justify-content:space-between; gap:12px;
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.08em;
+    color:var(--dim); border-bottom:1px dashed var(--line); padding-bottom:10px; }
+  .bar .dot{ color:var(--amber); }
+  .toggle{ display:inline-flex; border:1px solid var(--line); border-radius:6px; overflow:hidden; }
+  .toggle button{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.1em;
+    background:transparent; color:var(--dim); border:0; padding:5px 10px; cursor:pointer; }
+  .toggle button.on{ background:var(--amber); color:var(--bg); font-weight:600; }
+
+  .head{ display:flex; align-items:baseline; gap:12px; margin:16px 2px 18px; flex-wrap:wrap; }
+  .mark{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:26px; letter-spacing:.04em; line-height:1; }
+  .mark .slash{ color:var(--amber); }
+  .sub{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--dim); }
+
+  .cards{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media(max-width:620px){ .cards{ grid-template-columns:1fr; } }
+
+  .card{ position:relative; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px; }
+  .card .corner{ position:absolute; top:0; left:0; width:10px; height:10px;
+    border-top:2px solid var(--amber); border-left:2px solid var(--amber); border-top-left-radius:10px; }
+
+  .glyph{ font-size:18px; }
+  .ctitle{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:17px; margin:2px 0; }
+  .eyebrow{ font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--steel); }
+  .coords{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--dim); margin:6px 0 10px; }
+
+  .stamp{ position:absolute; top:12px; right:10px; transform:rotate(-5deg);
+    font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:600; letter-spacing:.12em;
+    padding:3px 7px; border:1.5px solid currentColor; border-radius:3px; opacity:.92; }
+  .stamp.secured{ color:var(--amber); }
+  .stamp.marked{ color:var(--steel); }
+
+  .hours{ background:var(--panel2); border:1px solid var(--line); border-radius:7px; padding:9px 10px; font-family:'IBM Plex Mono',monospace; }
+  .hrow{ display:flex; align-items:center; justify-content:space-between; font-size:12px; }
+  .open{ color:var(--amber); font-weight:600; }
+  .week{ display:flex; gap:5px; margin-top:8px; }
+  .week span{ flex:1; text-align:center; font-size:9px; padding:3px 0; border-radius:3px; color:var(--dim); border:1px solid var(--line); }
+  .week span.lit{ color:var(--bg); background:var(--amber); border-color:var(--amber); }
+  .week span.shut{ opacity:.4; }
+
+  .foot{ display:flex; align-items:center; justify-content:space-between; margin-top:11px; gap:8px; }
+  .maps{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.06em; color:var(--amber); text-decoration:none; }
+  .maps:hover{ text-decoration:underline; }
+  .tags{ display:flex; gap:5px; }
+  .tag{ font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--dim); border:1px solid var(--line); border-radius:999px; padding:1px 7px; }
+
+  .legend{ display:flex; flex-wrap:wrap; gap:14px; align-items:center; margin-top:18px; padding-top:12px;
+    border-top:1px dashed var(--line); font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.06em; color:var(--dim); }
+  .sw{ display:inline-flex; align-items:center; gap:6px; }
+  .chip{ width:14px; height:14px; border-radius:3px; border:1px solid var(--line); display:inline-block; }
+</style>
+</head>
+<body>
+  <div class="stage" data-theme="dark" id="stage">
+    <div class="bar">
+      <span><span class="dot">●</span> LOCAL ONLY &nbsp;·&nbsp; 12 CACHES &nbsp;·&nbsp; 4 EXPEDITIONS</span>
+      <span class="toggle">
+        <button class="on" data-t="dark">DARK</button>
+        <button data-t="light">LIGHT</button>
+        <button data-t="system">SYSTEM</button>
+      </span>
+    </div>
+
+    <div class="head">
+      <span class="mark">WAYPOINT<span class="slash">//</span></span>
+      <span class="sub">field terminal · working title</span>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <span class="corner"></span>
+        <span class="stamp secured">✓ SECURED</span>
+        <div class="eyebrow"><span class="glyph">🛍️</span> &nbsp;BOTTLE SHOP</div>
+        <div class="ctitle">Świat Piwa</div>
+        <div class="coords">KRAKÓW · PL · 50.057, 19.939</div>
+        <div class="hours">
+          <div class="hrow"><span>TODAY · FRI</span><span class="open">OPEN · 10:00–00:00</span></div>
+          <div class="week">
+            <span class="lit">M</span><span class="lit">T</span><span class="lit">W</span>
+            <span class="lit">T</span><span class="lit">F</span><span class="lit">S</span><span class="lit">S</span>
+          </div>
+        </div>
+        <div class="foot">
+          <a class="maps" href="#">▸ OPEN IN GOOGLE MAPS</a>
+          <span class="tags"><span class="tag">craft</span><span class="tag">★ 4</span></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="corner"></span>
+        <span class="stamp marked">◐ MARKED</span>
+        <div class="eyebrow"><span class="glyph">🍺</span> &nbsp;TAPROOM</div>
+        <div class="ctitle">Multi Qlti</div>
+        <div class="coords">KRAKÓW · PL · 50.061, 19.938</div>
+        <div class="hours">
+          <div class="hrow"><span>TODAY · FRI</span><span class="open">OPEN · 14:00–02:00</span></div>
+          <div class="week">
+            <span class="shut">M</span><span class="lit">T</span><span class="lit">W</span>
+            <span class="lit">T</span><span class="lit">F</span><span class="lit">S</span><span class="lit">S</span>
+          </div>
+        </div>
+        <div class="foot">
+          <a class="maps" href="#">▸ OPEN IN GOOGLE MAPS</a>
+          <span class="tags"><span class="tag">craft</span><span class="tag">taproom</span></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span class="sw"><span class="chip" style="background:#0E0E0F"></span>oil&nbsp;black</span>
+      <span class="sw"><span class="chip" style="background:#FFB000"></span>phosphor&nbsp;amber</span>
+      <span class="sw"><span class="chip" style="background:#CC4B2E"></span>rust</span>
+      <span class="sw"><span class="chip" style="background:#74808C"></span>steel</span>
+      <span class="sw"><span class="chip" style="background:#E7E1D4"></span>bone</span>
+      &nbsp;·&nbsp;
+      <span>Space&nbsp;Grotesk · IBM&nbsp;Plex&nbsp;Sans · IBM&nbsp;Plex&nbsp;Mono</span>
+    </div>
+  </div>
+
+<script>
+  (function(){
+    var stage = document.getElementById('stage');
+    var mq = window.matchMedia('(prefers-color-scheme: dark)');
+
+    function applySystem(){ stage.setAttribute('data-theme', mq.matches ? 'dark' : 'light'); }
+
+    stage.querySelectorAll('.toggle button').forEach(function(b){
+      b.addEventListener('click', function(){
+        stage.querySelectorAll('.toggle button').forEach(function(x){ x.classList.remove('on'); });
+        b.classList.add('on');
+        var mode = b.getAttribute('data-t');
+        if(mode === 'system'){ applySystem(); mq.addEventListener('change', applySystem); }
+        else { mq.removeEventListener('change', applySystem); stage.setAttribute('data-theme', mode); }
+      });
+    });
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,193 @@
+/* ===== CARD SHELL ===== */
+
+.card {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Amber corner bracket — the one piece of hardware decoration */
+.card-corner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  border-top: 2px solid var(--amber);
+  border-left: 2px solid var(--amber);
+  border-top-left-radius: 10px;
+  pointer-events: none;
+}
+
+/* ===== STATUS STAMP ===== */
+
+.stamp {
+  position: absolute;
+  top: 12px;
+  right: 10px;
+  transform: rotate(-5deg);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  padding: 3px 7px;
+  border: 1.5px solid currentColor;
+  border-radius: 3px;
+  opacity: .9;
+  pointer-events: none;
+  user-select: none;
+}
+.stamp--secured { color: var(--amber); }
+.stamp--marked  { color: var(--steel); }
+.stamp--flagged { color: var(--dim); }
+
+/* ===== CARD BODY ===== */
+
+.card-eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--steel);
+  margin-bottom: 3px;
+}
+.card-glyph { font-size: 13px; }
+
+.card-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 17px;
+  margin: 0 0 4px;
+  line-height: 1.2;
+  padding-right: 80px; /* clear the stamp */
+  color: var(--ink);
+}
+
+.card-coords {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--dim);
+  margin-bottom: 10px;
+  letter-spacing: .04em;
+}
+
+/* ===== HOURS BOX ===== */
+
+.hours-box {
+  background: var(--panel2);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 9px 10px;
+  margin-bottom: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.hours-today {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  margin-bottom: 8px;
+}
+.hours-day-label {
+  color: var(--dim);
+  letter-spacing: .08em;
+}
+.hours-readout {
+  letter-spacing: .04em;
+  color: var(--dim);
+}
+.hours-readout--open   { color: var(--amber); font-weight: 600; }
+.hours-readout--closed { color: var(--rust); }
+
+/* 7-day strip */
+.hours-week {
+  display: flex;
+  gap: 4px;
+}
+.hours-pip {
+  flex: 1;
+  text-align: center;
+  font-size: 9px;
+  padding: 3px 0;
+  border-radius: 3px;
+  border: 1px solid var(--line);
+  color: var(--dim);
+  letter-spacing: 0;
+}
+.pip--open    { color: var(--bg); background: var(--amber); border-color: var(--amber); }
+.pip--closed  { opacity: .35; }
+.pip--today   { box-shadow: 0 0 0 1px var(--amber); }
+
+/* ===== CARD FOOTER ===== */
+
+.card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.maps-link {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: .06em;
+  color: var(--amber);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.maps-link:hover { text-decoration: underline; }
+.maps-link--none {
+  color: var(--dim);
+  opacity: .45;
+  cursor: default;
+}
+.maps-link--none:hover { text-decoration: none; }
+
+.card-tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.tag {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: var(--dim);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 1px 7px;
+  white-space: nowrap;
+}
+
+/* ===== CARD ACTION BUTTONS ===== */
+
+.card-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+  margin-top: auto;
+}
+.card-btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  background: transparent;
+  color: var(--dim);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 3px 10px;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.card-btn:hover         { color: var(--ink);  border-color: var(--steel); }
+.card-btn--danger:hover { color: var(--rust); border-color: var(--rust);  }

@@ -1,80 +1,112 @@
-/* Minimal styling for the step-1 smoke test. Intentionally plain —
-   real visual design lands at step 2 when we build the library UI. */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
-:root {
-  --bg: #14151a;
-  --panel: #1d1f27;
-  --line: #2c2f3a;
-  --text: #e7e8ec;
-  --muted: #9aa0ad;
-  --accent: #6ee7b7;
-  --accent-ink: #07261c;
+/* ===== THEME TOKENS ===== */
+
+:root[data-theme="dark"] {
+  --bg:         #0E0E0F;
+  --panel:      #161518;
+  --panel2:     #1E1C20;
+  --line:       #2C2A2E;
+  --ink:        #E7E1D4;
+  --dim:        #948C80;
+  --amber:      #FFB000;
+  --amber-soft: rgba(255, 176, 0, .14);
+  --rust:       #CC4B2E;
+  --steel:      #74808C;
+  --scan:       .05;
 }
 
-* { box-sizing: border-box; }
+:root[data-theme="light"] {
+  --bg:         #E7E0D0;
+  --panel:      #F1EBDC;
+  --panel2:     #E2DAC6;
+  --line:       #C5B99E;
+  --ink:        #211D15;
+  --dim:        #6B6354;
+  --amber:      #9C5A12;
+  --amber-soft: rgba(156, 90, 18, .12);
+  --rust:       #9A2E15;
+  --steel:      #5A6066;
+  --scan:       0;
+}
+
+/* system = follow OS preference */
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] {
+    --bg:         #0E0E0F;
+    --panel:      #161518;
+    --panel2:     #1E1C20;
+    --line:       #2C2A2E;
+    --ink:        #E7E1D4;
+    --dim:        #948C80;
+    --amber:      #FFB000;
+    --amber-soft: rgba(255, 176, 0, .14);
+    --rust:       #CC4B2E;
+    --steel:      #74808C;
+    --scan:       .05;
+  }
+}
+@media (prefers-color-scheme: light) {
+  :root[data-theme="system"] {
+    --bg:         #E7E0D0;
+    --panel:      #F1EBDC;
+    --panel2:     #E2DAC6;
+    --line:       #C5B99E;
+    --ink:        #211D15;
+    --dim:        #6B6354;
+    --amber:      #9C5A12;
+    --amber-soft: rgba(156, 90, 18, .12);
+    --rust:       #9A2E15;
+    --steel:      #5A6066;
+    --scan:       0;
+  }
+}
+
+/* ===== GLOBAL RESET & BASE ===== */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { margin: 0; }
 
 body {
-  margin: 0;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
   background: var(--bg);
-  color: var(--text);
-  line-height: 1.45;
+  color: var(--ink);
+  line-height: 1.5;
+  transition: background .25s ease, color .25s ease;
 }
 
-.app { max-width: 1000px; margin: 0 auto; padding: 24px 16px 64px; }
-
-.topbar {
-  display: flex; justify-content: space-between; align-items: center;
-  gap: 16px; flex-wrap: wrap; margin-bottom: 16px;
+/* Scanline texture — barely visible in dark mode, gone in light */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 255, .6) 0 1px,
+    transparent 1px 3px
+  );
+  opacity: var(--scan);
+  mix-blend-mode: overlay;
 }
-h1 { font-size: 1.4rem; margin: 0; }
-h2 { font-size: 1rem; margin: 0 0 10px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
-h3 { font-size: 1rem; margin: 8px 0 4px; }
 
-.actions { display: flex; gap: 8px; }
-
-button {
-  background: var(--accent); color: var(--accent-ink);
-  border: none; border-radius: 8px; padding: 8px 14px;
-  font-weight: 600; cursor: pointer;
+@media (prefers-reduced-motion: reduce) {
+  body { transition: none; }
 }
-button.ghost { background: transparent; color: var(--text); border: 1px solid var(--line); }
-button:disabled { opacity: .5; cursor: default; }
 
-.statusline {
-  display: flex; gap: 16px; flex-wrap: wrap; align-items: center;
-  padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px;
-  margin-bottom: 20px; font-size: .9rem;
-}
-.ok { color: var(--accent); font-weight: 600; }
-.muted { color: var(--muted); }
-.hint { font-size: .82rem; }
-
-.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.card {
-  background: var(--panel); border: 1px solid var(--line);
-  border-radius: 12px; padding: 16px;
-}
-.card.wide { grid-column: 1 / -1; }
-@media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
-
-.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
-.list.tight { gap: 4px; }
-.list > li { border-bottom: 1px solid var(--line); padding-bottom: 10px; }
-.list.tight > li { border: none; padding: 0; }
-.list > li:last-child { border-bottom: none; }
-
-.row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.name { font-weight: 600; }
-.meta { color: var(--muted); font-size: .88rem; }
-.pill {
-  font-size: .75rem; border: 1px solid var(--line);
-  border-radius: 999px; padding: 1px 8px; color: var(--muted); white-space: nowrap;
-}
-a { color: var(--accent); font-size: .85rem; text-decoration: none; }
+a { color: var(--amber); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
-.flight { font-size: .9rem; margin-top: 4px; }
-.day { margin-bottom: 14px; }
-.block { margin: 6px 0 6px 4px; }
-.blocklabel { font-size: .82rem; color: var(--muted); }
+/* Visible focus ring */
+:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Minimal scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }

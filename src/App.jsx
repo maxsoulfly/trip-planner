@@ -1,193 +1,159 @@
-import { useEffect, useState } from 'react';
-import {
-  getAllPlaces,
-  getAllTrips,
-  getScheduleForTrip,
-  resetAll,
-  counts,
-} from './db/repo.js';
-import { seedDummyData } from './db/seed.js';
-import { typeMeta, blockMeta, statusMeta, BLOCKS } from './db/constants.js';
-import { hoursSummary } from './utils/hours.js';
+import { useEffect, useMemo, useState } from 'react';
+import { getAllPlaces, deletePlace } from './db/repo.js';
+import { PLACE_TYPES, STATUSES } from './db/constants.js';
+import PlaceCard from './components/PlaceCard.jsx';
+import PlaceForm from './components/PlaceForm.jsx';
+import './App.css';
 
-// ---------------------------------------------------------------------------
-// STEP 1 — Round-trip smoke test.
-//
-// This screen is throwaway plumbing whose only job is to PROVE the data layer
-// works: write records to IndexedDB, read them back, and resolve relations
-// (schedule item -> place). The real place-library UI is step 2.
-//
-// The most important test you can run here: click "Seed", then RELOAD the
-// browser tab. If the data is still there, persistence works (it's in
-// IndexedDB, not just React state).
-// ---------------------------------------------------------------------------
+// modal state shapes:
+//   null                      — closed
+//   { mode: 'add' }           — new place form
+//   { mode: 'edit', place }   — edit existing place
 
 export default function App() {
-  const [places, setPlaces] = useState([]);
-  const [trip, setTrip] = useState(null);
-  const [schedule, setSchedule] = useState([]);
-  const [stats, setStats] = useState({ places: 0, trips: 0, scheduleItems: 0 });
-  const [busy, setBusy] = useState(false);
+  const [places,       setPlaces]       = useState([]);
+  const [search,       setSearch]       = useState('');
+  const [filterCity,   setFilterCity]   = useState('');
+  const [filterType,   setFilterType]   = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [modal,        setModal]        = useState(null);
 
-  async function loadAll() {
-    const [allPlaces, allTrips, c] = await Promise.all([
-      getAllPlaces(),
-      getAllTrips(),
-      counts(),
-    ]);
-    setPlaces(allPlaces);
-    setStats(c);
-    const firstTrip = allTrips[0] || null;
-    setTrip(firstTrip);
-    setSchedule(firstTrip ? await getScheduleForTrip(firstTrip.id) : []);
+  async function loadPlaces() {
+    setPlaces(await getAllPlaces());
   }
 
-  // Read whatever is already in IndexedDB on first render.
-  useEffect(() => {
-    loadAll();
-  }, []);
+  useEffect(() => { loadPlaces(); }, []);
 
-  async function handleSeed() {
-    setBusy(true);
-    await seedDummyData();
-    await loadAll();
-    setBusy(false);
+  // Unique city list derived from current library — drives the city dropdown.
+  const cities = useMemo(() => {
+    const set = new Set(places.map((p) => p.city).filter(Boolean));
+    return [...set].sort();
+  }, [places]);
+
+  // Client-side filter — fast enough for hundreds of records.
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return places.filter((p) => {
+      if (filterCity   && p.city   !== filterCity)   return false;
+      if (filterType   && p.type   !== filterType)   return false;
+      if (filterStatus && p.status !== filterStatus) return false;
+      if (q && ![p.name, p.city, p.country, p.notes, ...(p.tags || [])]
+        .join(' ').toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [places, search, filterCity, filterType, filterStatus]);
+
+  async function handleDelete(place) {
+    if (!window.confirm(`Delete "${place.name}"? This cannot be undone.`)) return;
+    await deletePlace(place.id);
+    await loadPlaces();
   }
 
-  async function handleClear() {
-    setBusy(true);
-    await resetAll();
-    await loadAll();
-    setBusy(false);
+  function handleSaved() {
+    setModal(null);
+    loadPlaces();
   }
-
-  const placeById = Object.fromEntries(places.map((p) => [p.id, p]));
-  const hasData = stats.places > 0 || stats.trips > 0;
 
   return (
     <div className="app">
-      <header className="topbar">
-        <div>
-          <h1>Trip Planner</h1>
-          <p className="muted">Step 1 — data layer round-trip test</p>
-        </div>
-        <div className="actions">
-          <button onClick={handleSeed} disabled={busy}>Seed dummy data</button>
-          <button onClick={handleClear} disabled={busy} className="ghost">Clear all</button>
-        </div>
-      </header>
 
-      <div className="statusline">
-        <span className={hasData ? 'ok' : 'muted'}>
-          {hasData ? '✓ data in IndexedDB' : 'empty — click “Seed dummy data”'}
+      {/* ── Status bar ─────────────────────────────────────────────── */}
+      <div className="statusbar">
+        <span>
+          <span className="statusbar__dot">●</span>
+          {' LOCAL ONLY · '}
+          <span className="statusbar__count">{places.length} CACHES</span>
         </span>
-        <span className="muted">
-          {stats.places} places · {stats.trips} trips · {stats.scheduleItems} schedule items
-        </span>
-        <span className="muted hint">Tip: after seeding, reload the page — data should persist.</span>
+        <span className="statusbar__right">FIELD TERMINAL</span>
       </div>
 
-      <main className="grid">
-        {/* ---- Places library (read-back) ---- */}
-        <section className="card">
-          <h2>Place library</h2>
-          {places.length === 0 && <p className="muted">No places yet.</p>}
-          <ul className="list">
-            {places.map((p) => {
-              const t = typeMeta(p.type);
-              const s = statusMeta(p.status);
-              return (
-                <li key={p.id}>
-                  <div className="row">
-                    <span className="name">{t.emoji} {p.name}</span>
-                    <span className="pill">{s.emoji} {s.label}</span>
-                  </div>
-                  <div className="meta">
-                    {t.label} · {p.city}, {p.country}
-                  </div>
-                  <div className="meta">{hoursSummary(p.openingHours)}</div>
-                  {p.googleMapsUrl && (
-                    <a href={p.googleMapsUrl} target="_blank" rel="noreferrer">
-                      Open in Google Maps ↗
-                    </a>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </section>
+      {/* ── Page heading ───────────────────────────────────────────── */}
+      <div className="library-head">
+        <span className="library-mark">
+          PLACE LIBRARY<span className="library-slash">//</span>
+        </span>
+        <span className="library-sub">local cache · all cities</span>
+      </div>
 
-        {/* ---- Trip + flights (read-back) ---- */}
-        <section className="card">
-          <h2>Trip</h2>
-          {!trip && <p className="muted">No trip yet.</p>}
-          {trip && (
-            <>
-              <h3>{trip.title}</h3>
-              <div className="meta">
-                {trip.cities.join(', ')} · {trip.startDate} → {trip.endDate}
-              </div>
-              {trip.outboundFlight && (
-                <div className="flight">
-                  ✈ Out: {trip.outboundFlight.from} → {trip.outboundFlight.to} ·{' '}
-                  {trip.outboundFlight.number}
-                </div>
-              )}
-              {trip.inboundFlight && (
-                <div className="flight">
-                  ✈ Back: {trip.inboundFlight.from} → {trip.inboundFlight.to} ·{' '}
-                  {trip.inboundFlight.number}
-                </div>
-              )}
-            </>
-          )}
-        </section>
+      {/* ── Search + filter toolbar ────────────────────────────────── */}
+      <div className="toolbar">
+        <input
+          className="toolbar__search"
+          type="search"
+          placeholder="SEARCH CACHES…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          aria-label="Search places"
+        />
 
-        {/* ---- Schedule, grouped by date then block (relations resolved) ---- */}
-        <section className="card wide">
-          <h2>Schedule</h2>
-          {schedule.length === 0 && <p className="muted">No schedule items yet.</p>}
-          {groupByDate(schedule).map(([date, itemsForDate]) => (
-            <div key={date} className="day">
-              <h3>{date}</h3>
-              {BLOCKS.map((b) => {
-                const items = itemsForDate
-                  .filter((it) => it.block === b.key)
-                  .sort((a, c) => a.order - c.order);
-                if (items.length === 0) return null;
-                return (
-                  <div key={b.key} className="block">
-                    <span className="blocklabel">{b.emoji} {b.label}</span>
-                    <ul className="list tight">
-                      {items.map((it) => (
-                        <li key={it.id}>
-                          {it.kind === 'place'
-                            ? renderPlaceItem(placeById[it.placeId])
-                            : (it.adHoc?.label || it.kind)}
-                          {it.notes && <span className="muted"> — {it.notes}</span>}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                );
-              })}
-            </div>
+        <select
+          className="toolbar__select"
+          value={filterCity}
+          onChange={(e) => setFilterCity(e.target.value)}
+          aria-label="Filter by city"
+        >
+          <option value="">ALL CITIES</option>
+          {cities.map((c) => (
+            <option key={c} value={c}>{c.toUpperCase()}</option>
           ))}
-        </section>
+        </select>
+
+        <select
+          className="toolbar__select"
+          value={filterType}
+          onChange={(e) => setFilterType(e.target.value)}
+          aria-label="Filter by type"
+        >
+          <option value="">ALL TYPES</option>
+          {PLACE_TYPES.map((t) => (
+            <option key={t.key} value={t.key}>{t.emoji} {t.label.toUpperCase()}</option>
+          ))}
+        </select>
+
+        <select
+          className="toolbar__select"
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          aria-label="Filter by status"
+        >
+          <option value="">ALL STATUS</option>
+          {STATUSES.map((s) => (
+            <option key={s.key} value={s.key}>{s.emoji} {s.label.toUpperCase()}</option>
+          ))}
+        </select>
+
+        <button className="btn-add" onClick={() => setModal({ mode: 'add' })}>
+          + ADD CACHE
+        </button>
+      </div>
+
+      {/* ── Cards grid ─────────────────────────────────────────────── */}
+      <main className="cards-grid" aria-live="polite" aria-label="Place library">
+        {filtered.length === 0 && (
+          <p className="empty-state">
+            {places.length === 0
+              ? 'No caches yet — add your first place.'
+              : 'No matches. Try adjusting the filters.'}
+          </p>
+        )}
+        {filtered.map((p) => (
+          <PlaceCard
+            key={p.id}
+            place={p}
+            onEdit={() => setModal({ mode: 'edit', place: p })}
+            onDelete={() => handleDelete(p)}
+          />
+        ))}
       </main>
+
+      {/* ── Add / Edit modal ───────────────────────────────────────── */}
+      {modal && (
+        <PlaceForm
+          initialData={modal.mode === 'edit' ? modal.place : null}
+          onSave={handleSaved}
+          onClose={() => setModal(null)}
+        />
+      )}
     </div>
   );
-}
-
-// Resolve a schedule item's place into a readable line; guards missing refs.
-function renderPlaceItem(place) {
-  if (!place) return '⚠ (missing place)';
-  return `${typeMeta(place.type).emoji} ${place.name}`;
-}
-
-// Group schedule items by date, returned as sorted [date, items] pairs.
-function groupByDate(items) {
-  const map = {};
-  for (const it of items) (map[it.date] ||= []).push(it);
-  return Object.entries(map).sort(([a], [b]) => a.localeCompare(b));
 }
