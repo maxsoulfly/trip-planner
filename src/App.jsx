@@ -6,6 +6,7 @@ import PlaceForm from './components/PlaceForm.jsx';
 import CsvImport from './components/CsvImport.jsx';
 import TripList  from './components/TripList.jsx';
 import TripForm  from './components/TripForm.jsx';
+import TripGrid  from './components/TripGrid.jsx';
 import './App.css';
 
 // Top-level view state:
@@ -183,17 +184,12 @@ export default function App() {
         />
       )}
 
-      {/* ── TRIPS VIEW — grid (Commit B) ───────────────────────────────────── */}
+      {/* ── TRIPS VIEW — grid ─────────────────────────────────────────────── */}
       {view === 'trips' && activeTrip && (
-        <div className="grid-placeholder">
-          <button className="btn-back" onClick={() => setActiveTrip(null)}>
-            ← TRIPS
-          </button>
-          <p className="grid-placeholder__msg">
-            <strong>{activeTrip.title}</strong>
-            {' — grid coming in commit B.'}
-          </p>
-        </div>
+        <TripGrid
+          trip={activeTrip}
+          onBack={() => setActiveTrip(null)}
+        />
       )}
 
       {/* ── Modals ─────────────────────────────────────────────────────────── */}

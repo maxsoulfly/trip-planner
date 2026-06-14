@@ -88,3 +88,32 @@
   - `getAllTrips()` sorts by `startDate`; trips with empty startDate sort to the front.
 
 - **Next:** Step 4b — TripGrid, SlotCell, PlacePicker (commit B).
+
+---
+
+### 2026-06-14 — Step 4b: Day × block grid (commit B)
+
+- **Done:**
+  - `src/components/TripGrid.jsx` (new) — top-level grid component. Props: `trip`, `onBack` (view state stays in App.jsx — TripGrid calls `onBack()`, never touches view state directly). On mount, loads `getScheduleForTrip(trip.id)` and `getAllPlaces()` in parallel; builds an `id → place` map for O(1) lookup. State: `scheduleItems`, `places`, `picker` (null | `{ date, block }`). Renders: header row with `← TRIPS` back button, trip title, cities; accommodation strip (if `trip.accommodationPlaceIds` non-empty — names looked up from places map, shown once above the grid, not in any night cell); horizontally-scrolling flex row of day columns from `daysInRange`. Each day column has one SlotCell per BLOCKS entry. Outbound flight injected as a static `flightCard` into morning of `trip.startDate`; inbound into morning of `trip.endDate` (both land in the same column on single-day trips). After remove or confirm, re-fetches. If trip has no dates, shows prompt to edit the trip.
+  - `src/components/TripGrid.css` (new) — `.tg-root` flex column; `.tg-header` dashed border-bottom flex row; `.tg-back` amber no-border button; `.tg-accom-strip` panel-bg pill with steel ACCOMMODATION label; `.tg-days` flex row `overflow-x: auto` with thin scrollbar; `.tg-day-col` `flex: 0 0 210px`; `.tg-day-header` mono amber with 2px amber underline.
+  - `src/components/SlotCell.jsx` (new) — Props: `block` (full `{ key, label, emoji, order }` object), `items` (filtered by date+block by TripGrid — never queries Dexie), `places` (id map), `flightCards`, `onAdd`, `onRemove`. Renders block label with emoji; static flight cards (OUT/IN badge, route, number; no remove button); sorted schedule items: `kind === 'place'` shows `typeMeta(place.type).emoji` + name; `kind === 'note'`/`'transport'` shows 📝/🚌 + `adHoc.label`. Each mutable item has ✕ remove button (hover rust). `// TODO: up/down reorder (polish step)` comment on each item row. `+ ADD` dashed button at bottom.
+  - `src/components/SlotCell.css` (new) — `.sc-root` panel border rounded, min-height 56px; flight card with steel border; item rows with truncating name; dashed + ADD ghost button, amber on hover.
+  - `src/components/PlacePicker.jsx` (new) — Props: `date`, `block`, `trip`, `places` (id map), `onConfirm`, `onClose`. ESC closes. Two tabs: **FROM LIBRARY** and **AD-HOC**. Library: text search (name or city), type dropdown, "Show all cities" checkbox (defaults to checked when `trip.cities` is empty; otherwise defaults to city-filtered). Place buttons call `addScheduleItem({ kind: 'place', placeId })` then `onConfirm()`. Ad-hoc: NOTE 📝 / TRANSPORT 🚌 radio as styled visual toggle (`sr-only` input), free-text label, ◈ ADD submit — calls `addScheduleItem({ kind, adHoc: { label } })` then `onConfirm()`. Backdrop click closes.
+  - `src/components/PlacePicker.css` (new) — modal shell (3rd duplication, noted for cleanup). Mode tabs with 2px amber underline on active. Library: search + select row, show-all checkbox, scrollable place list with amber-border hover. Ad-hoc: kind toggle buttons (amber when active), text input, amber submit.
+  - `src/App.jsx` (edited) — added `TripGrid` import; replaced `grid-placeholder` div with `<TripGrid trip={activeTrip} onBack={() => setActiveTrip(null)} />`.
+  - `src/App.css` (edited) — removed `.grid-placeholder`, `.grid-placeholder__msg`, `.btn-back` (now in TripGrid.css).
+
+- **Deviations:**
+  - Reorder deferred as planned — `// TODO: up/down reorder (polish step)` comments left in SlotCell.
+  - `order: 0` written for all new schedule items; items render in IndexedDB insertion order (stable, harmless until reorder is implemented).
+  - Flight cards are never stored in `scheduleItems` — derived from `trip.outboundFlight` / `trip.inboundFlight` at render time and passed as static props to the morning SlotCell.
+
+- **Schema/contract changes:** none — `db.js`, `repo.js`, `constants.js` untouched. `addScheduleItem` and `deleteScheduleItem` used as-is.
+
+- **Known issues / TODO:**
+  - Modal shell CSS duplicated three times (PlaceForm, TripForm, PlacePicker) — extract to `styles.css` in a later cleanup.
+  - No edit-in-place for schedule items — remove and re-add is the workaround for v1.
+  - Up/down reorder deferred (TODO comment in SlotCell).
+  - `order: 0` on all items means sort order matches insertion order until reorder is built.
+
+- **Next:** Step 5 — HTML day-sheet export (offline, tap-to-Maps).

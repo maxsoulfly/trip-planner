@@ -1,0 +1,133 @@
+/* ===== SLOT CELL ===== */
+
+.sc-root {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-height: 56px;
+}
+
+/* Block label row */
+.sc-block-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .16em;
+  color: var(--steel);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 2px;
+}
+.sc-block-emoji { font-size: 11px; }
+
+/* ===== FLIGHT CARD (read-only, injected from trip object) ===== */
+
+.sc-flight-card {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--panel2);
+  border: 1px solid var(--steel);
+  border-radius: 4px;
+  padding: 4px 6px;
+  flex-wrap: wrap;
+}
+
+.sc-flight-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  color: var(--steel);
+  border: 1px solid var(--steel);
+  border-radius: 3px;
+  padding: 1px 4px;
+  flex-shrink: 0;
+}
+
+.sc-flight-route {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--ink);
+  letter-spacing: .04em;
+  flex: 1;
+}
+
+.sc-flight-num {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: var(--dim);
+  letter-spacing: .06em;
+}
+
+/* ===== SCHEDULE ITEMS ===== */
+
+.sc-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--panel2);
+  border-radius: 4px;
+  padding: 5px 6px;
+}
+
+.sc-item-icon {
+  font-size: 12px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.sc-item-name {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--ink);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: .02em;
+}
+
+.sc-item--adhoc .sc-item-name { color: var(--dim); }
+
+.sc-remove {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  background: transparent;
+  color: var(--dim);
+  border: none;
+  cursor: pointer;
+  padding: 0 2px;
+  flex-shrink: 0;
+  line-height: 1;
+  transition: color .12s;
+}
+.sc-remove:hover { color: var(--rust); }
+
+/* ===== ADD BUTTON ===== */
+
+.sc-add {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  background: transparent;
+  color: var(--dim);
+  border: 1px dashed var(--line);
+  border-radius: 4px;
+  padding: 4px 0;
+  cursor: pointer;
+  width: 100%;
+  text-align: center;
+  transition: color .12s, border-color .12s;
+  margin-top: 2px;
+}
+.sc-add:hover { color: var(--amber); border-color: var(--amber); }
