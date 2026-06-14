@@ -82,7 +82,7 @@
 - **Schema/contract changes:** `repo.js` only — added `deleteTripCascade(tripId)`. `db.js` and `constants.js` untouched.
 
 - **Known issues / TODO:**
-  - User reported 10-point checklist failures: create/edit/delete not reflecting in list, OPEN GRID shows empty page, back arrow unresponsive. Code logic looks correct; suspected Dexie/IndexedDB schema conflict (browser DB predates `trips` table) or crash inside `daysInRange` on malformed dates. Needs console check — likely cleared by deleting the IndexedDB in DevTools and hard-refreshing.
+  - ~~User reported 10-point checklist failures: create/edit/delete not reflecting in list, OPEN GRID shows empty page, back arrow unresponsive.~~ Resolved by clearing IndexedDB in DevTools — schema conflict from pre-trips browser DB. No code change needed. All checklist items pass.
   - `TripForm.css` duplicates modal shell from `PlaceForm.css` — tech debt, extract to `styles.css` in a later cleanup.
   - No search/filter on the trip list itself.
   - `getAllTrips()` sorts by `startDate`; trips with empty startDate sort to the front.
