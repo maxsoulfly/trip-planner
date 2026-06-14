@@ -1,0 +1,160 @@
+/* ===== TRIPS VIEW SHELL ===== */
+
+.trips-view {
+  /* inherits .app padding from parent */
+}
+
+.trips-head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.trips-mark {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 26px;
+  letter-spacing: .04em;
+  line-height: 1;
+}
+.trips-slash { color: var(--amber); }
+.trips-sub {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.trips-toolbar {
+  margin-bottom: 20px;
+}
+
+.trips-empty {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--dim);
+  letter-spacing: .06em;
+  padding: 48px 0;
+  text-align: center;
+  margin: 0;
+}
+
+/* ===== TRIP CARDS GRID ===== */
+
+.trips-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 620px) {
+  .trips-grid { grid-template-columns: 1fr; }
+}
+
+/* ===== TRIP CARD ===== */
+
+.trip-card {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.trip-card-corner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  border-top: 2px solid var(--amber);
+  border-left: 2px solid var(--amber);
+  border-top-left-radius: 10px;
+  pointer-events: none;
+}
+
+.trip-eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .16em;
+  color: var(--steel);
+  margin-bottom: 2px;
+}
+
+.trip-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 17px;
+  margin: 0 0 4px;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.trip-cities {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--ink);
+  letter-spacing: .06em;
+}
+
+.trip-dates {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--dim);
+  letter-spacing: .04em;
+}
+.trip-days { color: var(--steel); }
+
+.trip-flight {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--steel);
+  letter-spacing: .06em;
+  margin-top: 2px;
+}
+
+/* ===== TRIP CARD ACTIONS ===== */
+
+.trip-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+  margin-top: 8px;
+}
+
+.trip-btn-open {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  background: var(--amber);
+  color: var(--bg);
+  border: none;
+  border-radius: 4px;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: opacity .15s;
+}
+.trip-btn-open:hover { opacity: .85; }
+
+.trip-btn-ghost {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  background: transparent;
+  color: var(--dim);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.trip-btn-ghost:hover          { color: var(--ink);  border-color: var(--steel); }
+.trip-btn-danger:hover         { color: var(--rust); border-color: var(--rust);  }

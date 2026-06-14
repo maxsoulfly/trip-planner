@@ -78,6 +78,14 @@ export const getTrip = (id) => db.trips.get(id);
 export const getAllTrips = () => db.trips.orderBy('startDate').toArray();
 export const deleteTrip = (id) => db.trips.delete(id);
 
+// Delete a trip and all its schedule items in one transaction.
+export async function deleteTripCascade(tripId) {
+  await db.transaction('rw', db.trips, db.scheduleItems, async () => {
+    await db.scheduleItems.where('tripId').equals(tripId).delete();
+    await db.trips.delete(tripId);
+  });
+}
+
 // ----- Schedule items ------------------------------------------------------
 
 export async function addScheduleItem(data) {

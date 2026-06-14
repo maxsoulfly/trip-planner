@@ -29,6 +29,9 @@ state via React Context (no Redux).
 - `src/db/constants.js` — controlled vocabularies (`PLACE_TYPES`, `BLOCKS`,
   `STATUSES`, `WEEKDAYS`) with emoji. Use these everywhere; don't hardcode.
 - `src/utils/hours.js` — `openingHours` helpers.
+- `src/utils/mapsParser.js` — pure `parseMapsUrl(url)` → `{ name, lat, lng }`.
+  Returns `{ short: true }` for goo.gl short URLs. Comment block documents all
+  URL shapes handled. Reused by step 6 importer — do not break its interface.
 - **`openingHours` semantics (DATA CONTRACT):** for each weekday key —
   **absent key = hours UNKNOWN** (renders `—`); explicit **`null` = CLOSED**
   (renders `CLOSED`); `{ open, close }` = open. Importers, CSV mapping, and any
@@ -39,30 +42,28 @@ state via React Context (no Redux).
   via ScheduleItem. Time blocks: `morning / noon / late_afternoon / evening / night`.
 
 ## Build sequence (status)
-1. **DONE (committed)** — Scaffold + Dexie schema + dummy-data round-trip.
-2. **DONE (committed)** — Place library UI: list, search, filter by
-   city / type / status, add / edit / delete with opening-hours editor,
-   Open-in-Maps. Real UI replaced the smoke-test App; data layer untouched.
-3. **DONE (committed)** — Maps-link prefill in PlaceForm + CSV import modal
-   (upload → map columns → preview/counts → confirm).
-4. **NEXT →** Trips: the `date × block` grid — assign places, flights, accommodation
+1. **DONE** — Scaffold + Dexie schema + dummy-data round-trip.
+2. **DONE** — Place library UI: list, search, filter by city / type / status,
+   add / edit / delete with opening-hours editor, Open-in-Maps.
+3. **DONE** — Maps-link prefill (auto-parse on paste, name + coords + URL) +
+   CSV import (3-step modal: upload → map columns → preview/confirm).
+   `papaparse` installed. `openingHours` left absent (unknown) per data contract.
+4. **NEXT →** Trips: date × block grid — assign places, flights, accommodation
    (address + map link), ad-hoc items.
-5. **HTML day-sheet export** — offline, tap-to-Maps. The phone deliverable.
+5. HTML day-sheet export — offline, tap-to-Maps. The phone deliverable.
 6. Importer → seed the library from `Travel_Plans_Yana.xlsx` (best-effort).
 7. Polish, then first fast-follow: auto-suggest a plan from saved places,
-   constrained by opening hours (heuristic, human-in-the-loop). The schema
-   already supports it.
+   constrained by opening hours (heuristic, human-in-the-loop).
 
 ## Design language — "post-apocalyptic field terminal"
 A salvaged-tech / amber-CRT / survival-field-manual feel. NOT neon cyberpunk and
 NOT the near-black + acid-green AI default. Reference mock: `design-mock.html`.
 
-- **Theming:** CSS custom properties + a `[data-theme]` attribute on the root.
+- **Theming:** CSS custom properties + a `[data-theme]` attribute on `<html>`.
   Three themes — `dark` (default), `light`, `system` (follows
-  `prefers-color-scheme`). Build theme-ready from step 2 (variables, no
-  hardcoded colors); the visible toggle UI can ship as a later small step.
-  Light mode is reframed as a _printed field manual_ (manila paper + ink), NOT
-  an inverted dark mode — identity is carried by type + structure + stamps, not glow.
+  `prefers-color-scheme`). Already wired from step 2. Visible toggle UI is a
+  future small step.
+  Light mode = _printed field manual_ (manila paper + ink), NOT inverted dark.
 
 - **Palette — dark:** `--bg:#0E0E0F` · `--panel:#161518` · `--panel2:#1E1C20` ·
   `--line:#2C2A2E` · `--ink:#E7E1D4` (bone) · `--dim:#948C80` ·
@@ -78,21 +79,27 @@ NOT the near-black + acid-green AI default. Reference mock: `design-mock.html`.
 
 - **Signature element:** the status **stamp** — wishlist / planned / visited shown
   as an inked, slightly-rotated rubber stamp (`☆ FLAGGED` / `◐ MARKED` /
-  `✓ SECURED`). It is the ONE bold flourish; keep everything else quiet.
-  Place cards read like salvaged dossiers: type glyph + name (display), a mono
-  coordinate line, a mono hours readout with a 7-day open/closed strip, and
-  "Open in Google Maps" as a terminal-style action.
+  `✓ SECURED`). ONE bold flourish; keep everything else quiet.
 
-- **Restraint:** scanline/CRT texture is _barely_ there (overdone CRT is a
-  cliché). Respect `prefers-reduced-motion`. Visible keyboard focus. Responsive
-  to mobile (it's used on the phone mid-trip). Spend boldness only on the stamp.
+- **Restraint:** scanline barely-there. Respect `prefers-reduced-motion`.
+  Visible keyboard focus. Mobile-responsive (used on the phone mid-trip).
 
-- **Copy:** flavored, in-world labels are welcome (CACHES, EXPEDITIONS, the
-  stamps) BUT plain meaning must always stay legible. Never sacrifice clarity
-  for flavor on anything actionable.
+- **Copy:** flavored in-world labels welcome (CACHES, EXPEDITIONS, stamps) BUT
+  plain meaning always legible. Never sacrifice clarity for flavor on anything
+  actionable.
 
-- **Naming:** "WAYPOINT" in the mock is placeholder text, NOT a chosen name.
-  Don't bake any product name in until Maxx picks one.
+- **Naming:** no product name baked in until Maxx picks one.
+
+## Commit messages
+Format: `<type>(<scope>): <what changed>`
+Types: feat · fix · refactor · chore · docs
+Scope: db · places · trips · export · importer · ui
+One line, present tense, lowercase. No "Step N" as the whole message —
+reference it in the body if needed.
+Examples:
+  feat(places): Maps-link prefill and CSV import with column mapping
+  fix(hours): absent key renders — not CLOSED (unknown vs null contract)
+  chore(db): bump to version 2, add budgetEntries table
 
 ## Don't
 No TypeScript. No Tailwind unless asked. No backend in v1. Don't bypass
