@@ -1,0 +1,28 @@
+# Dependencies — large, never needs reading
+
+node_modules/
+
+# Build output — generated, not source
+
+dist/
+dist-ssr/
+
+# Vite cache
+
+.vite/
+
+# OS / editor noise
+
+.DS_Store
+\*.local
+.vscode/
+
+# The xlsx source file — large binary, Claude Code can't parse it usefully anyway
+
+# The importer (step 6) will handle it via SheetJS in code, not by Claude reading it raw
+
+Travel_Plans_Yana.xlsx
+
+# Design mock — reference only, Claude Code doesn't need to read it during coding
+
+design-mock.html
