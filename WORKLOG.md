@@ -155,3 +155,39 @@
   - `a.download` attribute not honoured by iOS Safari in-browser — file opens instead of downloading; user can long-press → save. Standard limitation, no workaround without a server.
 
 - **Next:** Step 6 — importer to seed library from `Travel_Plans_Yana.xlsx`; or Step 7 Polish.
+
+---
+
+### 2026-06-15 — Step 6: XLSX importer (seed library from Travel_Plans_Yana.xlsx)
+
+- **Done:**
+  - `src/utils/xlsxImport.js` (new) — pure `parseXlsxWorkbook(workbook)` function; takes a SheetJS workbook object, returns `{ places, warnings }`. No React, no Dexie. Per-sheet strategies:
+    - **Madrid Aug 2024** (`parseMadrid`): structured table — finds header row where col 1 is "Place", extracts name/type/address/day-specific hours. Type strings ("Taproom", "Bar", "Shop") mapped to PLACE_TYPES keys. Hours format: "12:00 PM - 12:00 AM".
+    - **Sofia Dec 2025** (`parseSofiaDec`): 2-day table — header row "Venue | Friday | Saturday"; maps English day-name columns to weekday keys; hours format: "10 am–10 pm", "4 pm–1 am".
+    - **Bucharest JUN 2024** (`parseHebrewTable`, table only): Hebrew day-name headers in columns (שבת/ראשון/שני = sat/sun/mon); col 0 = venue; hours in day cells; Excel date serials (typeof number) skipped; budget rows (numeric col 0) stop extraction. Grid intentionally skipped (contains Krakow copy-paste content).
+    - **Krakow + Warsaw Apr 2024**: `parseHebrewTable` (Krakow table, rows 11+) + `extractGrid` (grid rows 3–9). Grid auto-detects Warsaw columns by scanning all rows 0–9 for "Warsaw"/"Warszawa" keyword; when found, that column and all subsequent become city='Warsaw'. Hours: "13:30-23:30" 24h dash format.
+    - **Budapest Feb 2025** (`extractGrid` only): table Place column is blank — fallback to grid cell extraction; emits warning "Budapest: names from grid cells, verify manually".
+    - **Katowice + Krakow Mar 2023** (`extractGrid`, multi-city): defaults to Katowice; Krakow detected mid-grid by column keyword scan.
+    - **6 grid-only sheets** (`extractGrid`): Krakow Nov 2025, Barcelona Aug 2023, Sofia Jul 2023, Berlin Mar 2023, Sofia Jan 2023, Bucharest Nov 2022.
+    - `extractGrid`: rows 3–9 (0-indexed); splits cell values on `\n`; filters Hebrew text, flight/airport codes, digit-leading tokens, transit keywords; strips trailing hours patterns and " - annotation" from names; per-column city propagation.
+    - Hours parser (`parseHoursString`): handles em-dash, en-dash, space-hyphen-space, and plain hyphen between two time expressions; both 12h (am/pm) and 24h; Excel date serials (5–6 digit numbers) → null (unknown).
+    - Global dedup by `name.toLowerCase()|city.toLowerCase()` across all sheets.
+    - Import in `import * as XLSX from 'xlsx'` (named import — ESM default not available).
+  - `src/components/XlsxImport.jsx` (new) — 2-step modal: (1) file picker (`.xlsx`, reads via `file.arrayBuffer()` + `XLSX.read(buffer, { type: 'array' })`); (2) preview — total count, breakdown by city (sorted by count), warnings, IMPORT button. On confirm: `getAllPlaces()` builds existing set, skips duplicates by name+city, calls `addPlace()` for each new place. Done state shows imported/skipped counts.
+  - `src/components/XlsxImport.css` (new) — `xi-*` namespace, mirrors CsvImport shell visually.
+  - `src/App.jsx` — added `import XlsxImport`; `showXlsx` state; `setShowXlsx(false)` in `switchView`; "IMPORT XLSX" button in toolbar; `<XlsxImport>` modal mount.
+
+- **Deviations:**
+  - `import * as XLSX` (not `import XLSX`) — ESM build of xlsx has no default export; `import XLSX from 'xlsx'` fails at build time in Vite.
+  - Hours imported only for days explicitly listed in the sheet (e.g., sat+sun for Bucharest); all other weekday keys left absent (unknown) per data contract.
+  - Name annotation stripping (" - שלישים", " - 0.15") applied globally in `cleanName` — safe for all sheets, no false positives observed.
+  - Bucharest JUN 2024 grid skipped entirely (verified: contains Krakow venues from a copy-paste template — importing would create wrong-city records).
+
+- **Schema/contract changes:** none — `db.js`, `repo.js`, `constants.js` untouched.
+
+- **Known issues / TODO:**
+  - Grid extraction is heuristic — some non-venue tokens (generic labels, city names used as section headers) may slip through if they don't match the filter patterns. User should review the preview before confirming import.
+  - Budapest hours not imported (grid cells have names only, no hours structure). Type defaults to 'other' for all Budapest/grid-extracted venues — edit per-place.
+  - Chunk size warning from Vite: xlsx bundle is ~714 kB (gzip ~235 kB). Acceptable for now; dynamic import() of xlsxImport.js is a future optimization if load time becomes an issue.
+
+- **Next:** Step 7 Polish; or extend grid extractor for specific sheets if Budapest/Katowice results look off after a real import test.

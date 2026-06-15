@@ -3,8 +3,9 @@ import { getAllPlaces, deletePlace, getAllTrips, deleteTripCascade } from './db/
 import { PLACE_TYPES, STATUSES } from './db/constants.js';
 import PlaceCard from './components/PlaceCard.jsx';
 import PlaceForm from './components/PlaceForm.jsx';
-import CsvImport from './components/CsvImport.jsx';
-import TripList  from './components/TripList.jsx';
+import CsvImport   from './components/CsvImport.jsx';
+import XlsxImport  from './components/XlsxImport.jsx';
+import TripList    from './components/TripList.jsx';
 import TripForm  from './components/TripForm.jsx';
 import TripGrid  from './components/TripGrid.jsx';
 import './App.css';
@@ -29,6 +30,7 @@ export default function App() {
   const [filterStatus, setFilterStatus] = useState('');
   const [modal,        setModal]        = useState(null);
   const [showImport,   setShowImport]   = useState(false);
+  const [showXlsx,     setShowXlsx]     = useState(false);
   const [tripModal,    setTripModal]    = useState(null);
 
   async function loadPlaces() { setPlaces(await getAllPlaces()); }
@@ -42,6 +44,7 @@ export default function App() {
     // Close any open modals belonging to the other view.
     setModal(null);
     setShowImport(false);
+    setShowXlsx(false);
   }
 
   // ── Place library helpers ─────────────────────────────────────────────────
@@ -151,6 +154,9 @@ export default function App() {
             <button className="btn-import" onClick={() => setShowImport(true)}>
               IMPORT CSV
             </button>
+            <button className="btn-import" onClick={() => setShowXlsx(true)}>
+              IMPORT XLSX
+            </button>
           </div>
 
           <main className="cards-grid" aria-live="polite" aria-label="Place library">
@@ -206,6 +212,13 @@ export default function App() {
         <CsvImport
           onDone={() => { setShowImport(false); loadPlaces(); }}
           onClose={() => setShowImport(false)}
+        />
+      )}
+
+      {showXlsx && (
+        <XlsxImport
+          onDone={() => { setShowXlsx(false); loadPlaces(); }}
+          onClose={() => setShowXlsx(false)}
         />
       )}
 
