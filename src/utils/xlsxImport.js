@@ -22,6 +22,17 @@ const FLIGHT_RE    = /^[A-Z0-9]{2}\d{3,4}$/;
 const AIRPORT_RE   = /^[A-Z]{3}$/;
 const TRANSIT_RE   = /\b(train|flight|bus|plane|airport|taxi|uber|metro|check[\s-]?in|check[\s-]?out)\b/i;
 
+// FIX-3: airline name prefixes
+const AIRLINE_RE   = /^(wizz\s?air|ryan\s?air|lot|easyjet|lufthansa)\s/i;
+// FIX-3: bare airline-code + flight number with optional space ("W6 2098", "6H 171")
+const FLIGHT2_RE   = /^[A-Z0-9]{2}\s?\d{3,4}$/;
+
+// FIX-1 (budget) + FIX-7 (misc): exact-match blocklist (compared lowercase)
+const EXACT_BLOCK  = new Set([
+  'card1', 'card2', 'split diff', 'cash diff', 'meads',   // budget rows from Hebrew tables
+  '-or-', 'katowice', 'warszawa centrum', 'city tour',     // direction/nav labels
+]);
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function dayKeyFromCell(val) {
@@ -111,21 +122,73 @@ function cleanName(s) {
   s = String(s).trim();
   // Strip annotation after " - " (e.g., "Antycafe - שלישים" → "Antycafe")
   s = s.replace(/\s+-\s+.*$/, '');
-  // Strip trailing hours patterns (e.g., "Venue Name 12:00-23:00")
+  // Strip trailing explicit HH:MM–HH:MM hours range
   s = s.replace(/\s+\d{1,2}:\d{2}\s*[-–]\s*\d{1,2}:\d{2}.*$/, '');
+  // FIX-9: strip trailing (...) whose content is a time/hours annotation
+  //   catches: "Swiat Piwa (From 10)", "Finca Brunch (7:30-16)", "Emalia Zablocie (9-22)"
+  s = s.replace(/\s*\([^)]*(?:\d{1,2}[:\s]?\d{0,2}\s*(?:am|pm)?[\s\-–]+|from\s+|until\s+)[^)]*\)$/i, '');
+  // FIX-9b: strip trailing "(?) " confidence marker
+  s = s.replace(/\s*\(\?\)$/, '');
+  // FIX-1k: strip trailing " -" fragment (e.g., "Aubergine -" → "Aubergine")
+  s = s.replace(/\s+-$/, '');
   return s.trim();
 }
 
 function isNonVenue(s) {
   s = String(s).trim();
   if (!s || s.length < 3)         return true;
-  if (HEBREW_RE.test(s))          return true;  // Hebrew text
-  if (FLIGHT_RE.test(s))          return true;  // flight codes
-  if (AIRPORT_RE.test(s))         return true;  // TLV, KRK, WAW
-  if (/^\d/.test(s))              return true;  // starts with digit
-  if (TRANSIT_RE.test(s))         return true;  // transit keywords
-  if (/^\d{1,2}[./]\d{1,2}/.test(s)) return true; // date patterns
+  if (HEBREW_RE.test(s))          return true;   // Hebrew text
+  if (FLIGHT_RE.test(s))          return true;   // flight codes e.g. "W62098"
+  if (FLIGHT2_RE.test(s))         return true;   // FIX-3: "W6 2098", "6H 171"
+  if (AIRPORT_RE.test(s))         return true;   // bare 3-letter codes: TLV, KRK, WAW
+  if (AIRLINE_RE.test(s))         return true;   // FIX-3: "Wizz Air …", "Ryan Air …"
+  // FIX-1+7: exact-match blocklist (budget labels, direction labels)
+  if (EXACT_BLOCK.has(s.toLowerCase())) return true;
+  // FIX-4: no Latin letters at all — emoji-only or symbol-only tokens
+  if (!/[a-zA-Z]/.test(s))        return true;
+  // FIX-5: flight emoji prefix
+  if (s.startsWith('✈'))          return true;
+  // FIX-1a: parenthesised tokens — always noise (inline hours, notes, flight refs)
+  if (s.startsWith('('))          return true;
+  // FIX-1b: 3 uppercase letters + space/digit (airport+time: "TLV 09:15", "WAW to TLV")
+  if (/^[A-Z]{3}[\s\d]/.test(s)) return true;
+  // FIX-1c: "From …" / "Until …" openers (standalone opening-hour annotations)
+  if (/^(From|Until)\s/i.test(s)) return true;
+  // FIX-6: "open from …" / "opens at …" (venue descriptions, not names)
+  if (/^open\s+from/i.test(s))    return true;
+  if (/^opens?\s+at/i.test(s))    return true;
+  // FIX-1d: "Option N" decision/booking labels
+  if (/^Option\s\d/i.test(s))     return true;
+  // FIX-1e: standalone time strings ("18:00", "From 18:00")
+  if (/^(From\s)?\d{1,2}:\d{2}/.test(s)) return true;
+  // FIX-1f: day-block / schedule template labels (exact match, case-insensitive)
+  if (/^(morning|noon|late|afternoon|evening|night|time of day|what'?s running|late afternoon|night stay)$/i.test(s)) return true;
+  // FIX-1g: date strings like "14.02.25"
+  if (/^\d{1,2}\.\d{2}\.\d{2,4}$/.test(s)) return true;
+  // FIX-2 (date filter extension): day-name + date "Friday, 14.02.25"
+  if (/^(monday|tuesday|wednesday|thursday|friday|saturday|sunday),?\s+\d/i.test(s)) return true;
+  // FIX-1h: standalone day names (bare, no trailing date)
+  if (/^(monday|tuesday|wednesday|thursday|friday|saturday|sunday)$/i.test(s)) return true;
+  // FIX-1i: transit / navigation labels
+  if (/^(city tour|go to |to [A-Z]|from [a-z])/i.test(s)) return true;
+  // FIX-1l: pure numeric or digit+punctuation tokens (replaces old blanket /^\d/ check)
+  //   keeps "100 Beers" (has letters after digit) but rejects "100", "12:00", "15-00", "45395"
+  if (/^\d+$/.test(s))              return true;
+  if (/^\d[\d\s\.\:\-]+$/.test(s))  return true;
+  if (TRANSIT_RE.test(s))           return true;  // transit keywords (train, flight, etc.)
   return false;
+}
+
+// FIX-8: infer place type from name patterns (grid rows have no explicit type column)
+function inferType(name) {
+  const n = name.toLowerCase();
+  // Street address patterns → accommodation
+  if (/^(ul\.|str\.|strada |noclegi |hotel |hostel )/i.test(name)) return 'accommodation';
+  // "Titanic" hotel chain
+  if (n.includes('titanic')) return 'accommodation';
+  // Ends with a number AND has ≥3 words → likely a street address
+  if (/\s\d{1,4}$/.test(name) && name.trim().split(/\s+/).length >= 3) return 'accommodation';
+  return 'other';
 }
 
 // ── Grid extractor (rows 3–9, 0-indexed) ─────────────────────────────────────
@@ -168,7 +231,7 @@ function extractGrid(rows, defaultCity, country) {
         const key = `${name.toLowerCase()}|${city.toLowerCase()}`;
         if (seen.has(key)) continue;
         seen.add(key);
-        places.push({ name, type: 'other', city, country, address: '', openingHours: {} });
+        places.push({ name, type: inferType(name), city, country, address: '', openingHours: {} });
       }
     }
   }
@@ -292,9 +355,10 @@ function parseHebrewTable(rows, city, country) {
 
   for (let r = headerRow + 1; r < rows.length; r++) {
     const row = rows[r];
-    const raw0 = String(row[0] || '').trim();
+    // FIX-2: venue names are in col 1, not col 0 (col 0 is blank in both Bucharest and Krakow+Warsaw)
+    const raw0 = String(row[1] || '').trim();
     if (!raw0) continue;
-    // Budget section: first cell is a pure number → stop
+    // Budget section: col 1 is a pure number → stop
     if (/^\d+$/.test(raw0)) break;
 
     const name = cleanName(raw0);
@@ -384,4 +448,128 @@ export function parseXlsxWorkbook(workbook) {
   }
 
   return { places: allPlaces, warnings };
+}
+
+// ── DEBUG EXPORT (temporary — remove before shipping) ─────────────────────────
+// Returns every candidate token from every extraction path, tagged with source.
+// { raw, cleaned, sheet, path, city, accepted }
+// 'accepted' = true if it would make it into the final places list (passed cleanName + isNonVenue).
+export function parseXlsxWorkbookDebug(workbook) {
+  const candidates = [];
+
+  function getRows(sheetName) {
+    const ws = workbook.Sheets[sheetName];
+    if (!ws) return null;
+    return XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+  }
+
+  function record(raw, sheet, path, city) {
+    const cleaned = cleanName(raw);
+    candidates.push({
+      raw: raw.trim(),
+      cleaned,
+      sheet,
+      path,
+      city,
+      accepted: !!cleaned && !isNonVenue(cleaned),
+    });
+  }
+
+  function debugGrid(rows, sheet, defaultCity) {
+    const maxCols = rows.reduce((mx, r) => Math.max(mx, r.length), 0);
+    const colCity = new Array(maxCols).fill(defaultCity);
+    for (let r = 0; r <= Math.min(9, rows.length - 1); r++) {
+      const row = rows[r] || [];
+      for (let c = 0; c < row.length; c++) {
+        const cell = String(row[c] || '').toLowerCase();
+        if (cell.includes('warsaw') || cell.includes('warszawa')) {
+          for (let i = c; i < maxCols; i++) colCity[i] = 'Warsaw';
+        } else if (cell.includes('krakow') || cell.includes('kraków')) {
+          for (let i = c; i < maxCols; i++) colCity[i] = 'Krakow';
+        } else if (cell.includes('katowice')) {
+          for (let i = c; i < maxCols; i++) colCity[i] = 'Katowice';
+        }
+      }
+    }
+    for (let r = 3; r <= Math.min(9, rows.length - 1); r++) {
+      for (let c = 0; c < (rows[r] || []).length; c++) {
+        const raw = String(rows[r][c] || '').trim();
+        if (!raw) continue;
+        const city = colCity[c] || defaultCity;
+        for (const token of raw.split(/\n/)) {
+          if (!token.trim()) continue;
+          record(token, sheet, 'extractGrid', city);
+        }
+      }
+    }
+  }
+
+  function debugMadrid(rows) {
+    let startRow = -1;
+    for (let r = 0; r < rows.length; r++) {
+      if (String(rows[r][1] || '').toLowerCase().trim() === 'place') { startRow = r + 1; break; }
+    }
+    if (startRow < 0) return;
+    for (let r = startRow; r < rows.length; r++) {
+      const raw = String(rows[r][1] || '').trim();
+      if (raw) record(raw, 'Madrid Aug 2024', 'parseMadrid', 'Madrid');
+    }
+  }
+
+  function debugSofiaDec(rows) {
+    let headerRow = -1;
+    for (let r = 0; r < rows.length; r++) {
+      if (String(rows[r][0] || '').toLowerCase().trim() === 'venue') { headerRow = r; break; }
+    }
+    if (headerRow < 0) return;
+    for (let r = headerRow + 1; r < rows.length; r++) {
+      const raw = String(rows[r][0] || '').trim();
+      if (raw) record(raw, 'Sofia Dec 2025', 'parseSofiaDec', 'Sofia');
+    }
+  }
+
+  function debugHebrewTable(rows, sheet, city) {
+    let headerRow = -1;
+    outer:
+    for (let r = 0; r < rows.length; r++) {
+      for (let c = 1; c < rows[r].length; c++) {
+        const cell = String(rows[r][c] || '').trim();
+        for (const heb of Object.keys(HEB_DAY)) {
+          if (cell.startsWith(heb)) { headerRow = r; break outer; }
+        }
+      }
+    }
+    if (headerRow < 0) return;
+    for (let r = headerRow + 1; r < rows.length; r++) {
+      // FIX-2: venue names in col 1, not col 0
+      const raw = String(rows[r][1] || '').trim();
+      if (!raw) continue;
+      if (/^\d+$/.test(raw)) break;
+      record(raw, sheet, 'parseHebrewTable', city);
+    }
+  }
+
+  for (const name of workbook.SheetNames) {
+    const rows = getRows(name);
+    if (!rows || rows.length === 0) continue;
+
+    if (name === 'Madrid Aug 2024') {
+      debugMadrid(rows);
+    } else if (name === 'Sofia Dec 2025') {
+      debugSofiaDec(rows);
+    } else if (name === 'Bucharest JUN 2024') {
+      debugHebrewTable(rows, name, 'Bucharest');
+    } else if (name === 'Krakow + Warsaw Apr 2024') {
+      debugHebrewTable(rows, name, 'Krakow');
+      debugGrid(rows, name, 'Krakow');
+    } else if (name === 'Budapest Feb 2025') {
+      debugGrid(rows, name, 'Budapest');
+    } else if (name.startsWith('Katowich + Krakow') || name.startsWith('Katowice + Krakow')) {
+      debugGrid(rows, name, 'Katowice');
+    } else if (GRID_SHEETS[name]) {
+      debugGrid(rows, name, GRID_SHEETS[name].city);
+    }
+  }
+
+  return candidates;
 }

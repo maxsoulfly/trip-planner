@@ -47,6 +47,8 @@ export const getPlace = (id) => db.places.get(id);
 export const getAllPlaces = () => db.places.orderBy('name').toArray();
 export const getPlacesByCity = (city) => db.places.where('city').equals(city).toArray();
 export const deletePlace = (id) => db.places.delete(id);
+// TEMP: wipe places table only — remove after seeding run
+export const clearAllPlaces = () => db.places.clear();
 
 // ----- Trips ---------------------------------------------------------------
 

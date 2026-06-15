@@ -2,6 +2,27 @@
 
 ---
 
+### 2026-06-15 — Step 6b: XLSX token filter pass + seeding prep
+
+- **Done:** Two iterative filter-improvement passes on `src/utils/xlsxImport.js` driven by a diagnostic script (`diagnose.mjs`, temporary, not committed). No UI or schema changes.
+  - `cleanName`: added FIX-9 (strip trailing hours-annotation parens `(From 10)`, `(7:30-16)`), FIX-9b (strip `(?)` confidence marker), FIX-1k (strip trailing ` -` fragment).
+  - `isNonVenue`: added FIX-1a–1l (parens-prefix, airport+time codes, From/Until openers, Option N labels, standalone times, day-block labels, date strings, day names, transit labels, digit-only tokens), FIX-2 (date with day-name prefix), FIX-3 (AIRLINE_RE for named airlines, FLIGHT2_RE for spaced flight codes), FIX-4 (reject tokens with no Latin letters), FIX-5 (✈ prefix), FIX-6 (open-from/opens-at phrases), FIX-7 (exact-match blocklist: budget labels, direction labels).
+  - `parseHebrewTable`: fixed column offset — venue names are in col 1 (not col 0) in both Bucharest JUN 2024 and Krakow+Warsaw Apr 2024 (col 0 is blank in those sheets).
+  - `inferType` (new): infers `accommodation` for street-address-pattern names (`ul.`, `str.`, `strada`, `noclegi`, `hotel` prefix, `titanic` substring, ≥3-word names ending in a street number). Used in `extractGrid` instead of hardcoded `'other'`.
+  - `parseXlsxWorkbookDebug` (new export, temporary): mirrors each extraction path and records all candidate tokens with `{raw, cleaned, sheet, path, city, accepted}` for diagnostic use. Remove before shipping.
+  - Final parser output: 203 places (151 type=other, 8 accommodation, rest bar/taproom/bottle_shop from structured sheets). ~20 noise names still accepted (multiline fragments, date strings, description text) — flagged for manual deletion after import.
+  - `src/db/repo.js`: added `clearAllPlaces()` (temp, one-liner — remove after seeding).
+  - `src/App.jsx`: added temporary "⚠ CLEAR PLACES" button in toolbar wired to `clearAllPlaces` + confirm dialog. Remove after seeding.
+- **Deviations:** Diagnostic scripts (`diagnose.mjs`, `inspect_hebrew.mjs`, `list_other.mjs`) left in project root, not committed — temporary tooling.
+- **Schema/contract changes:** none.
+- **Known issues / TODO:**
+  - Noise still accepted: `Apr 9/14` date strings, `in Warsaw` fragment, `🍻 beer board`, description fragments (`and Bulgarian wine`, `Craft beer. Craft food.`), arrow-concatenated strings (`Pivoteka -> Pop Up ->`), multiline-split museum names. Delete manually after import.
+  - `Diter Hotel` imports as type=other (suffix "Hotel" not caught by inferType prefix pattern). Edit manually.
+  - `clearAllPlaces`, temp button, and `parseXlsxWorkbookDebug` export should be removed after seeding run is confirmed good.
+- **Next:** Run seeding import in browser, delete noise entries, then move to Step 7 (polish) or remove temp seeding tooling first.
+
+---
+
 ### 2026-06-14 — Step 1: Scaffold + data layer
 
 - **Done:** Vite + React scaffold; Dexie schema (`places`, `trips`, `scheduleItems`);

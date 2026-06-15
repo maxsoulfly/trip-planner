@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { getAllPlaces, deletePlace, getAllTrips, deleteTripCascade } from './db/repo.js';
+import { getAllPlaces, deletePlace, getAllTrips, deleteTripCascade, clearAllPlaces } from './db/repo.js';
 import { PLACE_TYPES, STATUSES } from './db/constants.js';
 import PlaceCard from './components/PlaceCard.jsx';
 import PlaceForm from './components/PlaceForm.jsx';
@@ -157,6 +157,11 @@ export default function App() {
             <button className="btn-import" onClick={() => setShowXlsx(true)}>
               IMPORT XLSX
             </button>
+            {/* TEMP: remove after seeding */}
+            <button className="btn-import" style={{color:'var(--rust)'}} onClick={async () => {
+              if (!window.confirm('Clear ALL places? Cannot be undone.')) return;
+              await clearAllPlaces(); await loadPlaces();
+            }}>⚠ CLEAR PLACES</button>
           </div>
 
           <main className="cards-grid" aria-live="polite" aria-label="Place library">
