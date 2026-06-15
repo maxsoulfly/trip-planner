@@ -48,6 +48,24 @@
   color: var(--dim);
 }
 
+.tg-export {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  background: transparent;
+  color: var(--dim);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 5px 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-left: auto;
+  align-self: center;
+  transition: color .15s, border-color .15s;
+}
+.tg-export:hover { color: var(--ink); border-color: var(--steel); }
+
 /* ===== ACCOMMODATION STRIP ===== */
 
 .tg-accom-strip {

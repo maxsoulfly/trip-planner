@@ -136,3 +136,22 @@
 - **Known issues / TODO:** PlaceForm modal header still says CACHE.
 
 - **Next:** Step 5 — HTML day-sheet export (offline, tap-to-Maps).
+
+---
+
+### 2026-06-15 — Step 5: HTML day-sheet export
+
+- **Done:**
+  - `src/utils/exportHtml.js` (new) — pure `generateDaySheet(trip, scheduleItems, placesMap)` function; no React, no Dexie. Internal helpers: `esc(str)` (HTML entity escaping), `mapsUrl(place)` (priority order: googleMapsUrl → lat/lng coords URL → address search URL → null), `hoursSpan(openingHours, weekdayKey)` (returns a `<span>` with class `hours--open` / `hours--closed` / `hours--unknown`), `renderFlight`, `renderPlace`, `renderAdHoc`, `renderBlock`, `renderDay`. `buildCss()` returns all styles as a string — dark theme by default, CSS custom properties on `#content`, `#tt:checked + #content` adjacent sibling selector overrides variables for light mode (no JS). Fonts: `ui-monospace, 'Courier New', monospace` for all data; `system-ui, -apple-system, sans-serif` for body — no Google Fonts link per approved plan. Theme toggle: hidden `<input type="checkbox" id="tt">` + `<label for="tt">` with `☀ LIGHT` / `◐ DARK` spans toggled via CSS. Generated date in header topbar (right side). Accommodation strip (once, above days) with tappable Maps links where available. One `<section class="day">` per day; blocks with no content omitted; empty days get "Nothing scheduled." Flight cards injected into morning block of startDate (outbound) and endDate (inbound) from the trip object — never stored in scheduleItems. Maps button is a full-width 48px min-height `<a>` on each place card that has a resolvable URL.
+  - `src/components/TripGrid.jsx` — added `import { generateDaySheet }` from exportHtml. Added `handleExport()`: calls `generateDaySheet`, builds a Blob, creates an object URL, triggers download via a programmatic `<a>` click, revokes the URL. Filename: `trip.title` with non-alphanumeric chars collapsed to `-`, trimmed, lowercased, + `.html`. Added `<button className="tg-export">EXPORT HTML</button>` to the tg-header div (right side via `margin-left: auto`).
+  - `src/components/TripGrid.css` — added `.tg-export`: ghost button, IBM Plex Mono 11px, `margin-left: auto` + `align-self: center` (overrides parent's `align-items: baseline` so the button sits centered in the header row), color `var(--dim)` → `var(--ink)` on hover, border `var(--line)` → `var(--steel)` on hover.
+
+- **Deviations:** No Google Fonts `<link>` in the export — system font stacks used throughout (explicitly requested: offline document, no delay/error on a phone with no signal). Body background stays `#0E0E0F` hardcoded in dark mode because `body` is not a descendant of `#content` and can't inherit the toggled CSS variables — visually harmless on mobile (screen narrower than 600px max-width), minor side-gutter stays dark on desktop in light mode.
+
+- **Schema/contract changes:** none — `db.js`, `repo.js`, `constants.js` untouched. `exportHtml.js` imports from constants and hours utils read-only.
+
+- **Known issues / TODO:**
+  - Light-mode gutter: body background stays dark (#0E0E0F) when light mode toggled, visible only on screens wider than 600px; acceptable for a phone document.
+  - `a.download` attribute not honoured by iOS Safari in-browser — file opens instead of downloading; user can long-press → save. Standard limitation, no workaround without a server.
+
+- **Next:** Step 6 — importer to seed library from `Travel_Plans_Yana.xlsx`; or Step 7 Polish.

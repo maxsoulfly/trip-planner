@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getScheduleForTrip, getAllPlaces, deleteScheduleItem } from '../db/repo.js';
 import { BLOCKS } from '../db/constants.js';
 import { daysInRange, formatDayHeader } from '../utils/dates.js';
+import { generateDaySheet } from '../utils/exportHtml.js';
 import SlotCell from './SlotCell.jsx';
 import PlacePicker from './PlacePicker.jsx';
 import './TripGrid.css';
@@ -32,6 +33,19 @@ export default function TripGrid({ trip, onBack }) {
   function handlePickerConfirm() {
     setPicker(null);
     load();
+  }
+
+  function handleExport() {
+    const html = generateDaySheet(trip, scheduleItems, places);
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = trip.title.replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase() + '.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 
   const days = (trip.startDate && trip.endDate)
@@ -67,6 +81,7 @@ export default function TripGrid({ trip, onBack }) {
         {trip.cities?.length > 0 && (
           <span className="tg-cities">{trip.cities.join(' · ').toUpperCase()}</span>
         )}
+        <button className="tg-export" onClick={handleExport}>EXPORT HTML</button>
       </div>
 
       {/* ── Accommodation strip (trip-level, not per-night cell) ── */}
