@@ -30,13 +30,16 @@ state via React Context (no Redux).
   `STATUSES`, `WEEKDAYS`) with emoji. Use these everywhere; don't hardcode.
 - `src/utils/hours.js` — `openingHours` helpers.
 - `src/utils/mapsParser.js` — pure `parseMapsUrl(url)` → `{ name, lat, lng }`.
-  Returns `{ short: true }` for goo.gl short URLs. Comment block documents all
-  URL shapes handled. Reused by step 6 importer — do not break its interface.
+  Returns `{ short: true }` for goo.gl short URLs. Reused by importer — do not
+  break its interface.
+- `src/utils/xlsxImport.js` — pure `parseXlsxWorkbook(workbook)` → `{ places,
+  warnings }`. Per-sheet hardcoded strategies + extractGrid heuristic.
+- `src/utils/exportHtml.js` — pure `generateDaySheet(trip, scheduleItems,
+  placesMap)` → HTML string. No React, no Dexie.
 - **`openingHours` semantics (DATA CONTRACT):** for each weekday key —
   **absent key = hours UNKNOWN** (renders `—`); explicit **`null` = CLOSED**
-  (renders `CLOSED`); `{ open, close }` = open. Importers, CSV mapping, and any
-  prefill MUST preserve this: leave unknown days absent — never write `null` to
-  mean "we don't know." Auto-suggest must treat unknown ≠ closed.
+  (renders `CLOSED`); `{ open, close }` = open. Never write `null` to mean
+  "we don't know." Auto-suggest must treat unknown ≠ closed.
 - **Model:** a Place is stored **once, globally**; "a city's places" is just a
   filter. A Trip references places and schedules them into `date × block` slots
   via ScheduleItem. Time blocks: `morning / noon / late_afternoon / evening / night`.
@@ -47,22 +50,49 @@ state via React Context (no Redux).
    add / edit / delete with opening-hours editor, Open-in-Maps.
 3. **DONE** — Maps-link prefill (auto-parse on paste, name + coords + URL) +
    CSV import (3-step modal: upload → map columns → preview/confirm).
-   `papaparse` installed. `openingHours` left absent (unknown) per data contract.
-4. **NEXT →** Trips: date × block grid — assign places, flights, accommodation
-   (address + map link), ad-hoc items.
-5. HTML day-sheet export — offline, tap-to-Maps. The phone deliverable.
-6. Importer → seed the library from `Travel_Plans_Yana.xlsx` (best-effort).
-7. Polish, then first fast-follow: auto-suggest a plan from saved places,
-   constrained by opening hours (heuristic, human-in-the-loop).
+4. **DONE** — Trips: tab switcher, trip list + form, day × block grid,
+   slot assignment (PlacePicker), flights + accommodation in grid header,
+   ad-hoc notes/transport. cascade delete.
+5. **DONE** — HTML day-sheet export (offline, tap-to-Maps, CSS-only theme
+   toggle, per-day hours colored by open/closed/unknown).
+6. **DONE** — XLSX importer: seeds library from Travel_Plans_Yana.xlsx.
+   203 places · 9 cities imported. Per-sheet hardcoded strategies +
+   extractGrid heuristic. openingHours contract enforced throughout.
+7. **NEXT →** Polish — two commits:
+
+   **Commit A — data quality + admin:**
+   - INCOMPLETE filter in library toolbar (type=other OR no hours OR no maps link)
+   - Stub indicator on place cards (small ⚠ eyebrow on incomplete records)
+   - Opening hours paste parser in PlaceForm — paste Google Maps hours text
+     → fills hours editor. Formats to handle:
+       "Monday\n12–10 pm\nTuesday\n12–10 pm" (alternating day/time lines)
+       "Monday–Friday: 12–10 pm" (range shorthand)
+     Result must respect openingHours data contract (absent=unknown, null=closed).
+   - Address paste → prefill city/country in PlaceForm (parse last
+     comma-separated segments of a full address string)
+   - Admin modal (triggered from a ADMIN or ⚙ button in statusbar):
+     Clear Places, Clear Trips, Clear All Data, Export JSON (backup),
+     Import JSON (restore). Move existing ⚠ CLEAR PLACES out of toolbar
+     into admin modal.
+   - Remove ⚠ CLEAR PLACES from main toolbar.
+
+   **Commit B — UI polish:**
+   - Theme toggle (dark/light/system) in statusbar
+   - Compact list view + bulk delete for place library
+   - Modal CSS extraction to styles.css (PlaceForm/TripForm/PlacePicker
+     share the same shell — extract the common parts)
+   - PlaceForm modal header: fix remaining CACHE → PLACE label
+   - Slot reorder: up/down arrows in SlotCell (no drag-and-drop)
+   - Trip list: fix sort so empty-startDate trips go to bottom not top
+   - window.confirm → inline confirmation for all deletes
 
 ## Design language — "post-apocalyptic field terminal"
 A salvaged-tech / amber-CRT / survival-field-manual feel. NOT neon cyberpunk and
 NOT the near-black + acid-green AI default. Reference mock: `design-mock.html`.
 
 - **Theming:** CSS custom properties + a `[data-theme]` attribute on `<html>`.
-  Three themes — `dark` (default), `light`, `system` (follows
-  `prefers-color-scheme`). Already wired from step 2. Visible toggle UI is a
-  future small step.
+  Three themes — `dark` (default), `light`, `system`. Already wired from step 2.
+  Visible toggle ships in Commit B of step 7.
   Light mode = _printed field manual_ (manila paper + ink), NOT inverted dark.
 
 - **Palette — dark:** `--bg:#0E0E0F` · `--panel:#161518` · `--panel2:#1E1C20` ·
@@ -84,22 +114,21 @@ NOT the near-black + acid-green AI default. Reference mock: `design-mock.html`.
 - **Restraint:** scanline barely-there. Respect `prefers-reduced-motion`.
   Visible keyboard focus. Mobile-responsive (used on the phone mid-trip).
 
-- **Copy:** flavored in-world labels welcome (CACHES, EXPEDITIONS, stamps) BUT
-  plain meaning always legible. Never sacrifice clarity for flavor on anything
-  actionable.
+- **Copy:** flavored in-world labels welcome (stamps, expedition flavor text)
+  BUT plain meaning always legible. Never sacrifice clarity for flavor on
+  anything actionable.
 
 - **Naming:** no product name baked in until Maxx picks one.
 
 ## Commit messages
 Format: `<type>(<scope>): <what changed>`
 Types: feat · fix · refactor · chore · docs
-Scope: db · places · trips · export · importer · ui
-One line, present tense, lowercase. No "Step N" as the whole message —
-reference it in the body if needed.
+Scope: db · places · trips · export · importer · ui · admin
+One line, present tense, lowercase.
 Examples:
-  feat(places): Maps-link prefill and CSV import with column mapping
-  fix(hours): absent key renders — not CLOSED (unknown vs null contract)
-  chore(db): bump to version 2, add budgetEntries table
+  feat(places): incomplete filter, hours paste parser, address prefill
+  feat(admin): admin modal with clear/export/import JSON
+  feat(ui): theme toggle, compact view, bulk delete, slot reorder
 
 ## Don't
 No TypeScript. No Tailwind unless asked. No backend in v1. Don't bypass
