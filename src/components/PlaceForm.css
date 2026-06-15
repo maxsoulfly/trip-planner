@@ -114,6 +114,15 @@
 .prefill-msg--ok   { color: var(--amber); }
 .prefill-msg--warn { color: var(--steel); }
 
+/* textarea variant — allows multi-line paste for hours */
+.prefill-textarea {
+  resize: vertical;
+  min-height: 60px;
+  line-height: 1.5;
+  align-self: flex-start;
+  width: 100%;
+}
+
 /* ===== FORM LAYOUT ===== */
 
 .place-form {

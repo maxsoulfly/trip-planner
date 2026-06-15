@@ -2,6 +2,26 @@
 
 ---
 
+### 2026-06-15 — Step 7 Commit A: data quality + admin features
+
+- **Done:**
+  - `src/utils/hoursParser.js` (new) — pure `parseGoogleHours(text)` → partial `openingHours` object. Handles Format A (alternating day/hours lines, Google Maps desktop copy-paste) and Format B (day: hours per line). Day ranges expand ("Monday–Friday" → mon–fri). `"Closed"` → `null`; `"Open 24 hours"` → `{open:'00:00', close:'24:00'}`; bare-hour tokens ("12") treated as HH:00 to handle "12 – 10 pm". Only sets keys for explicitly mentioned days — absent = unknown per data contract.
+  - `src/db/repo.js` — added `clearAllTrips()` (trips + scheduleItems in one `rw` transaction, no orphaned items), `clearAllData()` (all three tables), `exportAll()` (returns `{places, trips, scheduleItems}` arrays), `importAll(data)` (validates `data.places` array guard, then clears + `bulkPut` all tables in one transaction). Removed TEMP comment from `clearAllPlaces`.
+  - `src/components/AdminModal.jsx` (new) — `⚙ ADMIN` modal with: Export JSON (download as `trip-planner-backup.json`), Import JSON (file input → `importAll` → error displayed inline if validation fails), Clear Places / Clear Trips / Clear All Data (each with inline REALLY?/CONFIRM/CANCEL row, no `window.confirm`). `onRefresh` prop reloads places + trips in App.
+  - `src/components/AdminModal.css` (new) — `admin-*` namespace, matches design language.
+  - `src/components/PlaceCard.jsx` — added `incomplete` prop; renders `⚠` in `.card-eyebrow` (right-aligned via flex) when true. Stamp not affected (it's `position:absolute`).
+  - `src/components/PlaceCard.css` — `.card-eyebrow` now `display:flex; justify-content:space-between`; `.card-stub` in `--rust`.
+  - `src/components/PlaceForm.jsx` — added `parseAddressString` local helper (splits on `,`, strips leading postcode from city segment); address prefill input with auto-parse on paste + PARSE button in LOCATION fieldset. Added `parseGoogleHours` import and hours paste textarea with auto-parse on paste + PARSE button in OPENING HOURS fieldset; merges into existing `hours` state (only overwrites mentioned days).
+  - `src/components/PlaceForm.css` — `.prefill-textarea` for the multi-line hours paste input.
+  - `src/App.jsx` — `isIncomplete(p)` module-level helper; `filterIncomplete` state + `⚠ INCOMPLETE` toggle button in toolbar (rust-colored when active); `filterIncomplete` AND-ed into `filtered` useMemo; `showAdmin` state + `⚙ ADMIN` button in statusbar; `<AdminModal>` mount; `statusbar-right` wrapper div for admin button + tab switcher; removed temp `⚠ CLEAR PLACES` button and `clearAllPlaces` import.
+  - `src/App.css` — `.statusbar-right`, `.btn-admin`, `.btn-import--active` (rust border/text when incomplete filter is on).
+- **Deviations:** None from the approved plan.
+- **Schema/contract changes:** `repo.js` — four new exports (`clearAllTrips`, `clearAllData`, `exportAll`, `importAll`). No `db.js` or `constants.js` changes.
+- **Known issues / TODO:** `PlaceForm` hours editor initializes all 7 days to `null` (closed) rather than absent (unknown) — pre-existing issue, unknown/closed distinction is collapsed in the UI. Deferred.
+- **Next:** Step 7 Commit B — theme toggle, compact list view + bulk delete, modal CSS extraction, slot reorder, trip list sort fix, `window.confirm` → inline confirmation for deletes.
+
+---
+
 ### 2026-06-15 — Step 6b: XLSX token filter pass + seeding prep
 
 - **Done:** Two iterative filter-improvement passes on `src/utils/xlsxImport.js` driven by a diagnostic script (`diagnose.mjs`, temporary, not committed). No UI or schema changes.

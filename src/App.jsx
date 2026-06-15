@@ -1,14 +1,24 @@
 import { useEffect, useMemo, useState } from 'react';
-import { getAllPlaces, deletePlace, getAllTrips, deleteTripCascade, clearAllPlaces } from './db/repo.js';
+import { getAllPlaces, deletePlace, getAllTrips, deleteTripCascade } from './db/repo.js';
 import { PLACE_TYPES, STATUSES } from './db/constants.js';
 import PlaceCard from './components/PlaceCard.jsx';
 import PlaceForm from './components/PlaceForm.jsx';
 import CsvImport   from './components/CsvImport.jsx';
 import XlsxImport  from './components/XlsxImport.jsx';
+import AdminModal  from './components/AdminModal.jsx';
 import TripList    from './components/TripList.jsx';
 import TripForm  from './components/TripForm.jsx';
 import TripGrid  from './components/TripGrid.jsx';
 import './App.css';
+
+// A place is "incomplete" if it still needs type, hours, or a maps link.
+function isIncomplete(p) {
+  return (
+    p.type === 'other' ||
+    Object.keys(p.openingHours || {}).length === 0 ||
+    !p.googleMapsUrl
+  );
+}
 
 // Top-level view state:
 //   view:       'places' | 'trips'
@@ -29,9 +39,11 @@ export default function App() {
   const [filterType,   setFilterType]   = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [modal,        setModal]        = useState(null);
-  const [showImport,   setShowImport]   = useState(false);
-  const [showXlsx,     setShowXlsx]     = useState(false);
-  const [tripModal,    setTripModal]    = useState(null);
+  const [showImport,       setShowImport]       = useState(false);
+  const [showXlsx,         setShowXlsx]         = useState(false);
+  const [showAdmin,        setShowAdmin]        = useState(false);
+  const [filterIncomplete, setFilterIncomplete] = useState(false);
+  const [tripModal,        setTripModal]        = useState(null);
 
   async function loadPlaces() { setPlaces(await getAllPlaces()); }
   async function loadTrips()  { setTrips(await getAllTrips());   }
@@ -45,6 +57,7 @@ export default function App() {
     setModal(null);
     setShowImport(false);
     setShowXlsx(false);
+    setShowAdmin(false);
   }
 
   // ── Place library helpers ─────────────────────────────────────────────────
@@ -57,14 +70,15 @@ export default function App() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return places.filter((p) => {
-      if (filterCity   && p.city   !== filterCity)   return false;
-      if (filterType   && p.type   !== filterType)   return false;
-      if (filterStatus && p.status !== filterStatus) return false;
+      if (filterCity       && p.city   !== filterCity)   return false;
+      if (filterType       && p.type   !== filterType)   return false;
+      if (filterStatus     && p.status !== filterStatus) return false;
+      if (filterIncomplete && !isIncomplete(p))          return false;
       if (q && ![p.name, p.city, p.country, p.notes, ...(p.tags || [])]
         .join(' ').toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [places, search, filterCity, filterType, filterStatus]);
+  }, [places, search, filterCity, filterType, filterStatus, filterIncomplete]);
 
   async function handleDeletePlace(place) {
     if (!window.confirm(`Delete "${place.name}"? This cannot be undone.`)) return;
@@ -98,7 +112,9 @@ export default function App() {
           {' · '}
           <span className="statusbar__count">{trips.length} TRIPS</span>
         </span>
-        <div className="tab-switcher">
+        <div className="statusbar-right">
+          <button className="btn-admin" onClick={() => setShowAdmin(true)} aria-label="Admin">⚙ ADMIN</button>
+          <div className="tab-switcher">
           <button
             className={`tab-btn ${view === 'places' ? 'tab-btn--active' : ''}`}
             onClick={() => switchView('places')}
@@ -107,6 +123,7 @@ export default function App() {
             className={`tab-btn ${view === 'trips' ? 'tab-btn--active' : ''}`}
             onClick={() => switchView('trips')}
           >TRIPS</button>
+          </div>
         </div>
       </div>
 
@@ -148,6 +165,13 @@ export default function App() {
                 <option key={s.key} value={s.key}>{s.emoji} {s.label.toUpperCase()}</option>
               ))}
             </select>
+            <button
+              className={`btn-import${filterIncomplete ? ' btn-import--active' : ''}`}
+              onClick={() => setFilterIncomplete(v => !v)}
+              aria-pressed={filterIncomplete}
+            >
+              ⚠ INCOMPLETE
+            </button>
             <button className="btn-add" onClick={() => setModal({ mode: 'add' })}>
               + ADD PLACE
             </button>
@@ -157,11 +181,6 @@ export default function App() {
             <button className="btn-import" onClick={() => setShowXlsx(true)}>
               IMPORT XLSX
             </button>
-            {/* TEMP: remove after seeding */}
-            <button className="btn-import" style={{color:'var(--rust)'}} onClick={async () => {
-              if (!window.confirm('Clear ALL places? Cannot be undone.')) return;
-              await clearAllPlaces(); await loadPlaces();
-            }}>⚠ CLEAR PLACES</button>
           </div>
 
           <main className="cards-grid" aria-live="polite" aria-label="Place library">
@@ -176,6 +195,7 @@ export default function App() {
               <PlaceCard
                 key={p.id}
                 place={p}
+                incomplete={isIncomplete(p)}
                 onEdit={() => setModal({ mode: 'edit', place: p })}
                 onDelete={() => handleDeletePlace(p)}
               />
@@ -232,6 +252,13 @@ export default function App() {
           initialData={tripModal.mode === 'edit' ? tripModal.trip : null}
           onSave={handleTripSaved}
           onClose={() => setTripModal(null)}
+        />
+      )}
+
+      {showAdmin && (
+        <AdminModal
+          onRefresh={() => { loadPlaces(); loadTrips(); }}
+          onClose={() => setShowAdmin(false)}
         />
       )}
     </div>

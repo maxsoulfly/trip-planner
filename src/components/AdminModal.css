@@ -1,0 +1,164 @@
+/* ===== ADMIN MODAL ===== */
+
+.admin-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 16px;
+}
+
+.admin-panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+/* ── Header ── */
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+
+.admin-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+.admin-close {
+  background: transparent;
+  border: none;
+  color: var(--dim);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 6px;
+  line-height: 1;
+  border-radius: 4px;
+  transition: color .15s;
+}
+.admin-close:hover { color: var(--ink); }
+
+/* ── Body ── */
+
+.admin-body {
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-msg {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: .04em;
+  padding: 8px 10px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  border: 1px solid transparent;
+}
+.admin-msg--ok  { color: var(--amber); border-color: var(--amber); background: rgba(255,176,0,.06); }
+.admin-msg--err { color: var(--rust);  border-color: var(--rust);  background: rgba(204,75,46,.06); }
+
+/* ── Section ── */
+
+.admin-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.admin-section-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--dim);
+  padding: 6px 0 4px;
+}
+
+.admin-divider {
+  border: none;
+  border-top: 1px dashed var(--line);
+  margin: 8px 0;
+}
+
+/* ── Row ── */
+
+.admin-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+.admin-row:last-child { border-bottom: none; }
+
+.admin-row-desc {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 12px;
+  color: var(--dim);
+  flex: 1;
+}
+
+/* ── Buttons ── */
+
+.admin-btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  background: transparent;
+  color: var(--dim);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color .15s, border-color .15s;
+  display: inline-flex;
+  align-items: center;
+}
+.admin-btn:hover:not(:disabled)         { color: var(--ink); border-color: var(--steel); }
+.admin-btn:disabled                     { opacity: .4; cursor: not-allowed; }
+
+.admin-btn--danger       { color: var(--rust); border-color: var(--rust); }
+.admin-btn--danger:hover:not(:disabled) { color: var(--ink); border-color: var(--rust); background: rgba(204,75,46,.08); }
+
+.admin-btn--confirm      { color: var(--amber); border-color: var(--amber); }
+.admin-btn--confirm:hover:not(:disabled) { background: rgba(255,176,0,.08); }
+
+/* ── Inline confirm row ── */
+
+.admin-confirm-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.admin-confirm-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .12em;
+  color: var(--rust);
+}

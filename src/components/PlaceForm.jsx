@@ -2,7 +2,20 @@ import { useEffect, useRef, useState } from 'react';
 import { addPlace, putPlace } from '../db/repo.js';
 import { PLACE_TYPES, STATUSES, WEEKDAYS } from '../db/constants.js';
 import { parseMapsUrl } from '../utils/mapsParser.js';
+import { parseGoogleHours } from '../utils/hoursParser.js';
 import './PlaceForm.css';
+
+// Parse "City, Country" or "Street, Postcode City, Country" address strings.
+// Returns { address, city, country } with only non-empty fields populated.
+function parseAddressString(str) {
+  const parts = str.split(',').map(s => s.trim()).filter(Boolean);
+  if (parts.length < 2) return null;
+  const country = parts.at(-1);
+  const cityRaw = parts.at(-2);
+  const city    = cityRaw.replace(/^\d+\s*/, '').trim(); // strip leading postcode
+  const address = parts.slice(0, -2).join(', ');
+  return { address, city, country };
+}
 
 function buildHoursState(openingHours) {
   const src = openingHours || {};
@@ -36,6 +49,10 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
   const [error,        setError]        = useState('');
   const [prefillUrl,   setPrefillUrl]   = useState('');
   const [prefillMsg,   setPrefillMsg]   = useState(null); // { ok, text } | null
+  const [addrPaste,    setAddrPaste]    = useState('');
+  const [addrMsg,      setAddrMsg]      = useState(null); // { ok, text } | null
+  const [hoursPaste,   setHoursPaste]   = useState('');
+  const [hoursMsg,     setHoursMsg]     = useState(null); // { ok, text } | null
 
   const firstRef = useRef(null);
 
@@ -77,6 +94,40 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
     e.preventDefault();
     setPrefillUrl(text);
     handlePrefill(text);
+  }
+
+  function handleAddrParse(str) {
+    const parsed = parseAddressString(str || addrPaste);
+    if (!parsed) { setAddrMsg({ ok: false, text: 'Could not parse — need at least two comma-separated parts.' }); return; }
+    if (parsed.address) setAddress(parsed.address);
+    if (parsed.city)    setCity(parsed.city);
+    if (parsed.country) setCountry(parsed.country);
+    const filled = [parsed.city && 'city', parsed.country && 'country', parsed.address && 'address'].filter(Boolean);
+    setAddrMsg({ ok: true, text: `Prefilled: ${filled.join(' · ')}` });
+  }
+
+  function handleAddrPaste(e) {
+    const text = e.clipboardData?.getData('text/plain') || '';
+    if (!text) return;
+    e.preventDefault();
+    setAddrPaste(text);
+    handleAddrParse(text);
+  }
+
+  function handleHoursParse(text) {
+    const parsed = parseGoogleHours(text || hoursPaste);
+    const count  = Object.keys(parsed).length;
+    if (!count) { setHoursMsg({ ok: false, text: '0 days parsed — check the format.' }); return; }
+    setHours(h => ({ ...h, ...parsed }));
+    setHoursMsg({ ok: true, text: `Parsed ${count} day${count !== 1 ? 's' : ''}.` });
+  }
+
+  function handleHoursPaste(e) {
+    const text = e.clipboardData?.getData('text/plain') || '';
+    if (!text) return;
+    e.preventDefault();
+    setHoursPaste(text);
+    handleHoursParse(text);
   }
 
   function setDayOpen(key, open) {
@@ -234,6 +285,27 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
           <fieldset className="form-section">
             <legend className="form-legend">LOCATION</legend>
 
+            <div className="prefill-strip">
+              <span className="prefill-label">PREFILL FROM ADDRESS</span>
+              <div className="prefill-row">
+                <input
+                  className="prefill-input"
+                  type="text"
+                  value={addrPaste}
+                  onChange={(e) => setAddrPaste(e.target.value)}
+                  onPaste={handleAddrPaste}
+                  placeholder="Paste a full address string…"
+                  aria-label="Address string for prefill"
+                />
+                <button type="button" className="prefill-btn" onClick={() => handleAddrParse()}>PARSE</button>
+              </div>
+              {addrMsg && (
+                <span className={`prefill-msg ${addrMsg.ok ? 'prefill-msg--ok' : 'prefill-msg--warn'}`}>
+                  {addrMsg.ok ? '✓' : '⚠'} {addrMsg.text}
+                </span>
+              )}
+            </div>
+
             <div className="form-cols">
               <label className="form-row">
                 <span className="form-label">CITY</span>
@@ -311,6 +383,28 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
           {/* ---- Opening Hours ---- */}
           <fieldset className="form-section">
             <legend className="form-legend">OPENING HOURS</legend>
+
+            <div className="prefill-strip">
+              <span className="prefill-label">PASTE GOOGLE HOURS</span>
+              <div className="prefill-row">
+                <textarea
+                  className="prefill-input prefill-textarea"
+                  value={hoursPaste}
+                  onChange={(e) => setHoursPaste(e.target.value)}
+                  onPaste={handleHoursPaste}
+                  placeholder={"Monday\n12 PM–12 AM\nTuesday\nClosed"}
+                  rows={3}
+                  aria-label="Google Maps hours text for prefill"
+                />
+                <button type="button" className="prefill-btn" onClick={() => handleHoursParse()}>PARSE</button>
+              </div>
+              {hoursMsg && (
+                <span className={`prefill-msg ${hoursMsg.ok ? 'prefill-msg--ok' : 'prefill-msg--warn'}`}>
+                  {hoursMsg.ok ? '✓' : '⚠'} {hoursMsg.text}
+                </span>
+              )}
+            </div>
+
             <div className="hours-editor">
               {WEEKDAYS.map((w) => {
                 const h      = hours[w.key];

@@ -54,6 +54,17 @@
   text-transform: uppercase;
   color: var(--steel);
   margin-bottom: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-stub {
+  color: var(--rust);
+  font-size: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  line-height: 1;
+  opacity: .85;
 }
 .card-glyph { font-size: 13px; }
 

@@ -47,8 +47,43 @@ export const getPlace = (id) => db.places.get(id);
 export const getAllPlaces = () => db.places.orderBy('name').toArray();
 export const getPlacesByCity = (city) => db.places.where('city').equals(city).toArray();
 export const deletePlace = (id) => db.places.delete(id);
-// TEMP: wipe places table only — remove after seeding run
 export const clearAllPlaces = () => db.places.clear();
+
+// Wipe trips and all their schedule items together — no orphaned items.
+export async function clearAllTrips() {
+  await db.transaction('rw', db.trips, db.scheduleItems, async () => {
+    await Promise.all([db.trips.clear(), db.scheduleItems.clear()]);
+  });
+}
+
+// Wipe every table.
+export async function clearAllData() {
+  await db.transaction('rw', db.places, db.trips, db.scheduleItems, async () => {
+    await Promise.all([db.places.clear(), db.trips.clear(), db.scheduleItems.clear()]);
+  });
+}
+
+// Snapshot all data for JSON backup.
+export async function exportAll() {
+  const [places, trips, scheduleItems] = await Promise.all([
+    db.places.toArray(),
+    db.trips.toArray(),
+    db.scheduleItems.toArray(),
+  ]);
+  return { places, trips, scheduleItems };
+}
+
+// Restore from backup object. Validates, then replaces all data atomically.
+export async function importAll(data) {
+  if (!data?.places || !Array.isArray(data.places))
+    throw new Error('Invalid backup file — missing places array');
+  await db.transaction('rw', db.places, db.trips, db.scheduleItems, async () => {
+    await Promise.all([db.places.clear(), db.trips.clear(), db.scheduleItems.clear()]);
+    if (data.places.length)             await db.places.bulkPut(data.places);
+    if (data.trips?.length)             await db.trips.bulkPut(data.trips);
+    if (data.scheduleItems?.length)     await db.scheduleItems.bulkPut(data.scheduleItems);
+  });
+}
 
 // ----- Trips ---------------------------------------------------------------
 

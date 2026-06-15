@@ -15,7 +15,7 @@ function todayWeekdayKey() {
   return JS_DAY_KEYS[new Date().getDay()];
 }
 
-export default function PlaceCard({ place, onEdit, onDelete }) {
+export default function PlaceCard({ place, onEdit, onDelete, incomplete }) {
   const type   = typeMeta(place.type);
   const stamp  = STAMP[place.status] || STAMP.wishlist;
   const today  = todayWeekdayKey();
@@ -36,8 +36,8 @@ export default function PlaceCard({ place, onEdit, onDelete }) {
       <span className={`stamp ${stamp.cls}`}>{stamp.label}</span>
 
       <div className="card-eyebrow">
-        <span className="card-glyph">{type.emoji}</span>
-        {' '}{type.label.toUpperCase()}
+        <span><span className="card-glyph">{type.emoji}</span>{' '}{type.label.toUpperCase()}</span>
+        {incomplete && <span className="card-stub" aria-label="Incomplete record">⚠</span>}
       </div>
 
       <h2 className="card-title">{place.name}</h2>
