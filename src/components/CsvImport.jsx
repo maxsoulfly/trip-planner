@@ -300,7 +300,7 @@ export default function CsvImport({ onDone, onClose }) {
                   onClick={handleImport}
                   disabled={importing || validRows.length === 0}
                 >
-                  {importing ? 'IMPORTING…' : `◈ IMPORT ${validRows.length} CACHES`}
+                  {importing ? 'IMPORTING…' : `◈ IMPORT ${validRows.length} PLACES`}
                 </button>
                 <button className="ci-btn-ghost" onClick={() => setStep('map')} disabled={importing}>
                   BACK

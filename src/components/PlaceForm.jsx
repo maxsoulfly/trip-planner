@@ -354,6 +354,9 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
                 );
               })}
             </div>
+            {type === 'accommodation' && (
+              <p className="form-hours-hint">e.g. reception hours or check-in window</p>
+            )}
           </fieldset>
 
           {/* ---- Actions ---- */}

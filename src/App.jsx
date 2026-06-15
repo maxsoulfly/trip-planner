@@ -91,7 +91,7 @@ export default function App() {
         <span>
           <span className="statusbar__dot">●</span>
           {' LOCAL ONLY · '}
-          <span className="statusbar__count">{places.length} CACHES</span>
+          <span className="statusbar__count">{places.length} PLACES</span>
           {' · '}
           <span className="statusbar__count">{trips.length} TRIPS</span>
         </span>
@@ -99,7 +99,7 @@ export default function App() {
           <button
             className={`tab-btn ${view === 'places' ? 'tab-btn--active' : ''}`}
             onClick={() => switchView('places')}
-          >CACHES</button>
+          >PLACES</button>
           <button
             className={`tab-btn ${view === 'trips' ? 'tab-btn--active' : ''}`}
             onClick={() => switchView('trips')}
@@ -121,7 +121,7 @@ export default function App() {
             <input
               className="toolbar__search"
               type="search"
-              placeholder="SEARCH CACHES…"
+              placeholder="SEARCH PLACES…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               aria-label="Search places"
@@ -146,7 +146,7 @@ export default function App() {
               ))}
             </select>
             <button className="btn-add" onClick={() => setModal({ mode: 'add' })}>
-              + ADD CACHE
+              + ADD PLACE
             </button>
             <button className="btn-import" onClick={() => setShowImport(true)}>
               IMPORT CSV
@@ -157,7 +157,7 @@ export default function App() {
             {filtered.length === 0 && (
               <p className="empty-state">
                 {places.length === 0
-                  ? 'No caches yet — add your first place.'
+                  ? 'No places yet — add your first.'
                   : 'No matches. Try adjusting the filters.'}
               </p>
             )}

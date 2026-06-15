@@ -4,6 +4,19 @@ import './TripForm.css';
 
 const EMPTY_FLIGHT = { airline: '', number: '', from: '', to: '', depTime: '', arrTime: '' };
 
+// Old seed data stored full ISO datetime strings ('2025-11-16T11:00') in depTime/arrTime.
+// time inputs need 'HH:MM'. Strip the date prefix if present.
+function normalizeTime(val) {
+  if (!val) return '';
+  const t = val.includes('T') ? val.split('T')[1] : val;
+  return t.slice(0, 5);
+}
+
+function normalizeFlight(f) {
+  if (!f) return { ...EMPTY_FLIGHT };
+  return { ...f, depTime: normalizeTime(f.depTime), arrTime: normalizeTime(f.arrTime) };
+}
+
 // Inline sub-component for the six flight fields — only rendered when the
 // corresponding "has flight" toggle is checked.
 function FlightFields({ value, onChange }) {
@@ -62,9 +75,9 @@ export default function TripForm({ initialData, onSave, onClose }) {
   const [endDate,      setEndDate]      = useState(initialData?.endDate      || '');
   const [notes,        setNotes]        = useState(initialData?.notes        || '');
   const [hasOutbound,  setHasOutbound]  = useState(Boolean(initialData?.outboundFlight));
-  const [outbound,     setOutbound]     = useState(initialData?.outboundFlight  || { ...EMPTY_FLIGHT });
+  const [outbound,     setOutbound]     = useState(normalizeFlight(initialData?.outboundFlight));
   const [hasInbound,   setHasInbound]   = useState(Boolean(initialData?.inboundFlight));
-  const [inbound,      setInbound]      = useState(initialData?.inboundFlight   || { ...EMPTY_FLIGHT });
+  const [inbound,      setInbound]      = useState(normalizeFlight(initialData?.inboundFlight));
   const [accomIds,     setAccomIds]     = useState(initialData?.accommodationPlaceIds || []);
   const [accomPlaces,  setAccomPlaces]  = useState([]);
   const [accomSearch,  setAccomSearch]  = useState('');

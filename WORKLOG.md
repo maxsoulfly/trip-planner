@@ -117,3 +117,22 @@
   - `order: 0` on all items means sort order matches insertion order until reorder is built.
 
 - **Next:** Step 5 — HTML day-sheet export (offline, tap-to-Maps).
+
+---
+
+### 2026-06-15 — Fix: flight time prefill, CACHE→PLACE rename, accommodation hours hint
+
+- **Done:**
+  - `src/components/TripForm.jsx` — added `normalizeTime(val)`: splits on `'T'` if present (handles `'YYYY-MM-DDTHH:MM'` legacy format from seed data), slices to 5 chars (`'HH:MM'`). Added `normalizeFlight(f)`: returns `EMPTY_FLIGHT` spread if falsy, otherwise spreads `f` with both time fields normalized. `outbound` and `inbound` state initialization changed from `initialData?.outboundFlight || EMPTY_FLIGHT` to `normalizeFlight(initialData?.outboundFlight)` — normalizes on load so pre-fill and save both produce `'HH:MM'` strings.
+  - `src/App.jsx` — five label changes: statusbar `CACHES` → `PLACES`; tab button `CACHES` → `PLACES`; search placeholder `SEARCH CACHES…` → `SEARCH PLACES…`; add button `+ ADD CACHE` → `+ ADD PLACE`; empty state `'No caches yet — add your first place.'` → `'No places yet — add your first.'`
+  - `src/components/CsvImport.jsx` — import confirm button: `` `◈ IMPORT ${validRows.length} CACHES` `` → `` `◈ IMPORT ${validRows.length} PLACES` ``
+  - `src/components/PlaceForm.jsx` — after the `hours-editor` `</div>`, inside the OPENING HOURS fieldset: renders `<p className="form-hours-hint">e.g. reception hours or check-in window</p>` when `type === 'accommodation'`. No structural change to the hours editor.
+  - `src/components/PlaceForm.css` — added `.form-hours-hint`: IBM Plex Mono 10px, `var(--dim)`, `letter-spacing: .06em`, `margin: 4px 0 0`.
+
+- **Deviations:** PlaceForm modal titles (`◈ NEW CACHE` / `◈ EDIT CACHE`) left unchanged — not in the scope listed. Minor cleanup for a later polish step.
+
+- **Schema/contract changes:** none.
+
+- **Known issues / TODO:** PlaceForm modal header still says CACHE.
+
+- **Next:** Step 5 — HTML day-sheet export (offline, tap-to-Maps).

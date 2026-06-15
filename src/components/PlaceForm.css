@@ -273,6 +273,14 @@
   font-size: 12px;
 }
 
+.form-hours-hint {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--dim);
+  letter-spacing: .06em;
+  margin: 4px 0 0;
+}
+
 /* ===== FORM ACTIONS ===== */
 
 .form-actions {
