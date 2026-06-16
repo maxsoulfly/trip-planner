@@ -1,14 +1,31 @@
-import { useRef, useState } from 'react';
-import { clearAllPlaces, clearAllTrips, clearAllData, exportAll, importAll } from '../db/repo.js';
+import { useEffect, useRef, useState } from 'react';
+import {
+  clearAllPlaces, clearAllTrips, clearAllData,
+  exportAll, importAll,
+  getAllPlaces, mergeCities,
+} from '../db/repo.js';
 import './AdminModal.css';
 
 export default function AdminModal({ onRefresh, onClose }) {
   const [pending, setPending] = useState(null); // null | 'clearPlaces' | 'clearTrips' | 'clearAll'
   const [busy,    setBusy]    = useState(false);
   const [message, setMessage] = useState(null); // { ok, text }
+
+  const [cities,          setCities]          = useState([]);
+  const [sourceCityMerge, setSourceCityMerge] = useState('');
+  const [targetCityMerge, setTargetCityMerge] = useState('');
+  const [mergePending,    setMergePending]    = useState(false);
+
   const fileRef         = useRef(null);
   const backdropRef     = useRef(null);
   const mouseDownTarget = useRef(null);
+
+  useEffect(() => {
+    getAllPlaces().then((places) => {
+      const citySet = new Set(places.map((p) => p.city).filter(Boolean));
+      setCities([...citySet].sort());
+    });
+  }, []);
 
   function handleBackdropClick(e) {
     if (e.target === backdropRef.current &&
@@ -71,7 +88,21 @@ export default function AdminModal({ onRefresh, onClose }) {
     }
   }
 
-  // Render helper for destructive rows (not a component — avoids remount issues).
+  async function handleMerge() {
+    const src = sourceCityMerge;
+    const tgt = targetCityMerge;
+    setMergePending(false);
+    await run(async () => {
+      await mergeCities(src, tgt);
+      const places = await getAllPlaces();
+      const citySet = new Set(places.map((p) => p.city).filter(Boolean));
+      setCities([...citySet].sort());
+      setSourceCityMerge('');
+      setTargetCityMerge('');
+    });
+  }
+
+  // Render helper for destructive rows.
   function renderDestructive(action, label, fn) {
     if (pending !== action) {
       return (
@@ -97,18 +128,20 @@ export default function AdminModal({ onRefresh, onClose }) {
     );
   }
 
+  const mergeReady = sourceCityMerge && targetCityMerge && sourceCityMerge !== targetCityMerge;
+
   return (
     <div
-      className="admin-backdrop"
+      className="modal-backdrop modal-backdrop--center"
       ref={backdropRef}
       onMouseDown={e => { mouseDownTarget.current = e.target; }}
       onClick={handleBackdropClick}
     >
-      <div className="admin-panel" role="dialog" aria-modal="true" aria-label="Admin">
+      <div className="modal-panel admin-panel" role="dialog" aria-modal="true" aria-label="Admin">
 
-        <div className="admin-header">
-          <span className="admin-title">⚙ ADMIN</span>
-          <button className="admin-close" onClick={onClose} disabled={busy} aria-label="Close">✕</button>
+        <div className="modal-header">
+          <span className="modal-title admin-title">⚙ ADMIN</span>
+          <button className="modal-close" onClick={onClose} disabled={busy} aria-label="Close">✕</button>
         </div>
 
         <div className="admin-body">
@@ -143,6 +176,60 @@ export default function AdminModal({ onRefresh, onClose }) {
                   disabled={busy}
                 />
               </label>
+            </div>
+          </div>
+
+          <div className="admin-divider" />
+
+          {/* ── City merge ── */}
+          <div className="admin-section">
+            <div className="admin-section-label">City Merge</div>
+
+            <div className="admin-merge-fields">
+              <select
+                className="admin-merge-select"
+                value={sourceCityMerge}
+                onChange={(e) => { setSourceCityMerge(e.target.value); setMergePending(false); }}
+                disabled={busy}
+                aria-label="Source city"
+              >
+                <option value="">source city…</option>
+                {cities.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <span className="admin-merge-arrow">→</span>
+              <select
+                className="admin-merge-select"
+                value={targetCityMerge}
+                onChange={(e) => { setTargetCityMerge(e.target.value); setMergePending(false); }}
+                disabled={busy}
+                aria-label="Target city"
+              >
+                <option value="">target city…</option>
+                {cities.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+
+            <div className="admin-row admin-row--merge">
+              <span className="admin-row-desc">Rename all places in source city to target</span>
+              {mergePending ? (
+                <span className="admin-confirm-row">
+                  <span className="admin-confirm-label">REALLY?</span>
+                  <button className="admin-btn admin-btn--confirm" onClick={handleMerge} disabled={busy || !mergeReady}>
+                    CONFIRM
+                  </button>
+                  <button className="admin-btn" onClick={() => setMergePending(false)} disabled={busy}>
+                    CANCEL
+                  </button>
+                </span>
+              ) : (
+                <button
+                  className="admin-btn"
+                  onClick={() => { setMessage(null); setMergePending(true); }}
+                  disabled={busy || !mergeReady}
+                >
+                  MERGE
+                </button>
+              )}
             </div>
           </div>
 

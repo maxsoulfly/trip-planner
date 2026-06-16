@@ -1,60 +1,19 @@
-/* ===== ADMIN MODAL ===== */
+/* AdminModal — overrides over styles.css modal shell */
 
-.admin-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, .55);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 200;
-  padding: 16px;
-}
+.modal-backdrop--center { align-items: center; }
 
 .admin-panel {
-  background: var(--panel);
-  border: 1px solid var(--line);
   border-radius: 10px;
-  width: 100%;
   max-width: 420px;
-  display: flex;
-  flex-direction: column;
   max-height: 90vh;
-  overflow: hidden;
 }
 
-/* ── Header ── */
-
-.admin-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--line);
-  flex-shrink: 0;
-}
-
+/* Title needs smaller font + uppercase vs shared modal-title */
 .admin-title {
-  font-family: 'IBM Plex Mono', monospace;
   font-size: 11px;
-  font-weight: 600;
   letter-spacing: .18em;
   text-transform: uppercase;
-  color: var(--amber);
 }
-
-.admin-close {
-  background: transparent;
-  border: none;
-  color: var(--dim);
-  font-size: 14px;
-  cursor: pointer;
-  padding: 2px 6px;
-  line-height: 1;
-  border-radius: 4px;
-  transition: color .15s;
-}
-.admin-close:hover { color: var(--ink); }
 
 /* ── Body ── */
 
@@ -111,13 +70,49 @@
   padding: 8px 0;
   border-bottom: 1px solid var(--line);
 }
-.admin-row:last-child { border-bottom: none; }
+.admin-row:last-child,
+.admin-row--merge { border-bottom: none; }
 
 .admin-row-desc {
   font-family: 'IBM Plex Sans', sans-serif;
   font-size: 12px;
   color: var(--dim);
   flex: 1;
+}
+
+/* ── City merge fields ── */
+
+.admin-merge-fields {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0 4px;
+}
+
+.admin-merge-select {
+  flex: 1;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  background: var(--panel2);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 5px 8px;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  transition: border-color .15s;
+  min-width: 0;
+}
+.admin-merge-select:focus { border-color: var(--amber); }
+.admin-merge-select:disabled { opacity: .4; cursor: default; }
+
+.admin-merge-arrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  color: var(--steel);
+  flex-shrink: 0;
 }
 
 /* ── Buttons ── */

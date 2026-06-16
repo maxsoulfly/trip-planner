@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { WEEKDAYS, typeMeta } from '../db/constants.js';
 import { hoursForDay } from '../utils/hours.js';
 import './PlaceCard.css';
@@ -16,6 +17,8 @@ function todayWeekdayKey() {
 }
 
 export default function PlaceCard({ place, onEdit, onDelete, incomplete }) {
+  const [confirming, setConfirming] = useState(false);
+
   const type   = typeMeta(place.type);
   const stamp  = STAMP[place.status] || STAMP.wishlist;
   const today  = todayWeekdayKey();
@@ -78,15 +81,22 @@ export default function PlaceCard({ place, onEdit, onDelete, incomplete }) {
       </div>
 
       <div className="card-foot">
-        {place.googleMapsUrl
-          ? (
-            <a className="maps-link" href={place.googleMapsUrl} target="_blank" rel="noreferrer">
-              ▸ OPEN IN GOOGLE MAPS
+        <div className="card-links">
+          {place.googleMapsUrl
+            ? (
+              <a className="maps-link" href={place.googleMapsUrl} target="_blank" rel="noreferrer">
+                ▸ GOOGLE MAPS
+              </a>
+            ) : (
+              <span className="maps-link maps-link--none">▸ NO MAP LINK</span>
+            )
+          }
+          {place.websiteUrl && (
+            <a className="website-link" href={place.websiteUrl} target="_blank" rel="noreferrer">
+              ▸ WEBSITE
             </a>
-          ) : (
-            <span className="maps-link maps-link--none">▸ NO MAP LINK</span>
-          )
-        }
+          )}
+        </div>
         <div className="card-tags">
           {(place.tags || []).slice(0, 3).map((t) => (
             <span key={t} className="tag">{t}</span>
@@ -99,9 +109,21 @@ export default function PlaceCard({ place, onEdit, onDelete, incomplete }) {
         <button className="card-btn" onClick={onEdit} aria-label={`Edit ${place.name}`}>
           EDIT
         </button>
-        <button className="card-btn card-btn--danger" onClick={onDelete} aria-label={`Delete ${place.name}`}>
-          DEL
-        </button>
+        {confirming ? (
+          <span className="card-confirm-row">
+            <span className="card-confirm-label">REALLY?</span>
+            <button className="card-btn card-btn--confirm" onClick={onDelete}>CONFIRM</button>
+            <button className="card-btn" onClick={() => setConfirming(false)}>CANCEL</button>
+          </span>
+        ) : (
+          <button
+            className="card-btn card-btn--danger"
+            onClick={() => setConfirming(true)}
+            aria-label={`Delete ${place.name}`}
+          >
+            DEL
+          </button>
+        )}
       </div>
     </article>
   );

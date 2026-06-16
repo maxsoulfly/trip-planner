@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getScheduleForTrip, getAllPlaces, deleteScheduleItem } from '../db/repo.js';
+import { getScheduleForTrip, getAllPlaces, deleteScheduleItem, putScheduleItem } from '../db/repo.js';
 import { BLOCKS } from '../db/constants.js';
 import { daysInRange, formatDayHeader } from '../utils/dates.js';
 import { generateDaySheet } from '../utils/exportHtml.js';
@@ -27,6 +27,18 @@ export default function TripGrid({ trip, onBack }) {
 
   async function handleRemove(itemId) {
     await deleteScheduleItem(itemId);
+    load();
+  }
+
+  async function handleMoveItem(item, direction) {
+    const slotItems = scheduleItems
+      .filter((si) => si.date === item.date && si.block === item.block)
+      .sort((a, b) => a.order - b.order);
+    const idx     = slotItems.findIndex((si) => si.id === item.id);
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= slotItems.length) return;
+    await putScheduleItem({ ...slotItems[idx],     order: swapIdx });
+    await putScheduleItem({ ...slotItems[swapIdx], order: idx    });
     load();
   }
 
@@ -113,6 +125,8 @@ export default function TripGrid({ trip, onBack }) {
                     flightCards={flightCardsForSlot(date, block.key)}
                     onAdd={() => setPicker({ date, block: block.key })}
                     onRemove={handleRemove}
+                    onMoveUp={(item) => handleMoveItem(item, 'up')}
+                    onMoveDown={(item) => handleMoveItem(item, 'down')}
                   />
                 );
               })}

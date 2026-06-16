@@ -1,63 +1,5 @@
-/* Self-contained styles for the CSV import modal.
-   Mirrors the PlaceForm modal shell visually but uses ci-* class names
-   to avoid any implicit dependency on PlaceForm.css. */
-
-/* ===== BACKDROP & PANEL ===== */
-
-.ci-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, .65);
-  z-index: 100;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 20px 16px 40px;
-  overflow-y: auto;
-}
-
-.ci-panel {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  width: 100%;
-  max-width: 560px;
-  margin: auto 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* ===== HEADER ===== */
-
-.ci-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 13px 16px;
-  border-bottom: 1px solid var(--line);
-  flex-shrink: 0;
-}
-.ci-title {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: .14em;
-  color: var(--amber);
-}
-.ci-close {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 14px;
-  background: transparent;
-  color: var(--dim);
-  border: none;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
-  line-height: 1;
-  transition: color .15s;
-}
-.ci-close:hover { color: var(--ink); }
+/* Modal shell now in styles.css. Size override: */
+.ci-panel { max-width: 560px; }
 
 /* ===== BODY ===== */
 
@@ -95,17 +37,6 @@
   border-radius: 3px;
   border: 1px solid var(--line);
   font-family: inherit;
-}
-
-/* Screen-reader only */
-.sr-only {
-  position: absolute;
-  width: 1px; height: 1px;
-  padding: 0; margin: -1px;
-  overflow: hidden;
-  clip: rect(0,0,0,0);
-  white-space: nowrap;
-  border: 0;
 }
 
 /* ===== STEP 1: UPLOAD ===== */

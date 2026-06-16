@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import { daysInRange } from '../utils/dates.js';
 import './TripList.css';
 
 function TripCard({ trip, onOpen, onEdit, onDelete }) {
+  const [confirming, setConfirming] = useState(false);
+
   const dayCount = (trip.startDate && trip.endDate)
     ? daysInRange(trip.startDate, trip.endDate).length
     : null;
@@ -40,13 +43,34 @@ function TripCard({ trip, onOpen, onEdit, onDelete }) {
       <div className="trip-actions">
         <button className="trip-btn-open" onClick={() => onOpen(trip)}>OPEN GRID</button>
         <button className="trip-btn-ghost" onClick={() => onEdit(trip)}>EDIT</button>
-        <button className="trip-btn-ghost trip-btn-danger" onClick={() => onDelete(trip)}>DEL</button>
+        {confirming ? (
+          <span className="trip-confirm-row">
+            <span className="trip-confirm-label">REALLY?</span>
+            <button className="trip-btn-ghost trip-btn-confirm" onClick={() => onDelete(trip)}>CONFIRM</button>
+            <button className="trip-btn-ghost" onClick={() => setConfirming(false)}>CANCEL</button>
+          </span>
+        ) : (
+          <button
+            className="trip-btn-ghost trip-btn-danger"
+            onClick={() => setConfirming(true)}
+            aria-label={`Delete ${trip.title}`}
+          >
+            DEL
+          </button>
+        )}
       </div>
     </article>
   );
 }
 
 export default function TripList({ trips, onNew, onEdit, onDelete, onOpen }) {
+  const sorted = [...trips].sort((a, b) => {
+    if (!a.startDate && !b.startDate) return 0;
+    if (!a.startDate) return 1;
+    if (!b.startDate) return -1;
+    return a.startDate.localeCompare(b.startDate);
+  });
+
   return (
     <div className="trips-view">
       <div className="trips-head">
@@ -58,11 +82,11 @@ export default function TripList({ trips, onNew, onEdit, onDelete, onOpen }) {
         <button className="btn-add" onClick={onNew}>+ NEW TRIP</button>
       </div>
 
-      {trips.length === 0 ? (
+      {sorted.length === 0 ? (
         <p className="trips-empty">No trips yet — plan your first expedition.</p>
       ) : (
         <div className="trips-grid">
-          {trips.map((t) => (
+          {sorted.map((t) => (
             <TripCard
               key={t.id}
               trip={t}

@@ -73,18 +73,18 @@ export default function XlsxImport({ onDone, onClose }) {
 
   return (
     <div
-      className="xi-backdrop"
+      className="modal-backdrop"
       ref={backdropRef}
       onMouseDown={e => { mouseDownTarget.current = e.target; }}
       onClick={handleBackdropClick}
     >
-      <div className="xi-panel" role="dialog" aria-modal="true" aria-label="XLSX import">
+      <div className="modal-panel xi-panel" role="dialog" aria-modal="true" aria-label="XLSX import">
 
-        <div className="xi-header">
-          <span className="xi-title">
+        <div className="modal-header">
+          <span className="modal-title">
             {step === 'upload' ? '◈ XLSX IMPORT — UPLOAD' : '◈ XLSX IMPORT — PREVIEW'}
           </span>
-          <button className="xi-close" onClick={onClose} disabled={importing} aria-label="Close">✕</button>
+          <button className="modal-close" onClick={onClose} disabled={importing} aria-label="Close">✕</button>
         </div>
 
         <div className="xi-body">

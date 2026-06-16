@@ -158,3 +158,18 @@
 }
 .trip-btn-ghost:hover          { color: var(--ink);  border-color: var(--steel); }
 .trip-btn-danger:hover         { color: var(--rust); border-color: var(--rust);  }
+.trip-btn-confirm:hover        { color: var(--amber); border-color: var(--amber); }
+
+/* ===== INLINE DELETE CONFIRM ===== */
+
+.trip-confirm-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.trip-confirm-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .12em;
+  color: var(--rust);
+}

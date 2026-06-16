@@ -32,6 +32,22 @@
   flex-shrink: 0;
 }
 
+.btn-theme {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  background: transparent;
+  color: var(--dim);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color .15s, border-color .15s;
+}
+.btn-theme:hover { color: var(--amber); border-color: var(--amber); }
+
 .btn-admin {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 10px;
@@ -179,6 +195,32 @@
   border-color: var(--rust);
 }
 .btn-import--active:hover { color: var(--ink); border-color: var(--rust); }
+
+/* ===== VIEW TOGGLE (CARDS | LIST) ===== */
+
+.btn-view-group {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.btn-view {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  background: transparent;
+  color: var(--dim);
+  border: none;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  line-height: 1;
+}
+.btn-view--active { background: var(--panel2); color: var(--ink); }
+.btn-view:not(.btn-view--active):hover { color: var(--ink); }
 
 /* ===== CARDS GRID ===== */
 

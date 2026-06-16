@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { getAllPlaces, deletePlace, getAllTrips, deleteTripCascade } from './db/repo.js';
 import { PLACE_TYPES, STATUSES } from './db/constants.js';
 import PlaceCard from './components/PlaceCard.jsx';
+import PlaceList from './components/PlaceList.jsx';
 import PlaceForm from './components/PlaceForm.jsx';
 import CsvImport   from './components/CsvImport.jsx';
 import XlsxImport  from './components/XlsxImport.jsx';
@@ -10,6 +11,9 @@ import TripList    from './components/TripList.jsx';
 import TripForm  from './components/TripForm.jsx';
 import TripGrid  from './components/TripGrid.jsx';
 import './App.css';
+
+const THEME_CYCLE = ['dark', 'light', 'system'];
+const THEME_LABEL = { dark: '◐ DARK', light: '☀ LIGHT', system: '⊙ SYS' };
 
 function isIncomplete(p) {
   if (p.type === 'other') return true;
@@ -38,12 +42,27 @@ export default function App() {
   const [filterCity,   setFilterCity]   = useState('');
   const [filterType,   setFilterType]   = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [listView,     setListView]     = useState(false);
   const [modal,        setModal]        = useState(null);
   const [showImport,       setShowImport]       = useState(false);
   const [showXlsx,         setShowXlsx]         = useState(false);
   const [showAdmin,        setShowAdmin]        = useState(false);
   const [filterIncomplete, setFilterIncomplete] = useState(false);
   const [tripModal,        setTripModal]        = useState(null);
+  const [theme,            setThemeState]       = useState(
+    () => document.documentElement.getAttribute('data-theme') || 'dark'
+  );
+
+  function setTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    localStorage.setItem('theme', t);
+    setThemeState(t);
+  }
+
+  function cycleTheme() {
+    const idx = THEME_CYCLE.indexOf(theme);
+    setTheme(THEME_CYCLE[(idx + 1) % THEME_CYCLE.length]);
+  }
 
   async function loadPlaces() { setPlaces(await getAllPlaces()); }
   async function loadTrips()  { setTrips(await getAllTrips());   }
@@ -53,7 +72,6 @@ export default function App() {
   function switchView(v) {
     setView(v);
     setActiveTrip(null);
-    // Close any open modals belonging to the other view.
     setModal(null);
     setShowImport(false);
     setShowXlsx(false);
@@ -80,9 +98,14 @@ export default function App() {
     });
   }, [places, search, filterCity, filterType, filterStatus, filterIncomplete]);
 
+  // Inline confirm is now handled inside PlaceCard — handler just deletes.
   async function handleDeletePlace(place) {
-    if (!window.confirm(`Delete "${place.name}"? This cannot be undone.`)) return;
     await deletePlace(place.id);
+    await loadPlaces();
+  }
+
+  async function handleBulkDelete(ids) {
+    await Promise.all(ids.map((id) => deletePlace(id)));
     await loadPlaces();
   }
 
@@ -90,8 +113,8 @@ export default function App() {
 
   // ── Trip helpers ──────────────────────────────────────────────────────────
 
+  // Inline confirm handled inside TripCard — handler just deletes.
   async function handleDeleteTrip(trip) {
-    if (!window.confirm(`Delete "${trip.title}"? This also deletes all its schedule items.`)) return;
     await deleteTripCascade(trip.id);
     await loadTrips();
   }
@@ -113,16 +136,19 @@ export default function App() {
           <span className="statusbar__count">{trips.length} TRIPS</span>
         </span>
         <div className="statusbar-right">
+          <button className="btn-theme" onClick={cycleTheme} aria-label="Toggle theme">
+            {THEME_LABEL[theme]}
+          </button>
           <button className="btn-admin" onClick={() => setShowAdmin(true)} aria-label="Admin">⚙ ADMIN</button>
           <div className="tab-switcher">
-          <button
-            className={`tab-btn ${view === 'places' ? 'tab-btn--active' : ''}`}
-            onClick={() => switchView('places')}
-          >PLACES</button>
-          <button
-            className={`tab-btn ${view === 'trips' ? 'tab-btn--active' : ''}`}
-            onClick={() => switchView('trips')}
-          >TRIPS</button>
+            <button
+              className={`tab-btn ${view === 'places' ? 'tab-btn--active' : ''}`}
+              onClick={() => switchView('places')}
+            >PLACES</button>
+            <button
+              className={`tab-btn ${view === 'trips' ? 'tab-btn--active' : ''}`}
+              onClick={() => switchView('trips')}
+            >TRIPS</button>
           </div>
         </div>
       </div>
@@ -172,6 +198,21 @@ export default function App() {
             >
               ⚠ INCOMPLETE
             </button>
+
+            {/* View toggle */}
+            <div className="btn-view-group">
+              <button
+                className={`btn-view ${!listView ? 'btn-view--active' : ''}`}
+                onClick={() => setListView(false)}
+                aria-pressed={!listView}
+              >CARDS</button>
+              <button
+                className={`btn-view ${listView ? 'btn-view--active' : ''}`}
+                onClick={() => setListView(true)}
+                aria-pressed={listView}
+              >LIST</button>
+            </div>
+
             <button className="btn-add" onClick={() => setModal({ mode: 'add' })}>
               + ADD PLACE
             </button>
@@ -183,24 +224,32 @@ export default function App() {
             </button>
           </div>
 
-          <main className="cards-grid" aria-live="polite" aria-label="Place library">
-            {filtered.length === 0 && (
-              <p className="empty-state">
-                {places.length === 0
-                  ? 'No places yet — add your first.'
-                  : 'No matches. Try adjusting the filters.'}
-              </p>
-            )}
-            {filtered.map((p) => (
-              <PlaceCard
-                key={p.id}
-                place={p}
-                incomplete={isIncomplete(p)}
-                onEdit={() => setModal({ mode: 'edit', place: p })}
-                onDelete={() => handleDeletePlace(p)}
-              />
-            ))}
-          </main>
+          {listView ? (
+            <PlaceList
+              places={filtered}
+              onEdit={(p) => setModal({ mode: 'edit', place: p })}
+              onBulkDelete={handleBulkDelete}
+            />
+          ) : (
+            <main className="cards-grid" aria-live="polite" aria-label="Place library">
+              {filtered.length === 0 && (
+                <p className="empty-state">
+                  {places.length === 0
+                    ? 'No places yet — add your first.'
+                    : 'No matches. Try adjusting the filters.'}
+                </p>
+              )}
+              {filtered.map((p) => (
+                <PlaceCard
+                  key={p.id}
+                  place={p}
+                  incomplete={isIncomplete(p)}
+                  onEdit={() => setModal({ mode: 'edit', place: p })}
+                  onDelete={() => handleDeletePlace(p)}
+                />
+              ))}
+            </main>
+          )}
         </>
       )}
 

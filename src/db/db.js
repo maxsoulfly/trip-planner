@@ -15,11 +15,18 @@ import Dexie from 'dexie';
 export const db = new Dexie('trip-planner');
 
 db.version(1).stores({
+  places: 'id, name, type, city, country, status',
+  trips: 'id, title, startDate',
+  scheduleItems: 'id, tripId, [tripId+date], placeId',
+});
+
+// version(2) — adds websiteUrl to places (non-breaking; existing records get undefined).
+db.version(2).stores({
   // PLACE — stored once, globally. "A city's places" is just a filter on city.
   //   {
   //     id, name, type, city, country,
   //     lat, lng,                 // nullable, from Maps-link parse or manual
-  //     address, googleMapsUrl, untappdUrl,
+  //     address, googleMapsUrl, untappdUrl, websiteUrl,
   //     openingHours,             // { mon: {open,close}|null, ... sun }
   //     tags: [],
   //     notes,
@@ -55,8 +62,7 @@ db.version(1).stores({
   // The compound [tripId+date] index makes "give me this trip's day" fast.
   scheduleItems: 'id, tripId, [tripId+date], placeId',
 
-  // BUDGETENTRY is DEFERRED (see SPEC). Table intentionally not created yet;
-  // it will be added in a later db.version(2) so existing data migrates safely.
+  // BUDGETENTRY deferred — will be added in a future version(3).
 });
 
 export default db;

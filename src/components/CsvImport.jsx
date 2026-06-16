@@ -170,16 +170,16 @@ export default function CsvImport({ onDone, onClose }) {
 
   return (
     <div
-      className="ci-backdrop"
+      className="modal-backdrop"
       ref={backdropRef}
       onMouseDown={e => { mouseDownTarget.current = e.target; }}
       onClick={handleBackdropClick}
     >
-      <div className="ci-panel" role="dialog" aria-modal="true" aria-label="CSV import">
+      <div className="modal-panel ci-panel" role="dialog" aria-modal="true" aria-label="CSV import">
 
-        <div className="ci-header">
-          <span className="ci-title">{STEP_TITLE[step]}</span>
-          <button className="ci-close" onClick={onClose} aria-label="Close import">✕</button>
+        <div className="modal-header">
+          <span className="modal-title">{STEP_TITLE[step]}</span>
+          <button className="modal-close" onClick={onClose} aria-label="Close import">✕</button>
         </div>
 
         <div className="ci-body">

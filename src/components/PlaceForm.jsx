@@ -5,10 +5,36 @@ import { parseMapsUrl } from '../utils/mapsParser.js';
 import { parseGoogleHours } from '../utils/hoursParser.js';
 import './PlaceForm.css';
 
-// Parse "City, Country" or "Street, Postcode City, Country" address strings.
-// Returns { address, city, country } with only non-empty fields populated.
+const TYPE_KEYWORDS = {
+  museum:        ['museum', 'muzeum', 'muzej', 'galeri'],
+  accommodation: ['hotel', 'hostel', 'noclegi', 'apartment', 'apartament', 'pension', 'inn'],
+  brewpub:       ['brewery', 'browar', 'brauerei', 'brewpub', 'pivovar'],
+  cafe:          ['café', 'cafe', 'kawiarnia', 'kaffee'],
+};
+
+function detectType(name) {
+  const lower = name.toLowerCase();
+  for (const [typeKey, keywords] of Object.entries(TYPE_KEYWORDS)) {
+    if (keywords.some((kw) => lower.includes(kw))) return typeKey;
+  }
+  return null;
+}
+
+// Parse address strings, including plus codes like "62JF+RM Warsaw, Poland".
+// Returns { address, city, country } or null on failure.
 function parseAddressString(str) {
-  const parts = str.split(',').map(s => s.trim()).filter(Boolean);
+  const s = str.trim();
+  // Plus code pattern: CODE+CODE optionally followed by a space and city/country
+  const plusMatch = s.match(/^[A-Z0-9]{4,8}\+[A-Z0-9]{2,3}\s+(.*)/i);
+  if (plusMatch) {
+    const remainder = plusMatch[1].trim();
+    const parts = remainder.split(',').map((p) => p.trim()).filter(Boolean);
+    if (parts.length >= 2) {
+      return { address: s, city: parts[0], country: parts[parts.length - 1] };
+    }
+    return { address: s, city: parts[0] || '', country: '' };
+  }
+  const parts = str.split(',').map((p) => p.trim()).filter(Boolean);
   if (parts.length < 2) return null;
   const country = parts.at(-1);
   const cityRaw = parts.at(-2);
@@ -41,10 +67,12 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
   const [lng,          setLng]          = useState(initialData?.lng          ?? '');
   const [googleMapsUrl, setGoogleMapsUrl] = useState(initialData?.googleMapsUrl || '');
   const [untappdUrl,   setUntappdUrl]   = useState(initialData?.untappdUrl   || '');
+  const [websiteUrl,   setWebsiteUrl]   = useState(initialData?.websiteUrl   || '');
   const [rating,       setRating]       = useState(initialData?.rating       ?? '');
   const [tags,         setTags]         = useState((initialData?.tags || []).join(', '));
   const [notes,        setNotes]        = useState(initialData?.notes        || '');
   const [hours,        setHours]        = useState(() => buildHoursState(initialData?.openingHours));
+  const [suggestedType, setSuggestedType] = useState(null);
   const [busy,         setBusy]         = useState(false);
   const [error,        setError]        = useState('');
   const [prefillUrl,   setPrefillUrl]   = useState('');
@@ -163,6 +191,7 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
       lng:           lng !== '' ? parseFloat(lng) : null,
       googleMapsUrl: googleMapsUrl.trim(),
       untappdUrl:    untappdUrl.trim(),
+      websiteUrl:    websiteUrl.trim(),
       rating:        rating !== '' ? parseFloat(rating) : null,
       tags:          parseTags(tags),
       notes:         notes.trim(),
@@ -214,7 +243,7 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
         aria-label={isEdit ? 'Edit place' : 'Add place'}
       >
         <div className="modal-header">
-          <span className="modal-title">{isEdit ? '◈ EDIT CACHE' : '◈ NEW CACHE'}</span>
+          <span className="modal-title">{isEdit ? '◈ EDIT PLACE' : '◈ NEW PLACE'}</span>
           <button className="modal-close" onClick={onClose} aria-label="Close form">✕</button>
         </div>
 
@@ -262,7 +291,12 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
                 className="form-input"
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  const det = detectType(e.target.value);
+                  if (det && det !== type) setSuggestedType(det);
+                  else setSuggestedType(null);
+                }}
                 placeholder="e.g. Świat Piwa"
                 required
               />
@@ -271,11 +305,21 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
             <div className="form-cols">
               <label className="form-row">
                 <span className="form-label">TYPE</span>
-                <select className="form-select" value={type} onChange={(e) => setType(e.target.value)}>
+                <select className="form-select" value={type} onChange={(e) => { setType(e.target.value); setSuggestedType(null); }}>
                   {PLACE_TYPES.map((t) => (
                     <option key={t.key} value={t.key}>{t.emoji} {t.label}</option>
                   ))}
                 </select>
+                {suggestedType && suggestedType !== type && (() => {
+                  const meta = PLACE_TYPES.find((t) => t.key === suggestedType);
+                  return meta ? (
+                    <div className="type-suggest">
+                      <span>Detected: {meta.emoji} {meta.label.toUpperCase()}</span>
+                      <button type="button" className="type-suggest-btn" onClick={() => { setType(suggestedType); setSuggestedType(null); }}>APPLY</button>
+                      <button type="button" className="type-suggest-dismiss" onClick={() => setSuggestedType(null)}>✕</button>
+                    </div>
+                  ) : null;
+                })()}
               </label>
 
               <label className="form-row">
@@ -375,6 +419,12 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
           {/* ---- Links ---- */}
           <fieldset className="form-section">
             <legend className="form-legend">LINKS</legend>
+            <label className="form-row">
+              <span className="form-label">WEBSITE URL</span>
+              <input className="form-input" type="url"
+                value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)}
+                placeholder="https://…" />
+            </label>
             <label className="form-row">
               <span className="form-label">UNTAPPD URL</span>
               <input className="form-input" type="url"

@@ -1,7 +1,7 @@
 import { typeMeta } from '../db/constants.js';
 import './SlotCell.css';
 
-export default function SlotCell({ block, items, places, flightCards, onAdd, onRemove }) {
+export default function SlotCell({ block, items, places, flightCards, onAdd, onRemove, onMoveUp, onMoveDown }) {
   const sortedItems = items.slice().sort((a, b) => a.order - b.order);
 
   return (
@@ -29,14 +29,30 @@ export default function SlotCell({ block, items, places, flightCards, onAdd, onR
       ))}
 
       {/* Scheduled items */}
-      {sortedItems.map((item) => {
+      {sortedItems.map((item, idx) => {
+        const isFirst = idx === 0;
+        const isLast  = idx === sortedItems.length - 1;
+
         if (item.kind === 'place') {
           const place = places[item.placeId];
           return (
             <div key={item.id} className="sc-item sc-item--place">
               <span className="sc-item-icon">{typeMeta(place?.type)?.emoji || '📍'}</span>
               <span className="sc-item-name">{place?.name || '(deleted)'}</span>
-              {/* TODO: up/down reorder (polish step) */}
+              <span className="sc-item-controls">
+                <button
+                  className="sc-move-btn"
+                  onClick={() => onMoveUp(item)}
+                  disabled={isFirst}
+                  aria-label="Move up"
+                >↑</button>
+                <button
+                  className="sc-move-btn"
+                  onClick={() => onMoveDown(item)}
+                  disabled={isLast}
+                  aria-label="Move down"
+                >↓</button>
+              </span>
               <button className="sc-remove" onClick={() => onRemove(item.id)} aria-label="Remove">✕</button>
             </div>
           );
@@ -46,7 +62,20 @@ export default function SlotCell({ block, items, places, flightCards, onAdd, onR
           <div key={item.id} className="sc-item sc-item--adhoc">
             <span className="sc-item-icon">{kindIcon}</span>
             <span className="sc-item-name">{item.adHoc?.label || '—'}</span>
-            {/* TODO: up/down reorder (polish step) */}
+            <span className="sc-item-controls">
+              <button
+                className="sc-move-btn"
+                onClick={() => onMoveUp(item)}
+                disabled={isFirst}
+                aria-label="Move up"
+              >↑</button>
+              <button
+                className="sc-move-btn"
+                onClick={() => onMoveDown(item)}
+                disabled={isLast}
+                aria-label="Move down"
+              >↓</button>
+            </span>
             <button className="sc-remove" onClick={() => onRemove(item.id)} aria-label="Remove">✕</button>
           </div>
         );

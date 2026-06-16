@@ -1,59 +1,5 @@
-/* ===== MODAL BACKDROP ===== */
-
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, .65);
-  z-index: 100;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 20px 16px 40px;
-  overflow-y: auto;
-}
-
-/* ===== MODAL PANEL ===== */
-
-.modal-panel {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  width: 100%;
-  max-width: 600px;
-  margin: auto 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 13px 16px;
-  border-bottom: 1px solid var(--line);
-  flex-shrink: 0;
-}
-.modal-title {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: .14em;
-  color: var(--amber);
-}
-.modal-close {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 14px;
-  background: transparent;
-  color: var(--dim);
-  border: none;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
-  line-height: 1;
-  transition: color .15s;
-}
-.modal-close:hover { color: var(--ink); }
+/* Modal shell (.modal-backdrop, .modal-panel, .modal-header, .modal-title,
+   .modal-close) now lives in styles.css.                                    */
 
 /* ===== PREFILL STRIP ===== */
 
@@ -281,6 +227,51 @@
   color: var(--dim);
   font-size: 12px;
 }
+
+/* ===== TYPE SUGGESTION ===== */
+
+.type-suggest {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 5px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--amber);
+  letter-spacing: .06em;
+  background: var(--amber-soft);
+  border: 1px solid var(--amber);
+  border-radius: 5px;
+  padding: 4px 8px;
+}
+.type-suggest-btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  background: var(--amber);
+  color: var(--bg);
+  border: none;
+  border-radius: 3px;
+  padding: 2px 7px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity .15s;
+}
+.type-suggest-btn:hover { opacity: .85; }
+.type-suggest-dismiss {
+  background: transparent;
+  border: none;
+  color: var(--amber);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0 2px;
+  line-height: 1;
+  margin-left: auto;
+  opacity: .7;
+  transition: opacity .15s;
+}
+.type-suggest-dismiss:hover { opacity: 1; }
 
 .form-hours-hint {
   font-family: 'IBM Plex Mono', monospace;

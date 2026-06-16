@@ -2,6 +2,43 @@
 
 ---
 
+### 2026-06-17 — Step 7 Commit B: UI polish
+
+- **Done:**
+    - `src/db/db.js` — bumped to `version(2)` (additive); added `websiteUrl` to places record shape comment. Existing records get `websiteUrl: undefined` which the UI treats as empty string.
+    - `src/db/repo.js` — added `websiteUrl: ''` to `addPlace` defaults; added `mergeCities(sourceCity, targetCity)` — `db.places.where('city').equals(source).toArray()` then `Promise.all(map put)` with `city: targetCity` and refreshed `updatedAt`.
+    - `src/styles.css` — appended shared modal shell: `.modal-backdrop`, `.modal-panel` (max-width 600px default), `.modal-header`, `.modal-title`, `.modal-close`, `.sr-only`. Used by all 6 modals.
+    - `src/main.jsx` — reads `localStorage.getItem('theme') || 'dark'` and sets `document.documentElement.setAttribute('data-theme', saved)` before React mount; prevents flash-of-wrong-theme.
+    - `src/App.jsx` — theme state (`dark`/`light`/`system`), `cycleTheme()`, `setTheme()` with localStorage write; `◐ DARK` / `☀ LIGHT` / `⊙ SYS` button in statusbar. `listView` state; CARDS/LIST toggle in toolbar. `handleBulkDelete(ids)` calls `deletePlace` for each and reloads. Mounts `<PlaceList>` when `listView === true`; `<PlaceCard>` grid when false. Removed `window.confirm` from all delete handlers — inline confirm via `PlaceCard` state (Commit A already done).
+    - `src/App.css` — added `.btn-theme`, `.btn-view-group`, `.btn-view`, `.btn-view--active`.
+    - `src/components/PlaceForm.jsx` — `websiteUrl` field (LINKS fieldset). `suggestedType` state: on name input blur/change, `detectType(name)` checks against `TYPE_KEYWORDS` dict (museum/accommodation/brewpub/cafe); shows inline "Suggest: X → USE / ✕" strip below TYPE select. Address prefill enhanced: plus code pattern (`/^[A-Z0-9]{4,8}\+[A-Z0-9]{2,3}\s+(.*)/i`) strips the code and parses the rest. Modal title fixed: `◈ NEW CACHE` → `◈ NEW PLACE`, `◈ EDIT CACHE` → `◈ EDIT PLACE`.
+    - `src/components/PlaceForm.css` — removed modal shell (now in styles.css); added `.type-suggest`, `.type-suggest-btn`, `.type-suggest-dismiss`.
+    - `src/components/PlaceCard.jsx` — `confirming` state + inline REALLY?/CONFIRM/CANCEL pattern (no `window.confirm`). `websiteUrl` link in `.card-links` wrapper.
+    - `src/components/PlaceCard.css` — `.card-links` wrapper div, `.website-link`, `.card-confirm-row`, `.card-confirm-label`, `.card-btn--confirm` styles.
+    - `src/components/PlaceList.jsx` (new) — compact list view with checkbox selection, bulk delete with inline confirm. Table-like layout: checkbox | type emoji | name (→ onEdit) | city | status stamp | EDIT button.
+    - `src/components/PlaceList.css` (new) — `.pl-*` namespace, grid layout, bulk bar, selection highlight.
+    - `src/components/TripList.jsx` — `TripCard` gets `confirming` state for inline delete confirm. `TripList` sorts `trips` before render: empty `startDate` → bottom (ascending date otherwise).
+    - `src/components/TripList.css` — `.trip-confirm-row`, `.trip-confirm-label`, `.trip-btn-confirm:hover` styles.
+    - `src/components/SlotCell.jsx` — `onMoveUp`/`onMoveDown` props; ↑↓ buttons (`sc-move-btn`) on each item (disabled when first/last); removed TODO comments.
+    - `src/components/SlotCell.css` — `.sc-item-controls`, `.sc-move-btn` styles.
+    - `src/components/TripGrid.jsx` — imports `putScheduleItem`; `handleMoveItem(item, direction)` materialises sequential order indexes then swaps two adjacent items; passes `onMoveUp`/`onMoveDown` to SlotCell.
+    - `src/components/AdminModal.jsx` — city merge section: on mount loads all cities; two select dropdowns (source → target), MERGE with inline confirm, calls `mergeCities()`. Modal class renames: `admin-backdrop` → `modal-backdrop modal-backdrop--center`, `admin-panel` → `modal-panel admin-panel`, `admin-header` → `modal-header`, `admin-title` → `modal-title admin-title`, `admin-close` → `modal-close`.
+    - `src/components/AdminModal.css` — removed modal shell; added `.modal-backdrop--center { align-items: center }`, `.admin-panel { border-radius: 10px; max-width: 420px; max-height: 90vh }`, `.admin-title` font override (11px/.18em/uppercase vs shared 12px/.14em); city merge styles (`.admin-merge-fields`, `.admin-merge-select`, `.admin-merge-arrow`).
+    - `src/components/TripForm.css` — removed duplicated modal shell block and `.sr-only`.
+    - `src/components/CsvImport.jsx` — modal classes renamed to `modal-*` (backdrop, panel, header, title, close); `.ci-panel` kept as secondary class for sizing.
+    - `src/components/CsvImport.css` — removed shell block + `.sr-only`; added `.ci-panel { max-width: 560px }`.
+    - `src/components/XlsxImport.jsx` — modal classes renamed to `modal-*`; `.xi-panel` kept.
+    - `src/components/XlsxImport.css` — removed shell block + `.sr-only`; added `.xi-panel { max-width: 480px }`.
+    - `src/components/PlacePicker.jsx` — modal classes renamed to `modal-*`; `.pp-panel` kept.
+    - `src/components/PlacePicker.css` — removed shell block + `.sr-only`; added `.pp-panel { max-width: 480px; max-height: calc(100vh - 60px) }`.
+    - `src/utils/xlsxImport.js` — canonical city names: `'Warsaw'` → `'Warszawa'`, `'Krakow'` → `'Kraków'` in all city-value assignments in `extractGrid`, `debugGrid`, `GRID_SHEETS`, and `parseXlsxWorkbook` call sites. Sheet name strings (used for `===` comparison) unchanged.
+- **Deviations:** None.
+- **Schema/contract changes:** `db.js` bumped to version(2), `websiteUrl` field added (additive). `repo.js` — added `mergeCities` and `websiteUrl` default in `addPlace`.
+- **Known issues / TODO:** Existing places from the XLSX import have city='Krakow'/'Warsaw' — use AdminModal city merge tool to rename them to Kraków/Warszawa. PlaceForm hours editor pre-existing issue (initialises all 7 days to null instead of absent) deferred.
+- **Next:** Manual data cleanup (city merge Krakow→Kraków, Warsaw→Warszawa), then tag v0.1.
+
+---
+
 ### 2026-06-17 — Step 7 bug fixes (pre-Commit-A)
 
 - **Done:**

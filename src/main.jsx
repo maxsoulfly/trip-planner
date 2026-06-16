@@ -3,8 +3,9 @@ import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
 import './styles.css';
 
-// Default theme — a visible toggle will let users change this later.
-document.documentElement.setAttribute('data-theme', 'dark');
+// Read saved theme preference (default 'dark') and apply before first paint.
+const saved = localStorage.getItem('theme') || 'dark';
+document.documentElement.setAttribute('data-theme', saved);
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

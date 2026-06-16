@@ -205,10 +205,10 @@ function extractGrid(rows, defaultCity, country) {
     for (let c = 0; c < row.length; c++) {
       const cell = String(row[c] || '').toLowerCase();
       if (cell.includes('warsaw') || cell.includes('warszawa')) {
-        // Mark this column and all after as Warsaw
-        for (let i = c; i < maxCols; i++) colCity[i] = 'Warsaw';
+        // Mark this column and all after as Warszawa
+        for (let i = c; i < maxCols; i++) colCity[i] = 'Warszawa';
       } else if (cell.includes('krakow') || cell.includes('kraków')) {
-        for (let i = c; i < maxCols; i++) colCity[i] = 'Krakow';
+        for (let i = c; i < maxCols; i++) colCity[i] = 'Kraków';
       } else if (cell.includes('katowice')) {
         for (let i = c; i < maxCols; i++) colCity[i] = 'Katowice';
       }
@@ -383,7 +383,7 @@ function parseHebrewTable(rows, city, country) {
 
 // Simple grid-only sheet config
 const GRID_SHEETS = {
-  'Krakow Nov 2025':   { city: 'Krakow',    country: 'Poland'   },
+  'Krakow Nov 2025':   { city: 'Kraków',    country: 'Poland'   },
   'Barcelona Aug 2023':{ city: 'Barcelona', country: 'Spain'    },
   'Sofia Jul 2023':    { city: 'Sofia',     country: 'Bulgaria' },
   'Berlin Mar 2023':   { city: 'Berlin',    country: 'Germany'  },
@@ -427,9 +427,9 @@ export function parseXlsxWorkbook(workbook) {
       push(parseHebrewTable(rows, 'Bucharest', 'Romania'));
 
     } else if (name === 'Krakow + Warsaw Apr 2024') {
-      // Table = Krakow venues; grid = Warsaw (city auto-detected by column scan)
-      push(parseHebrewTable(rows, 'Krakow', 'Poland'));
-      push(extractGrid(rows, 'Krakow', 'Poland'));
+      // Table = Kraków venues; grid = Warszawa (city auto-detected by column scan)
+      push(parseHebrewTable(rows, 'Kraków', 'Poland'));
+      push(extractGrid(rows, 'Kraków', 'Poland'));
 
     } else if (name === 'Budapest Feb 2025') {
       // Table has blank Place column — fall back to grid
@@ -483,9 +483,9 @@ export function parseXlsxWorkbookDebug(workbook) {
       for (let c = 0; c < row.length; c++) {
         const cell = String(row[c] || '').toLowerCase();
         if (cell.includes('warsaw') || cell.includes('warszawa')) {
-          for (let i = c; i < maxCols; i++) colCity[i] = 'Warsaw';
+          for (let i = c; i < maxCols; i++) colCity[i] = 'Warszawa';
         } else if (cell.includes('krakow') || cell.includes('kraków')) {
-          for (let i = c; i < maxCols; i++) colCity[i] = 'Krakow';
+          for (let i = c; i < maxCols; i++) colCity[i] = 'Kraków';
         } else if (cell.includes('katowice')) {
           for (let i = c; i < maxCols; i++) colCity[i] = 'Katowice';
         }
@@ -560,8 +560,8 @@ export function parseXlsxWorkbookDebug(workbook) {
     } else if (name === 'Bucharest JUN 2024') {
       debugHebrewTable(rows, name, 'Bucharest');
     } else if (name === 'Krakow + Warsaw Apr 2024') {
-      debugHebrewTable(rows, name, 'Krakow');
-      debugGrid(rows, name, 'Krakow');
+      debugHebrewTable(rows, name, 'Kraków');
+      debugGrid(rows, name, 'Kraków');
     } else if (name === 'Budapest Feb 2025') {
       debugGrid(rows, name, 'Budapest');
     } else if (name.startsWith('Katowich + Krakow') || name.startsWith('Katowice + Krakow')) {

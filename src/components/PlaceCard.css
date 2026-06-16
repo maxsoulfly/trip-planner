@@ -138,11 +138,17 @@
 
 .card-foot {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
   margin-bottom: 10px;
   flex-wrap: wrap;
+}
+
+.card-links {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 
 .maps-link {
@@ -160,6 +166,16 @@
   cursor: default;
 }
 .maps-link--none:hover { text-decoration: none; }
+
+.website-link {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: .06em;
+  color: var(--steel);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.website-link:hover { text-decoration: underline; }
 
 .card-tags {
   display: flex;
@@ -201,4 +217,17 @@
   transition: color .15s, border-color .15s;
 }
 .card-btn:hover         { color: var(--ink);  border-color: var(--steel); }
-.card-btn--danger:hover { color: var(--rust); border-color: var(--rust);  }
+.card-btn--danger:hover  { color: var(--rust);  border-color: var(--rust);  }
+.card-btn--confirm:hover { color: var(--amber); border-color: var(--amber); }
+
+.card-confirm-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.card-confirm-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .12em;
+  color: var(--rust);
+}

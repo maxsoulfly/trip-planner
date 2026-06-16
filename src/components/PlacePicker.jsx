@@ -77,16 +77,16 @@ export default function PlacePicker({ date, block, trip, places, onConfirm, onCl
 
   return (
     <div
-      className="pp-backdrop"
+      className="modal-backdrop"
       ref={backdropRef}
       onMouseDown={e => { mouseDownTarget.current = e.target; }}
       onClick={handleBackdrop}
     >
-      <div className="pp-panel" role="dialog" aria-modal="true" aria-label="Add to slot">
+      <div className="modal-panel pp-panel" role="dialog" aria-modal="true" aria-label="Add to slot">
 
-        <div className="pp-header">
-          <span className="pp-title">+ ADD · {blockLabel}</span>
-          <button className="pp-close" onClick={onClose} aria-label="Close">✕</button>
+        <div className="modal-header">
+          <span className="modal-title">+ ADD · {blockLabel}</span>
+          <button className="modal-close" onClick={onClose} aria-label="Close">✕</button>
         </div>
 
         {/* ── Mode tabs ── */}

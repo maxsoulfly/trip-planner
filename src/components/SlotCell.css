@@ -98,6 +98,26 @@
 
 .sc-item--adhoc .sc-item-name { color: var(--dim); }
 
+.sc-item-controls {
+  display: flex;
+  gap: 1px;
+  flex-shrink: 0;
+}
+
+.sc-move-btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  background: transparent;
+  color: var(--dim);
+  border: none;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+  transition: color .12s;
+}
+.sc-move-btn:hover:not(:disabled) { color: var(--amber); }
+.sc-move-btn:disabled { opacity: .25; cursor: default; }
+
 .sc-remove {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 10px;

@@ -24,6 +24,7 @@ export async function addPlace(data) {
     address: '',
     googleMapsUrl: '',
     untappdUrl: '',
+    websiteUrl: '',
     openingHours: {},
     tags: [],
     notes: '',
@@ -48,6 +49,12 @@ export const getAllPlaces = () => db.places.orderBy('name').toArray();
 export const getPlacesByCity = (city) => db.places.where('city').equals(city).toArray();
 export const deletePlace = (id) => db.places.delete(id);
 export const clearAllPlaces = () => db.places.clear();
+
+// Reassign all places from sourceCity to targetCity.
+export async function mergeCities(sourceCity, targetCity) {
+  const places = await db.places.where('city').equals(sourceCity).toArray();
+  await Promise.all(places.map((p) => db.places.put({ ...p, city: targetCity, updatedAt: now() })));
+}
 
 // Wipe trips and all their schedule items together — no orphaned items.
 export async function clearAllTrips() {
