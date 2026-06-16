@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
 import { parseXlsxWorkbook } from '../utils/xlsxImport.js';
 import { getAllPlaces, addPlace } from '../db/repo.js';
@@ -10,6 +10,9 @@ export default function XlsxImport({ onDone, onClose }) {
   const [importing, setImporting] = useState(false);
   const [result,    setResult]    = useState(null);     // { imported, skipped }
   const [error,     setError]     = useState('');
+
+  const backdropRef     = useRef(null);
+  const mouseDownTarget = useRef(null);
 
   async function handleFile(e) {
     const file = e.target.files?.[0];
@@ -54,7 +57,8 @@ export default function XlsxImport({ onDone, onClose }) {
   }
 
   function handleBackdropClick(e) {
-    if (e.target === e.currentTarget && !importing) onClose();
+    if (e.target === backdropRef.current &&
+        mouseDownTarget.current === backdropRef.current && !importing) onClose();
   }
 
   // City breakdown for the preview
@@ -68,7 +72,12 @@ export default function XlsxImport({ onDone, onClose }) {
     : [];
 
   return (
-    <div className="xi-backdrop" onClick={handleBackdropClick}>
+    <div
+      className="xi-backdrop"
+      ref={backdropRef}
+      onMouseDown={e => { mouseDownTarget.current = e.target; }}
+      onClick={handleBackdropClick}
+    >
       <div className="xi-panel" role="dialog" aria-modal="true" aria-label="XLSX import">
 
         <div className="xi-header">

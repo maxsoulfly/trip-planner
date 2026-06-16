@@ -20,103 +20,150 @@ Vite + React (JS) · Dexie (IndexedDB) · Papaparse (CSV) · SheetJS (importer o
 state via React Context (no Redux).
 
 ## Architecture & conventions
-- `src/db/db.js` — Dexie schema = the data model. Tables: `places`, `trips`,
-  `scheduleItems`. `BudgetEntry` is deferred to a future `version(2)`.
-  **Full record shapes are documented in the comments here** — read them.
+- `src/db/db.js` — Dexie schema. Currently version(1): tables `places`, `trips`,
+  `scheduleItems`. BudgetEntry deferred. **Next schema change bumps to version(2)**
+  and adds `websiteUrl` field to places (non-breaking, existing records get
+  undefined which renders as empty).
 - `src/db/repo.js` — the **only** module that touches Dexie. All UI goes through
-  repo functions; never call `db` directly from components. A future sync layer
-  wraps these.
+  repo functions; never call `db` directly from components.
 - `src/db/constants.js` — controlled vocabularies (`PLACE_TYPES`, `BLOCKS`,
-  `STATUSES`, `WEEKDAYS`) with emoji. Use these everywhere; don't hardcode.
+  `STATUSES`, `WEEKDAYS`). Use these everywhere; don't hardcode.
 - `src/utils/hours.js` — `openingHours` helpers.
+- `src/utils/hoursParser.js` — `parseGoogleHours(text)` → partial openingHours.
+  Handles Google Maps copy-paste format (alternating day/hours lines) and
+  compact format (day: hours per line). Contract preserved: absent=unknown.
 - `src/utils/mapsParser.js` — pure `parseMapsUrl(url)` → `{ name, lat, lng }`.
-  Returns `{ short: true }` for goo.gl short URLs. Reused by importer — do not
-  break its interface.
+  Returns `{ short: true }` for goo.gl short URLs.
 - `src/utils/xlsxImport.js` — pure `parseXlsxWorkbook(workbook)` → `{ places,
   warnings }`. Per-sheet hardcoded strategies + extractGrid heuristic.
 - `src/utils/exportHtml.js` — pure `generateDaySheet(trip, scheduleItems,
   placesMap)` → HTML string. No React, no Dexie.
 - **`openingHours` semantics (DATA CONTRACT):** for each weekday key —
-  **absent key = hours UNKNOWN** (renders `—`); explicit **`null` = CLOSED**
+  **absent key = hours UNKNOWN** (renders `—`); explicit **`null` = CLOSED`**
   (renders `CLOSED`); `{ open, close }` = open. Never write `null` to mean
   "we don't know." Auto-suggest must treat unknown ≠ closed.
 - **Model:** a Place is stored **once, globally**; "a city's places" is just a
   filter. A Trip references places and schedules them into `date × block` slots
   via ScheduleItem. Time blocks: `morning / noon / late_afternoon / evening / night`.
 
+## Place schema (current + pending)
+Current fields: id, name, type, city, country, lat, lng, address,
+googleMapsUrl, untappdUrl, openingHours, tags, notes, status, rating,
+createdAt, updatedAt.
+**Pending (version 2):** `websiteUrl` — nullable string. Add to db.js
+version(2) upgrade block. Add field to PlaceForm and PlaceCard.
+
+## City normalization (KNOWN ISSUE)
+The importer produced both "Krakow" and "Kraków" as separate cities.
+Canonical spellings to enforce everywhere (importer + any prefill):
+  Krakow / Cracow / Cracov → Kraków
+  Warsaw / Warsawa → Warszawa (or keep Warsaw — Maxx to decide canonical)
+A city merge tool lives in AdminModal: pick source city → target city →
+reassign all places. Implement as part of step 7 Commit B.
+
+## isIncomplete definition (CORRECTED)
+A place is incomplete if ANY of:
+  - type === 'other'
+  - openingHours has 0 keys AND type is NOT in
+    ['accommodation', 'transport', 'other']
+The previous definition included !googleMapsUrl which flagged almost
+everything. Maps URL is optional, not a completeness signal.
+
 ## Build sequence (status)
 1. **DONE** — Scaffold + Dexie schema + dummy-data round-trip.
-2. **DONE** — Place library UI: list, search, filter by city / type / status,
-   add / edit / delete with opening-hours editor, Open-in-Maps.
-3. **DONE** — Maps-link prefill (auto-parse on paste, name + coords + URL) +
-   CSV import (3-step modal: upload → map columns → preview/confirm).
-4. **DONE** — Trips: tab switcher, trip list + form, day × block grid,
-   slot assignment (PlacePicker), flights + accommodation in grid header,
-   ad-hoc notes/transport. cascade delete.
-5. **DONE** — HTML day-sheet export (offline, tap-to-Maps, CSS-only theme
-   toggle, per-day hours colored by open/closed/unknown).
-6. **DONE** — XLSX importer: seeds library from Travel_Plans_Yana.xlsx.
-   203 places · 9 cities imported. Per-sheet hardcoded strategies +
-   extractGrid heuristic. openingHours contract enforced throughout.
-7. **NEXT →** Polish — two commits:
+2. **DONE** — Place library UI: list, search, filter, add/edit/delete,
+   hours editor, Open-in-Maps.
+3. **DONE** — Maps-link prefill + CSV import.
+4. **DONE** — Trips: tab switcher, trip list/form, day × block grid,
+   slot assignment, flights, accommodation, ad-hoc items.
+5. **DONE** — HTML day-sheet export (offline, tap-to-Maps).
+6. **DONE** — XLSX importer: 203 places · 9 cities from Travel_Plans_Yana.xlsx.
+7. **IN PROGRESS** — Polish:
 
-   **Commit A — data quality + admin:**
-   - INCOMPLETE filter in library toolbar (type=other OR no hours OR no maps link)
-   - Stub indicator on place cards (small ⚠ eyebrow on incomplete records)
-   - Opening hours paste parser in PlaceForm — paste Google Maps hours text
-     → fills hours editor. Formats to handle:
-       "Monday\n12–10 pm\nTuesday\n12–10 pm" (alternating day/time lines)
-       "Monday–Friday: 12–10 pm" (range shorthand)
-     Result must respect openingHours data contract (absent=unknown, null=closed).
-   - Address paste → prefill city/country in PlaceForm (parse last
-     comma-separated segments of a full address string)
-   - Admin modal (triggered from a ADMIN or ⚙ button in statusbar):
-     Clear Places, Clear Trips, Clear All Data, Export JSON (backup),
-     Import JSON (restore). Move existing ⚠ CLEAR PLACES out of toolbar
-     into admin modal.
-   - Remove ⚠ CLEAR PLACES from main toolbar.
+   **Commit A — DONE (needs 3 bug fixes before committing):**
+   See "Step 7 fixes" below.
 
-   **Commit B — UI polish:**
+   **Commit B — UI polish + schema v2:**
    - Theme toggle (dark/light/system) in statusbar
    - Compact list view + bulk delete for place library
-   - Modal CSS extraction to styles.css (PlaceForm/TripForm/PlacePicker
-     share the same shell — extract the common parts)
-   - PlaceForm modal header: fix remaining CACHE → PLACE label
-   - Slot reorder: up/down arrows in SlotCell (no drag-and-drop)
-   - Trip list: fix sort so empty-startDate trips go to bottom not top
+   - Modal CSS extraction to styles.css
+   - PlaceForm modal header: fix CACHE → PLACE
+   - Slot reorder: up/down arrows in SlotCell
+   - Trip list: fix sort (empty startDate → bottom)
    - window.confirm → inline confirmation for all deletes
+   - websiteUrl field (schema version(2) bump)
+   - City merge tool in AdminModal
+   - City normalization in xlsxImport.js
+   - Name-based type suggestion on prefill (Museum/Muzeum → museum,
+     Hotel/Hostel → accommodation, etc.)
+   - Plus code address prefill: extract city/country from suffix
+     ("62JF+RM Warsaw, Poland" → city: Warsaw, country: Poland)
+
+## Step 7 fixes (do BEFORE committing Commit A)
+
+### Fix 1 — isIncomplete definition
+In App.jsx, replace the current isIncomplete helper with:
+  function isIncomplete(p) {
+    if (p.type === 'other') return true;
+    const hoursTypes = ['taproom','bottle_shop','brewpub','bar',
+                        'restaurant','cafe','museum','activity','shop'];
+    if (hoursTypes.includes(p.type) &&
+        Object.keys(p.openingHours || {}).length === 0) return true;
+    return false;
+  }
+Do NOT flag on missing googleMapsUrl — it's optional, not a
+completeness signal. This fix eliminates the false positives.
+
+### Fix 2 — Modal backdrop closes on drag
+The modal backdrop onClick fires when mouseup lands outside after a
+drag that started inside a field. Fix: in ALL modals that have a
+backdrop close handler (PlaceForm, TripForm, CsvImport, XlsxImport,
+AdminModal, PlacePicker), track mousedown target and only close if
+both mousedown AND mouseup were on the backdrop element itself.
+Standard pattern:
+  const backdropRef = useRef(null);
+  const mouseDownTarget = useRef(null);
+  <div ref={backdropRef}
+    onMouseDown={e => mouseDownTarget.current = e.target}
+    onClick={e => {
+      if (e.target === backdropRef.current &&
+          mouseDownTarget.current === backdropRef.current) onClose();
+    }}>
+
+### Fix 3 — Maps URL paste → auto-parse lat/lng
+When user pastes into the Google Maps URL field in PlaceForm, it
+should auto-trigger parseMapsUrl and fill lat/lng (and name if empty).
+Currently this only fires in the prefill strip, not the URL field
+itself. Add an onPaste handler to the googleMapsUrl input that calls
+parseMapsUrl and merges lat, lng, and name (if name is currently empty)
+into form state. Same pattern as the existing prefill strip.
 
 ## Design language — "post-apocalyptic field terminal"
-A salvaged-tech / amber-CRT / survival-field-manual feel. NOT neon cyberpunk and
-NOT the near-black + acid-green AI default. Reference mock: `design-mock.html`.
+A salvaged-tech / amber-CRT / survival-field-manual feel.
+Reference mock: `design-mock.html`.
 
-- **Theming:** CSS custom properties + a `[data-theme]` attribute on `<html>`.
-  Three themes — `dark` (default), `light`, `system`. Already wired from step 2.
-  Visible toggle ships in Commit B of step 7.
-  Light mode = _printed field manual_ (manila paper + ink), NOT inverted dark.
+- **Theming:** CSS custom properties + `[data-theme]` on `<html>`.
+  Three themes: `dark` (default), `light`, `system`. Tokens wired since
+  step 2. Visible toggle ships in Commit B.
+  Light mode = printed field manual (manila paper + ink), not inverted dark.
 
 - **Palette — dark:** `--bg:#0E0E0F` · `--panel:#161518` · `--panel2:#1E1C20` ·
-  `--line:#2C2A2E` · `--ink:#E7E1D4` (bone) · `--dim:#948C80` ·
-  `--amber:#FFB000` (primary signal — used sparingly) · `--rust:#CC4B2E`
-  (warning/closed) · `--steel:#74808C` (info/muted).
+  `--line:#2C2A2E` · `--ink:#E7E1D4` · `--dim:#948C80` · `--amber:#FFB000` ·
+  `--rust:#CC4B2E` · `--steel:#74808C`.
 - **Palette — light:** `--bg:#E7E0D0` · `--panel:#F1EBDC` · `--panel2:#E2DAC6` ·
-  `--line:#C5B99E` · `--ink:#211D15` · `--dim:#6B6354` · `--amber:#9C5A12`
-  (burnt-amber ink) · `--rust:#9A2E15` · `--steel:#5A6066`.
+  `--line:#C5B99E` · `--ink:#211D15` · `--dim:#6B6354` · `--amber:#9C5A12` ·
+  `--rust:#9A2E15` · `--steel:#5A6066`.
 
-- **Type:** display = **Space Grotesk** (700); body = **IBM Plex Sans**;
-  data/utility = **IBM Plex Mono** — use mono for ALL data (hours, coordinates,
-  flight codes, statuses, eyebrows). This is meaningful, not decorative.
+- **Type:** Space Grotesk (700) display · IBM Plex Sans body ·
+  IBM Plex Mono for ALL data (hours, coords, codes, statuses, eyebrows).
 
-- **Signature element:** the status **stamp** — wishlist / planned / visited shown
-  as an inked, slightly-rotated rubber stamp (`☆ FLAGGED` / `◐ MARKED` /
-  `✓ SECURED`). ONE bold flourish; keep everything else quiet.
+- **Stamp:** `☆ FLAGGED` / `◐ MARKED` / `✓ SECURED` — the ONE bold flourish.
 
-- **Restraint:** scanline barely-there. Respect `prefers-reduced-motion`.
-  Visible keyboard focus. Mobile-responsive (used on the phone mid-trip).
+- **Restraint:** scanline barely-there. prefers-reduced-motion respected.
+  Mobile-responsive. Boldness spent only on the stamp.
 
-- **Copy:** flavored in-world labels welcome (stamps, expedition flavor text)
-  BUT plain meaning always legible. Never sacrifice clarity for flavor on
-  anything actionable.
+- **Copy:** flavored labels welcome but plain meaning always legible.
+  Never sacrifice clarity for flavor on actionable elements.
 
 - **Naming:** no product name baked in until Maxx picks one.
 
@@ -124,26 +171,26 @@ NOT the near-black + acid-green AI default. Reference mock: `design-mock.html`.
 Format: `<type>(<scope>): <what changed>`
 Types: feat · fix · refactor · chore · docs
 Scope: db · places · trips · export · importer · ui · admin
-One line, present tense, lowercase.
 Examples:
-  feat(places): incomplete filter, hours paste parser, address prefill
-  feat(admin): admin modal with clear/export/import JSON
+  fix(ui): isIncomplete definition, modal backdrop drag, maps url parse
   feat(ui): theme toggle, compact view, bulk delete, slot reorder
+  feat(admin): city merge tool
+  chore(db): version 2, add websiteUrl to places
 
 ## Don't
 No TypeScript. No Tailwind unless asked. No backend in v1. Don't bypass
 `repo.js`. Don't wholesale-rewrite working code — medium steps only.
 
 ## Worklog protocol
-At the end of every work step, append an entry to `WORKLOG.md` (create it if
-missing). Keep it short and factual — it's a handoff for the planning Claude in
-the chat, who cannot see this repo. Each entry:
+At the end of every work step, append an entry to `WORKLOG.md` (create
+it if missing). Read the files you changed — write from reality, not
+from memory or a template. Each entry:
 
 ### <date> — Step N: <short title>
 
-- **Done:** what was actually built/changed (files touched, key decisions).
-- **Deviations:** anything that differs from SPEC.md / CLAUDE.md, and why.
-- **Schema/contract changes:** any change to db.js, repo.js, or constants.js.
-- **Known issues / TODO:** bugs, shortcuts, things left for later.
-- **Next:** what step or task comes next.
+- **Done:** files touched + what actually changed in each.
+- **Deviations:** anything differing from SPEC.md / CLAUDE.md, and why.
+- **Schema/contract changes:** any change to db.js, repo.js, constants.js.
+- **Known issues / TODO:** bugs, shortcuts, deferred items.
+- **Next:** what comes next.
 Do not rewrite earlier entries — only append.

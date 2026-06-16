@@ -11,13 +11,13 @@ import TripForm  from './components/TripForm.jsx';
 import TripGrid  from './components/TripGrid.jsx';
 import './App.css';
 
-// A place is "incomplete" if it still needs type, hours, or a maps link.
 function isIncomplete(p) {
-  return (
-    p.type === 'other' ||
-    Object.keys(p.openingHours || {}).length === 0 ||
-    !p.googleMapsUrl
-  );
+  if (p.type === 'other') return true;
+  const hoursTypes = ['taproom','bottle_shop','brewpub','bar',
+                      'restaurant','cafe','museum','activity','shop'];
+  if (hoursTypes.includes(p.type) &&
+      Object.keys(p.openingHours || {}).length === 0) return true;
+  return false;
 }
 
 // Top-level view state:

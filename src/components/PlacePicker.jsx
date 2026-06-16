@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { addScheduleItem } from '../db/repo.js';
 import { PLACE_TYPES, blockMeta } from '../db/constants.js';
 import './PlacePicker.css';
@@ -12,6 +12,9 @@ export default function PlacePicker({ date, block, trip, places, onConfirm, onCl
   const [adhocKind,  setAdhocKind]  = useState('note'); // 'note' | 'transport'
   const [adhocLabel, setAdhocLabel] = useState('');
   const [busy,       setBusy]       = useState(false);
+
+  const backdropRef     = useRef(null);
+  const mouseDownTarget = useRef(null);
 
   useEffect(() => {
     function onKey(e) { if (e.key === 'Escape') onClose(); }
@@ -68,11 +71,17 @@ export default function PlacePicker({ date, block, trip, places, onConfirm, onCl
   }
 
   function handleBackdrop(e) {
-    if (e.target === e.currentTarget) onClose();
+    if (e.target === backdropRef.current &&
+        mouseDownTarget.current === backdropRef.current) onClose();
   }
 
   return (
-    <div className="pp-backdrop" onClick={handleBackdrop}>
+    <div
+      className="pp-backdrop"
+      ref={backdropRef}
+      onMouseDown={e => { mouseDownTarget.current = e.target; }}
+      onClick={handleBackdrop}
+    >
       <div className="pp-panel" role="dialog" aria-modal="true" aria-label="Add to slot">
 
         <div className="pp-header">

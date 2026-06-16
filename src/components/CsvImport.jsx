@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import Papa from 'papaparse';
 import { addPlace } from '../db/repo.js';
 import { PLACE_TYPES, STATUSES } from '../db/constants.js';
@@ -106,6 +106,9 @@ export default function CsvImport({ onDone, onClose }) {
   const [importing, setImporting] = useState(false);
   const [error,     setError]     = useState('');
 
+  const backdropRef     = useRef(null);
+  const mouseDownTarget = useRef(null);
+
   function handleFile(e) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -155,7 +158,8 @@ export default function CsvImport({ onDone, onClose }) {
   }
 
   function handleBackdropClick(e) {
-    if (e.target === e.currentTarget) onClose();
+    if (e.target === backdropRef.current &&
+        mouseDownTarget.current === backdropRef.current) onClose();
   }
 
   const STEP_TITLE = {
@@ -165,7 +169,12 @@ export default function CsvImport({ onDone, onClose }) {
   };
 
   return (
-    <div className="ci-backdrop" onClick={handleBackdropClick}>
+    <div
+      className="ci-backdrop"
+      ref={backdropRef}
+      onMouseDown={e => { mouseDownTarget.current = e.target; }}
+      onClick={handleBackdropClick}
+    >
       <div className="ci-panel" role="dialog" aria-modal="true" aria-label="CSV import">
 
         <div className="ci-header">

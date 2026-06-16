@@ -54,7 +54,9 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
   const [hoursPaste,   setHoursPaste]   = useState('');
   const [hoursMsg,     setHoursMsg]     = useState(null); // { ok, text } | null
 
-  const firstRef = useRef(null);
+  const firstRef        = useRef(null);
+  const backdropRef     = useRef(null);
+  const mouseDownTarget = useRef(null);
 
   // Focus first field on open; ESC to close.
   useEffect(() => {
@@ -182,11 +184,29 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
   }
 
   function handleBackdropClick(e) {
-    if (e.target === e.currentTarget) onClose();
+    if (e.target === backdropRef.current &&
+        mouseDownTarget.current === backdropRef.current) onClose();
+  }
+
+  function handleUrlFieldPaste(e) {
+    const text = e.clipboardData?.getData('text/plain') || '';
+    if (!text) return;
+    const parsed = parseMapsUrl(text);
+    if (parsed.short) return;
+    if (!name.trim() && parsed.name) setName(parsed.name);
+    if (parsed.lat != null && parsed.lng != null) {
+      setLat(String(parsed.lat));
+      setLng(String(parsed.lng));
+    }
   }
 
   return (
-    <div className="modal-backdrop" onClick={handleBackdropClick}>
+    <div
+      className="modal-backdrop"
+      ref={backdropRef}
+      onMouseDown={e => { mouseDownTarget.current = e.target; }}
+      onClick={handleBackdropClick}
+    >
       <div
         className="modal-panel"
         role="dialog"
@@ -347,6 +367,7 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
               <span className="form-label">GOOGLE MAPS URL</span>
               <input className="form-input" type="url"
                 value={googleMapsUrl} onChange={(e) => setGoogleMapsUrl(e.target.value)}
+                onPaste={handleUrlFieldPaste}
                 placeholder="https://maps.google.com/…" />
             </label>
           </fieldset>

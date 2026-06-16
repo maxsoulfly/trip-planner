@@ -84,7 +84,9 @@ export default function TripForm({ initialData, onSave, onClose }) {
   const [busy,         setBusy]         = useState(false);
   const [error,        setError]        = useState('');
 
-  const firstRef = useRef(null);
+  const firstRef        = useRef(null);
+  const backdropRef     = useRef(null);
+  const mouseDownTarget = useRef(null);
 
   useEffect(() => {
     firstRef.current?.focus();
@@ -149,11 +151,17 @@ export default function TripForm({ initialData, onSave, onClose }) {
   }
 
   function handleBackdropClick(e) {
-    if (e.target === e.currentTarget) onClose();
+    if (e.target === backdropRef.current &&
+        mouseDownTarget.current === backdropRef.current) onClose();
   }
 
   return (
-    <div className="modal-backdrop" onClick={handleBackdropClick}>
+    <div
+      className="modal-backdrop"
+      ref={backdropRef}
+      onMouseDown={e => { mouseDownTarget.current = e.target; }}
+      onClick={handleBackdropClick}
+    >
       <div className="modal-panel" role="dialog" aria-modal="true"
            aria-label={isEdit ? 'Edit trip' : 'New trip'}>
 

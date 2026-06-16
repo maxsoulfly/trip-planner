@@ -6,10 +6,13 @@ export default function AdminModal({ onRefresh, onClose }) {
   const [pending, setPending] = useState(null); // null | 'clearPlaces' | 'clearTrips' | 'clearAll'
   const [busy,    setBusy]    = useState(false);
   const [message, setMessage] = useState(null); // { ok, text }
-  const fileRef = useRef(null);
+  const fileRef         = useRef(null);
+  const backdropRef     = useRef(null);
+  const mouseDownTarget = useRef(null);
 
   function handleBackdropClick(e) {
-    if (e.target === e.currentTarget && !busy) onClose();
+    if (e.target === backdropRef.current &&
+        mouseDownTarget.current === backdropRef.current && !busy) onClose();
   }
 
   async function run(fn) {
@@ -95,7 +98,12 @@ export default function AdminModal({ onRefresh, onClose }) {
   }
 
   return (
-    <div className="admin-backdrop" onClick={handleBackdropClick}>
+    <div
+      className="admin-backdrop"
+      ref={backdropRef}
+      onMouseDown={e => { mouseDownTarget.current = e.target; }}
+      onClick={handleBackdropClick}
+    >
       <div className="admin-panel" role="dialog" aria-modal="true" aria-label="Admin">
 
         <div className="admin-header">
