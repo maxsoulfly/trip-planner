@@ -87,6 +87,7 @@ export default function TripForm({ initialData, onSave, onClose }) {
   const firstRef        = useRef(null);
   const backdropRef     = useRef(null);
   const mouseDownTarget = useRef(null);
+  const endDateRef      = useRef(null);
 
   useEffect(() => {
     firstRef.current?.focus();
@@ -195,12 +196,21 @@ export default function TripForm({ initialData, onSave, onClose }) {
               <label className="form-row">
                 <span className="form-label">START DATE *</span>
                 <input className="form-input" type="date"
-                  value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                  value={startDate}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setStartDate(val);
+                    if (endDate && val && endDate < val) setEndDate('');
+                    setTimeout(() => endDateRef.current?.focus(), 0);
+                  }} />
               </label>
               <label className="form-row">
                 <span className="form-label">END DATE *</span>
                 <input className="form-input" type="date"
-                  value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                  ref={endDateRef}
+                  value={endDate}
+                  min={startDate || undefined}
+                  onChange={(e) => setEndDate(e.target.value)} />
               </label>
             </div>
 

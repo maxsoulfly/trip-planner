@@ -2,7 +2,19 @@
 
 ---
 
-### 2026-06-17 — Step 7 Commit B: UI polish
+### 2026-06-17 — Type detection expansion + trip date UX
+
+- **Done:**
+    - `src/components/PlaceForm.jsx` — `TYPE_KEYWORDS` converted from a plain object to an ordered array of `[typeKey, keywords[]]` pairs, so iteration priority is guaranteed. Expanded from 4 entries to 8, covering the full beer taxonomy in priority order: `bottle_shop` ('beer shop', 'bottle shop', 'beer store', 'beerstore') → `brewpub` ('brewpub', 'brew pub', 'beer & food', 'beer and food', 'brewery', 'browar', 'brauerei', 'brewing', 'pivovar') → `taproom` ('taproom', 'tap room', 'beer bar', 'craft beer', 'beer') → `restaurant` ('restaurant', 'bistro', 'brasserie', 'ristorante') → `cafe` ('café', 'cafe', 'coffee', 'kawiarnia', 'kaffee') → `bar` ('bar') → `museum` ('museum', 'muzeum', 'muzej', 'gallery', 'galeria', 'galeri') → `accommodation` ('hotel', 'hostel', 'noclegi', 'apartment', 'apartament', 'pension', 'inn'). `detectType` updated to iterate the array directly (was `Object.entries`). Added two lines to `handleHoursParse`: after hours merge succeeds, re-runs `detectType(name)` and sets `suggestedType` if a match is found and doesn't match the current type.
+    - `src/components/TripForm.jsx` — added `endDateRef = useRef(null)`. START DATE `onChange` expanded: stores the new value, clears `endDate` if it was already set and is now before the new start, then `setTimeout(() => endDateRef.current?.focus(), 0)` opens the END DATE picker immediately after React re-renders. END DATE input gains `ref={endDateRef}` and `min={startDate || undefined}` — prevents picking before start and causes the calendar to open on the same month as startDate.
+- **Deviations:** None — implemented exactly as planned.
+- **Schema/contract changes:** None.
+- **Known issues / TODO:** None introduced.
+- **Next:** Manual data cleanup (city merges), then tag v0.1.
+
+---
+
+### 2026-06-17 — Step 7 Commit B: UI polish (5389448)
 
 - **Done:**
     - `src/db/db.js` — bumped to `version(2)` (additive); added `websiteUrl` to places record shape comment. Existing records get `websiteUrl: undefined` which the UI treats as empty string.

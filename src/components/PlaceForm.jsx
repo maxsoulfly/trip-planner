@@ -5,16 +5,21 @@ import { parseMapsUrl } from '../utils/mapsParser.js';
 import { parseGoogleHours } from '../utils/hoursParser.js';
 import './PlaceForm.css';
 
-const TYPE_KEYWORDS = {
-  museum:        ['museum', 'muzeum', 'muzej', 'galeri'],
-  accommodation: ['hotel', 'hostel', 'noclegi', 'apartment', 'apartament', 'pension', 'inn'],
-  brewpub:       ['brewery', 'browar', 'brauerei', 'brewpub', 'pivovar'],
-  cafe:          ['café', 'cafe', 'kawiarnia', 'kaffee'],
-};
+// Ordered — first match wins. More-specific phrases come before shorter ones.
+const TYPE_KEYWORDS = [
+  ['bottle_shop',   ['beer shop', 'bottle shop', 'beer store', 'beerstore']],
+  ['brewpub',       ['brewpub', 'brew pub', 'beer & food', 'beer and food', 'brewery', 'browar', 'brauerei', 'brewing', 'pivovar']],
+  ['taproom',       ['taproom', 'tap room', 'beer bar', 'craft beer', 'beer']],
+  ['restaurant',    ['restaurant', 'bistro', 'brasserie', 'ristorante']],
+  ['cafe',          ['café', 'cafe', 'coffee', 'kawiarnia', 'kaffee']],
+  ['bar',           ['bar']],
+  ['museum',        ['museum', 'muzeum', 'muzej', 'gallery', 'galeria', 'galeri']],
+  ['accommodation', ['hotel', 'hostel', 'noclegi', 'apartment', 'apartament', 'pension', 'inn']],
+];
 
 function detectType(name) {
   const lower = name.toLowerCase();
-  for (const [typeKey, keywords] of Object.entries(TYPE_KEYWORDS)) {
+  for (const [typeKey, keywords] of TYPE_KEYWORDS) {
     if (keywords.some((kw) => lower.includes(kw))) return typeKey;
   }
   return null;
@@ -150,6 +155,8 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
     if (!count) { setHoursMsg({ ok: false, text: '0 days parsed — check the format.' }); return; }
     setHours(h => ({ ...h, ...parsed }));
     setHoursMsg({ ok: true, text: `Parsed ${count} day${count !== 1 ? 's' : ''}.` });
+    const det = detectType(name);
+    if (det && det !== type) setSuggestedType(det);
   }
 
   function handleHoursPaste(e) {
