@@ -2,6 +2,18 @@
 
 ---
 
+### 2026-06-17 — Fix: separate today marker from open/closed pip design
+
+- **Done:**
+    - `src/components/PlaceCard.jsx` — strip rendering rewritten. Replaced bare `<span className="hours-pip ...">` with a `<div className="pip-wrapper[ pip-wrapper--today]">` wrapper containing the pip span. State logic simplified: only two pip classes needed (`pip--open` / `pip--closed`), covering all of open/closed/unknown — closed and unknown are visually identical (dim, faded). Removed `shut` variable and all `pip--today*` class selection.
+    - `src/components/PlaceCard.css` — full rewrite of the 7-day strip block. Added `.pip-wrapper { flex: 1; display: flex; flex-direction: column; align-items: center; }` (takes over `flex: 1` from `.hours-pip`). Added `.pip-wrapper--today::after` pseudo-element: 4×4px circle, `background: var(--steel)`, `margin: 2px auto 0` — neutral steel dot below today's pip, regardless of open state. `.hours-pip` loses `flex: 1`, gains `width: 100%` and explicit `background: transparent`. `.pip--open` updated: amber fill (`background: var(--amber)`), `color: var(--bg)`, `border-color: var(--amber)`, `font-weight: 600`, `opacity: 1`. `.pip--closed` simplified to `opacity: .4`. Removed `.pip--today`, `.pip--today-unknown`, `.pip--today-closed`.
+- **Deviations:** None.
+- **Schema/contract changes:** None.
+- **Known issues / TODO:** None.
+- **Next:** Data cleanup, then tag v0.1.
+
+---
+
 ### 2026-06-17 — Fix: today pip contrast, perm-closed stamp, Enter to save
 
 - **Done:**

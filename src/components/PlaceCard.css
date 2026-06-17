@@ -117,13 +117,34 @@
 .hours-readout--closed { color: var(--rust); }
 .hours-readout--steel  { color: var(--steel); }
 
-/* 7-day strip */
+/* 7-day strip — shows weekly open/closed pattern only.
+   Today is marked by a neutral steel dot below the pip (pip-wrapper--today::after).
+   The status badge ("OPEN", "CLOSED TODAY", etc.) handles all evaluative logic. */
 .hours-week {
   display: flex;
   gap: 4px;
 }
-.hours-pip {
+
+/* Wrapper participates in the flex layout and hosts the today-dot pseudo-element. */
+.pip-wrapper {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+/* Small steel dot below today's pip — neutral "this is now" marker. */
+.pip-wrapper--today::after {
+  content: '';
+  display: block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--steel);
+  margin: 2px auto 0;
+}
+
+.hours-pip {
+  width: 100%;
   text-align: center;
   font-size: 9px;
   padding: 3px 0;
@@ -131,30 +152,18 @@
   border: 1px solid var(--line);
   color: var(--dim);
   letter-spacing: 0;
+  background: transparent;
 }
-.pip--open    { border: 1.5px solid var(--amber); color: var(--dim); }
-.pip--closed  { opacity: .25; }
-/* Today — three states, each with a 2px bottom shadow as the "now" marker.
-   pip--today (open):    amber fill, bg text, bold — clearly open right now.
-   pip--today-unknown:   rust border, dim text — we don't know if it's open.
-   pip--today-closed:    rust border, dim + faded — definitively closed. */
-.pip--today {
+/* Open day: amber fill — same style whether today or not. */
+.pip--open {
   background: var(--amber);
   color: var(--bg);
   border-color: var(--amber);
-  font-weight: 700;
-  font-size: 13px;
+  font-weight: 600;
   opacity: 1;
-  box-shadow: 0 2px 0 0 var(--amber);
 }
-.pip--today-unknown {
-  border: 2px solid var(--rust);
-  color: var(--dim);
-}
-.pip--today-closed {
-  border: 2px solid var(--rust);
-  opacity: .35;
-}
+/* Closed or unknown: step back; today-dot still shows which one is now. */
+.pip--closed { opacity: .4; }
 
 /* ===== CARD FOOTER ===== */
 
