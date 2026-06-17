@@ -83,17 +83,19 @@ export default function PlaceCard({ place, onEdit, onDelete, incomplete }) {
         </div>
         <div className="hours-week">
           {WEEKDAYS.map((w) => {
-            const h    = place.openingHours?.[w.key];
-            const open = h && h.open && h.close;
-            const shut = h === null;
+            const h       = place.openingHours?.[w.key];
+            const open    = h && h.open && h.close;
+            const shut    = h === null;
+            const isToday = w.key === today;
+            // Today gets its own class that encodes open/unknown/closed state
+            // so it never inherits the amber-fill from pip--today when closed.
+            const stateClass = isToday
+              ? (open ? 'pip--today' : shut ? 'pip--today-closed' : 'pip--today-unknown')
+              : (open ? 'pip--open'  : shut ? 'pip--closed'       : 'pip--unknown');
             return (
               <span
                 key={w.key}
-                className={[
-                  'hours-pip',
-                  open ? 'pip--open' : shut ? 'pip--closed' : 'pip--unknown',
-                  w.key === today ? 'pip--today' : '',
-                ].join(' ')}
+                className={`hours-pip ${stateClass}`}
                 title={`${w.label}: ${hoursForDay(place.openingHours, w.key)}`}
               >
                 {DAY_ABBR[w.key]}

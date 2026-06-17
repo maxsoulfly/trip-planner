@@ -134,8 +134,10 @@
 }
 .pip--open    { color: var(--bg); background: var(--amber); border-color: var(--amber); }
 .pip--closed  { opacity: .35; }
-/* Today always renders inverted (amber fill / bg text) regardless of open state,
-   with a 2px amber underline and bold larger text so it pops at a glance. */
+/* Today — three states, each with a 2px bottom shadow as the "now" marker.
+   pip--today (open):    amber fill, bg text, bold — clearly open right now.
+   pip--today-unknown:   rust border, dim text — we don't know if it's open.
+   pip--today-closed:    rust border, dim + faded — definitively closed. */
 .pip--today {
   background: var(--amber);
   color: var(--bg);
@@ -144,6 +146,14 @@
   font-size: 13px;
   opacity: 1;
   box-shadow: 0 2px 0 0 var(--amber);
+}
+.pip--today-unknown {
+  border: 2px solid var(--rust);
+  color: var(--dim);
+}
+.pip--today-closed {
+  border: 2px solid var(--rust);
+  opacity: .35;
 }
 
 /* ===== CARD FOOTER ===== */

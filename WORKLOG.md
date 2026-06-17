@@ -2,6 +2,18 @@
 
 ---
 
+### 2026-06-17 — Fix: today pip state for unknown and closed hours
+
+- **Done:**
+    - `src/components/PlaceCard.jsx` — pip rendering logic rewritten. Previously, today's pip always stacked `pip--today` (amber-fill) on top of the state class, making unknown hours look open. Now today's pip gets exactly one of three exclusive classes: `pip--today` (has open hours, amber fill), `pip--today-unknown` (key absent from openingHours, rust border), `pip--today-closed` (null entry, rust border + dim opacity). Non-today pips unchanged.
+    - `src/components/PlaceCard.css` — replaced the `pip--today` comment block. Added `.pip--today-unknown { border: 2px solid var(--rust); color: var(--dim); }` and `.pip--today-closed { border: 2px solid var(--rust); opacity: .35; }`.
+- **Deviations:** None.
+- **Schema/contract changes:** None.
+- **Known issues / TODO:** None.
+- **Next:** Data cleanup, then tag v0.1.
+
+---
+
 ### 2026-06-17 — Commit B: place merger (repo + PlaceForm UI)
 
 - **Done:**
