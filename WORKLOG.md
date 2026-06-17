@@ -2,6 +2,28 @@
 
 ---
 
+### 2026-06-17 — Commit B: place merger (repo + PlaceForm UI)
+
+- **Done:**
+    - `src/db/repo.js` — added two exports:
+        - `mergePlaces(primaryId, duplicateId)` — atomic `rw` transaction over `db.places` + `db.scheduleItems`. Loads both records; builds merged record: truthy-fallback for `address`, `googleMapsUrl`, `untappdUrl`, `websiteUrl`; null-fallback for `lat`/`lng`; openingHours merged by copying duplicate's weekday keys that are absent in primary (primary never overwritten); tags = union of both arrays, lowercased and deduped via `Set`; notes concatenated with `' | '` if both non-empty; `rating` keeps primary unless null/undefined; `type` keeps primary unless it is `'other'`, then uses duplicate's. After building merged record: reassigns all `scheduleItems` where `placeId === duplicateId` to `primaryId` via `Promise.all(items.map(put))`; `db.places.put(merged)`; `db.places.delete(duplicateId)`. Returns `{ merged, scheduleItemsUpdated }`.
+        - `countScheduleItemsByPlace(placeId)` — one-liner using the existing `placeId` index: `db.scheduleItems.where('placeId').equals(placeId).count()`. Used by the merge preview to show slot reassignment count without loading full items.
+    - `src/components/PlaceForm.jsx` — multiple additions, no rewrites:
+        - Imports: added `getAllPlaces`, `mergePlaces as doMergePlaces`, `countScheduleItemsByPlace` from repo; added `typeMeta` from constants.
+        - State: added `otherPlaces`, `mergeSearch`, `mergeShowAll`, `mergeCandidate`, `mergeSlotCount`, `mergeBusy`, `mergeMsg`.
+        - `useEffect` (isEdit): loads all places, filters out `initialData.id`, stores in `otherPlaces`.
+        - `useEffect` (mergeCandidate): calls `countScheduleItemsByPlace` when candidate changes; resets to 0 on clear.
+        - `mergeFiltered` computed value: filters `otherPlaces` by city (unless `mergeShowAll`) and by name substring; limited to 8 results.
+        - `handleMerge()`: calls `doMergePlaces(initialData.id, mergeCandidate.id)`, then `onSave()` to close and reload.
+        - New `⚠ MERGE / DEDUPLICATE` fieldset at the bottom of the form (edit mode only, between OPENING HOURS and form actions): search input + "Show all cities" checkbox + results list (max 8, scrollable) → click to select candidate → two-column preview (PRIMARY vs DUPLICATE showing name, city, status, days known, notes) + summary sentence + address-mismatch warning in `--rust` + MERGE / CANCEL buttons.
+    - `src/components/PlaceForm.css` — added `.merge-section`, `.merge-search-row`, `.merge-showall`, `.merge-list`, `.merge-row` (grid 18px / 1fr / auto), `.merge-row-icon/name/city`, `.merge-empty`, `.merge-preview`, `.merge-cols` (grid 1fr / 20px / 1fr), `.merge-col`, `.merge-col-label`, `.merge-field`, `.merge-field--dim`, `.merge-field--notes`, `.merge-arrow`, `.merge-summary`, `.merge-warning`, `.merge-msg`, `.merge-actions`, `.merge-btn-confirm`, `.merge-btn-cancel`.
+- **Deviations:** None.
+- **Schema/contract changes:** `repo.js` — two new exports (`mergePlaces`, `countScheduleItemsByPlace`). `db.js` and `constants.js` untouched.
+- **Known issues / TODO:** The merge section always defaults to same-city filter; if `initialData.city` is empty it shows all places. This is the correct fallback.
+- **Next:** Manual data cleanup (city merges, noise deletions), then tag v0.1.
+
+---
+
 ### 2026-06-17 — Commit A: pm inference, today pip, permanently closed, supermarket, scheduling chips
 
 - **Done:**

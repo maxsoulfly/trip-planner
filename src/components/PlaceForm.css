@@ -316,6 +316,179 @@
 .sched-chip--on { color: var(--amber); border-color: var(--amber); }
 .sched-chip--on:hover { color: var(--amber); border-color: var(--amber); opacity: .85; }
 
+/* ===== MERGE / DEDUPLICATE SECTION ===== */
+
+.merge-section { border-color: var(--rust); }
+
+.merge-search-row { display: flex; gap: 7px; }
+
+.merge-showall {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .08em;
+  color: var(--dim);
+  cursor: pointer;
+  user-select: none;
+}
+
+.merge-list {
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.merge-row {
+  display: grid;
+  grid-template-columns: 18px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  padding: 7px 10px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  text-align: left;
+  transition: background .12s;
+}
+.merge-row:last-child { border-bottom: none; }
+.merge-row:hover { background: var(--panel2); }
+
+.merge-row-icon { font-size: 13px; line-height: 1; }
+.merge-row-name {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.merge-row-city {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--dim);
+  letter-spacing: .06em;
+  white-space: nowrap;
+}
+
+.merge-empty {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--dim);
+  padding: 10px;
+  text-align: center;
+}
+
+.merge-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.merge-cols {
+  display: grid;
+  grid-template-columns: 1fr 20px 1fr;
+  gap: 8px;
+  align-items: start;
+}
+
+.merge-col {
+  background: var(--panel2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 9px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.merge-col-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .16em;
+  color: var(--steel);
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+.merge-field {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.merge-field--dim   { font-size: 10px; color: var(--dim); }
+.merge-field--notes { font-size: 10px; color: var(--dim); white-space: normal; word-break: break-word; }
+
+.merge-arrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 14px;
+  color: var(--amber);
+  text-align: center;
+  align-self: center;
+}
+
+.merge-summary {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--dim);
+  letter-spacing: .03em;
+  line-height: 1.5;
+}
+.merge-summary strong { color: var(--ink); font-weight: 600; }
+
+.merge-warning {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--rust);
+  letter-spacing: .04em;
+}
+
+.merge-msg { font-family: 'IBM Plex Mono', monospace; font-size: 10px; }
+.merge-msg--ok   { color: var(--amber); }
+.merge-msg--warn { color: var(--rust); }
+
+.merge-actions { display: flex; gap: 8px; }
+
+.merge-btn-confirm {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  background: var(--amber);
+  color: var(--bg);
+  border: none;
+  border-radius: 5px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: opacity .15s;
+}
+.merge-btn-confirm:hover:not(:disabled) { opacity: .85; }
+.merge-btn-confirm:disabled { opacity: .5; cursor: default; }
+
+.merge-btn-cancel {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  background: transparent;
+  color: var(--dim);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.merge-btn-cancel:hover { color: var(--ink); border-color: var(--steel); }
+
 /* ===== FORM ACTIONS ===== */
 
 .form-actions {

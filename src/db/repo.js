@@ -56,6 +56,79 @@ export async function mergeCities(sourceCity, targetCity) {
   await Promise.all(places.map((p) => db.places.put({ ...p, city: targetCity, updatedAt: now() })));
 }
 
+// Merge two place records in one atomic transaction.
+// Primary wins on all identity fields; weaker-signal fields fall back to duplicate.
+// All scheduleItems pointing at the duplicate are reassigned to the primary.
+// Returns { merged, scheduleItemsUpdated }.
+export async function mergePlaces(primaryId, duplicateId) {
+  let merged;
+  let scheduleItemsUpdated = 0;
+
+  await db.transaction('rw', db.places, db.scheduleItems, async () => {
+    const [primary, duplicate] = await Promise.all([
+      db.places.get(primaryId),
+      db.places.get(duplicateId),
+    ]);
+    if (!primary)   throw new Error(`Primary place ${primaryId} not found`);
+    if (!duplicate) throw new Error(`Duplicate place ${duplicateId} not found`);
+
+    // openingHours: start from primary; fill absent weekday keys from duplicate
+    const primaryHours = primary.openingHours || {};
+    const dupHours     = duplicate.openingHours || {};
+    const mergedHours  = { ...primaryHours };
+    for (const key of Object.keys(dupHours)) {
+      if (!(key in primaryHours)) mergedHours[key] = dupHours[key];
+    }
+
+    // tags: union, lowercased, deduped
+    const mergedTags = [
+      ...new Set(
+        [...(primary.tags || []), ...(duplicate.tags || [])].map((t) => t.toLowerCase())
+      ),
+    ];
+
+    // notes: concatenate with ' | ' when both non-empty
+    const pNotes = (primary.notes   || '').trim();
+    const dNotes = (duplicate.notes || '').trim();
+    const mergedNotes = pNotes && dNotes ? `${pNotes} | ${dNotes}` : (pNotes || dNotes);
+
+    merged = {
+      ...primary,
+      // Truthy-fallback fields: primary wins if it has a value
+      address:       primary.address       || duplicate.address       || '',
+      googleMapsUrl: primary.googleMapsUrl || duplicate.googleMapsUrl || '',
+      untappdUrl:    primary.untappdUrl    || duplicate.untappdUrl    || '',
+      websiteUrl:    primary.websiteUrl    || duplicate.websiteUrl    || '',
+      lat:           primary.lat  != null  ? primary.lat  : duplicate.lat,
+      lng:           primary.lng  != null  ? primary.lng  : duplicate.lng,
+      // Merged fields
+      openingHours:  mergedHours,
+      tags:          mergedTags,
+      notes:         mergedNotes,
+      // Keep primary's unless it has no signal, then take duplicate's
+      rating: primary.rating != null ? primary.rating : duplicate.rating,
+      type:   primary.type !== 'other'  ? primary.type  : duplicate.type,
+      updatedAt: now(),
+    };
+
+    // Reassign schedule items pointing at the duplicate
+    const items = await db.scheduleItems.where('placeId').equals(duplicateId).toArray();
+    scheduleItemsUpdated = items.length;
+    if (items.length > 0) {
+      await Promise.all(items.map((item) => db.scheduleItems.put({ ...item, placeId: primaryId })));
+    }
+
+    await db.places.put(merged);
+    await db.places.delete(duplicateId);
+  });
+
+  return { merged, scheduleItemsUpdated };
+}
+
+// Count how many schedule items reference a given place (for merge preview).
+export const countScheduleItemsByPlace = (placeId) =>
+  db.scheduleItems.where('placeId').equals(placeId).count();
+
 // Wipe trips and all their schedule items together — no orphaned items.
 export async function clearAllTrips() {
   await db.transaction('rw', db.trips, db.scheduleItems, async () => {

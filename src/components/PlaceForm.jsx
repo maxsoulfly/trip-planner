@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { addPlace, putPlace } from '../db/repo.js';
-import { PLACE_TYPES, STATUSES, WEEKDAYS } from '../db/constants.js';
+import { addPlace, putPlace, getAllPlaces, mergePlaces as doMergePlaces, countScheduleItemsByPlace } from '../db/repo.js';
+import { PLACE_TYPES, STATUSES, WEEKDAYS, typeMeta } from '../db/constants.js';
 import { parseMapsUrl } from '../utils/mapsParser.js';
 import { parseGoogleHours } from '../utils/hoursParser.js';
 import './PlaceForm.css';
@@ -93,6 +93,15 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
   const [hoursPaste,   setHoursPaste]   = useState('');
   const [hoursMsg,     setHoursMsg]     = useState(null); // { ok, text } | null
 
+  // ── Merge section state (edit mode only) ────────────────────────────────
+  const [otherPlaces,    setOtherPlaces]    = useState([]);
+  const [mergeSearch,    setMergeSearch]    = useState('');
+  const [mergeShowAll,   setMergeShowAll]   = useState(false);
+  const [mergeCandidate, setMergeCandidate] = useState(null);
+  const [mergeSlotCount, setMergeSlotCount] = useState(0);
+  const [mergeBusy,      setMergeBusy]      = useState(false);
+  const [mergeMsg,       setMergeMsg]       = useState(null);
+
   const firstRef        = useRef(null);
   const backdropRef     = useRef(null);
   const mouseDownTarget = useRef(null);
@@ -104,6 +113,18 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
+
+  // Load all other places for the merge search (edit mode only).
+  useEffect(() => {
+    if (!isEdit) return;
+    getAllPlaces().then((ps) => setOtherPlaces(ps.filter((p) => p.id !== initialData.id)));
+  }, [isEdit, initialData?.id]);
+
+  // Count schedule items for the selected duplicate to show in the merge preview.
+  useEffect(() => {
+    if (!mergeCandidate) { setMergeSlotCount(0); return; }
+    countScheduleItemsByPlace(mergeCandidate.id).then(setMergeSlotCount);
+  }, [mergeCandidate]);
 
   function handlePrefill(url) {
     const parsed = parseMapsUrl(url);
@@ -171,6 +192,28 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
     e.preventDefault();
     setHoursPaste(text);
     handleHoursParse(text);
+  }
+
+  // Merge search: filter by city (unless showAll), then by name substring.
+  const mergeFiltered = otherPlaces.filter((p) => {
+    if (!mergeShowAll && initialData?.city && p.city !== initialData.city) return false;
+    const q = mergeSearch.trim().toLowerCase();
+    if (q && !p.name.toLowerCase().includes(q)) return false;
+    return true;
+  }).slice(0, 8);
+
+  async function handleMerge() {
+    if (!mergeCandidate) return;
+    setMergeBusy(true);
+    setMergeMsg(null);
+    try {
+      await doMergePlaces(initialData.id, mergeCandidate.id);
+      onSave();
+    } catch (err) {
+      setMergeMsg({ ok: false, text: 'Merge failed — check the console.' });
+      console.error(err);
+      setMergeBusy(false);
+    }
   }
 
   function toggleSchedulingTag(tag) {
@@ -563,6 +606,131 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
               <p className="form-hours-hint">e.g. reception hours or check-in window</p>
             )}
           </fieldset>
+
+          {/* ---- Merge / Deduplicate (edit mode only) ---- */}
+          {isEdit && (
+            <fieldset className="form-section merge-section">
+              <legend className="form-legend">⚠ MERGE / DEDUPLICATE</legend>
+
+              <div className="merge-search-row">
+                <input
+                  className="form-input"
+                  type="search"
+                  placeholder="Search for duplicate…"
+                  value={mergeSearch}
+                  onChange={(e) => { setMergeSearch(e.target.value); setMergeCandidate(null); setMergeMsg(null); }}
+                />
+              </div>
+
+              <label className="merge-showall">
+                <input
+                  type="checkbox"
+                  checked={mergeShowAll}
+                  onChange={(e) => { setMergeShowAll(e.target.checked); setMergeCandidate(null); }}
+                />
+                <span>Show all cities</span>
+              </label>
+
+              {/* Results list — shown when no candidate is selected */}
+              {!mergeCandidate && (
+                <div className="merge-list">
+                  {mergeFiltered.length === 0 ? (
+                    <p className="merge-empty">
+                      {mergeSearch.trim()
+                        ? 'No matches.'
+                        : (!mergeShowAll && initialData?.city)
+                          ? `No other places in ${initialData.city}.`
+                          : 'No other places in library.'}
+                    </p>
+                  ) : (
+                    mergeFiltered.map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        className="merge-row"
+                        onClick={() => { setMergeCandidate(p); setMergeMsg(null); }}
+                      >
+                        <span className="merge-row-icon">{typeMeta(p.type).emoji}</span>
+                        <span className="merge-row-name">{p.name}</span>
+                        <span className="merge-row-city">{p.city || '—'}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {/* Preview panel — shown once a candidate is selected */}
+              {mergeCandidate && (
+                <div className="merge-preview">
+                  <div className="merge-cols">
+                    <div className="merge-col">
+                      <div className="merge-col-label">PRIMARY · THIS PLACE</div>
+                      <div className="merge-field">{typeMeta(initialData.type).emoji} {initialData.name}</div>
+                      <div className="merge-field merge-field--dim">{initialData.city || '—'}</div>
+                      <div className="merge-field merge-field--dim">{initialData.status}</div>
+                      <div className="merge-field merge-field--dim">
+                        {Object.keys(initialData.openingHours || {}).length} days known
+                      </div>
+                      {initialData.notes && (
+                        <div className="merge-field merge-field--notes">{initialData.notes}</div>
+                      )}
+                    </div>
+                    <div className="merge-arrow">→</div>
+                    <div className="merge-col">
+                      <div className="merge-col-label">DUPLICATE</div>
+                      <div className="merge-field">{typeMeta(mergeCandidate.type).emoji} {mergeCandidate.name}</div>
+                      <div className="merge-field merge-field--dim">{mergeCandidate.city || '—'}</div>
+                      <div className="merge-field merge-field--dim">{mergeCandidate.status}</div>
+                      <div className="merge-field merge-field--dim">
+                        {Object.keys(mergeCandidate.openingHours || {}).length} days known
+                      </div>
+                      {mergeCandidate.notes && (
+                        <div className="merge-field merge-field--notes">{mergeCandidate.notes}</div>
+                      )}
+                    </div>
+                  </div>
+
+                  <p className="merge-summary">
+                    After merge: <strong>{initialData.name}</strong> absorbs <strong>{mergeCandidate.name}</strong>.
+                    {mergeSlotCount > 0 && (
+                      <> {mergeSlotCount} schedule slot{mergeSlotCount !== 1 ? 's' : ''} will be reassigned.</>
+                    )}
+                  </p>
+
+                  {initialData.address && mergeCandidate.address &&
+                   initialData.address !== mergeCandidate.address && (
+                    <p className="merge-warning">
+                      ⚠ Different addresses — are these really the same venue?
+                    </p>
+                  )}
+
+                  {mergeMsg && (
+                    <p className={`merge-msg${mergeMsg.ok ? ' merge-msg--ok' : ' merge-msg--warn'}`}>
+                      {mergeMsg.text}
+                    </p>
+                  )}
+
+                  <div className="merge-actions">
+                    <button
+                      type="button"
+                      className="merge-btn-confirm"
+                      onClick={handleMerge}
+                      disabled={mergeBusy}
+                    >
+                      {mergeBusy ? 'MERGING…' : 'MERGE'}
+                    </button>
+                    <button
+                      type="button"
+                      className="merge-btn-cancel"
+                      onClick={() => { setMergeCandidate(null); setMergeMsg(null); }}
+                    >
+                      CANCEL
+                    </button>
+                  </div>
+                </div>
+              )}
+            </fieldset>
+          )}
 
           {/* ---- Actions ---- */}
           <div className="form-actions">
