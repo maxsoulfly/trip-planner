@@ -43,7 +43,11 @@ function parseAddressString(str) {
   if (parts.length < 2) return null;
   const country = parts.at(-1);
   const cityRaw = parts.at(-2);
-  const city    = cityRaw.replace(/^\d+\s*/, '').trim(); // strip leading postcode
+  // Strip postcode prefix: Polish XX-XXX, then generic 4–5 digit forms.
+  const city = cityRaw
+    .replace(/^\d{2}-\d{3}\s*/, '')
+    .replace(/^\d{4,5}\s*/, '')
+    .trim();
   const address = parts.slice(0, -2).join(', ');
   return { address, city, country };
 }

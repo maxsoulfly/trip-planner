@@ -2,6 +2,20 @@
 
 ---
 
+### 2026-06-17 — Four small fixes: postcode, hours badge, Untappd, type-suggest-after-hours
+
+- **Done:**
+    - `src/components/PlaceForm.jsx` — `parseAddressString`: fixed postcode strip. Old regex `/^\d+\s*/` only stripped digits, leaving `-124 Kraków` for Polish postcodes like `31-124`. New two-pass: first try `/^\d{2}-\d{3}\s*/` (Polish XX-XXX format), then `/^\d{4,5}\s*/` (generic 4–5 digit codes). City now parses correctly from Plus-code address fields.
+    - `src/components/PlaceCard.jsx` — replaced the 3-state `todayHours`/`isOpen`/`isClosed` variables with a `getStatusBadge(openingHours, todayKey)` helper. Returns `null` for unknown (absent key → renders `—`); `{ label: 'CLOSED', cls: '--closed' }` for `null` entry; or one of four time-aware states: `OPEN` (now within window, amber bold), `OPENS SOON · HH:MM` (≤15 min before open, amber), `OPENS HH:MM` (>15 min before open, steel), `CLOSED TODAY` (after close window, rust). Badge label replaces the static hours range string. Added `▸ UNTAPPD` link in `.card-links` after the Maps link (only rendered when `place.untappdUrl` is set).
+    - `src/components/PlaceCard.css` — added `.hours-readout--steel { color: var(--steel); }` (used for the "OPENS HH:MM" state).
+    - Type suggestion after hours paste — confirmed already wired: `handleHoursParse` in `PlaceForm.jsx` already calls `detectType(name)` and sets `suggestedType` after successful parse. No code change needed.
+- **Deviations:** None.
+- **Schema/contract changes:** None.
+- **Known issues / TODO:** None introduced.
+- **Next:** Manual data cleanup (city merges Krakow→Kraków, Warsaw→Warszawa), then tag v0.1.
+
+---
+
 ### 2026-06-17 — Type detection expansion + trip date UX
 
 - **Done:**

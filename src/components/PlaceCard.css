@@ -114,6 +114,7 @@
 }
 .hours-readout--open   { color: var(--amber); font-weight: 600; }
 .hours-readout--closed { color: var(--rust); }
+.hours-readout--steel  { color: var(--steel); }
 
 /* 7-day strip */
 .hours-week {

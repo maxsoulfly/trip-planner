@@ -16,16 +16,40 @@ function todayWeekdayKey() {
   return JS_DAY_KEYS[new Date().getDay()];
 }
 
+// Returns { label, cls } for the real-time status badge, or null if hours are unknown.
+function getStatusBadge(openingHours, todayKey) {
+  const entry = openingHours?.[todayKey];
+  if (entry === undefined) return null;                                    // unknown
+  if (entry === null)      return { label: 'CLOSED', cls: 'hours-readout--closed' };
+  if (!entry.open || !entry.close) return null;
+
+  const now     = new Date();
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+
+  const [openH,  openM]  = entry.open.split(':').map(Number);
+  const [closeH, closeM] = entry.close.split(':').map(Number);
+  const openMins  = openH  * 60 + openM;
+  const closeMins = closeH * 60 + closeM;
+
+  if (nowMins >= openMins && nowMins < closeMins) {
+    return { label: 'OPEN', cls: 'hours-readout--open' };
+  }
+  if (nowMins < openMins) {
+    const diff = openMins - nowMins;
+    return diff <= 15
+      ? { label: `OPENS SOON · ${entry.open}`, cls: 'hours-readout--open'  }
+      : { label: `OPENS ${entry.open}`,         cls: 'hours-readout--steel' };
+  }
+  return { label: 'CLOSED TODAY', cls: 'hours-readout--closed' };
+}
+
 export default function PlaceCard({ place, onEdit, onDelete, incomplete }) {
   const [confirming, setConfirming] = useState(false);
 
   const type   = typeMeta(place.type);
   const stamp  = STAMP[place.status] || STAMP.wishlist;
   const today  = todayWeekdayKey();
-
-  const todayHours = hoursForDay(place.openingHours, today);
-  const isOpen     = todayHours !== 'Closed' && todayHours !== '—';
-  const isClosed   = todayHours === 'Closed';
+  const badge  = getStatusBadge(place.openingHours, today);
 
   const coordParts = [
     place.city,
@@ -52,10 +76,8 @@ export default function PlaceCard({ place, onEdit, onDelete, incomplete }) {
       <div className="hours-box">
         <div className="hours-today">
           <span className="hours-day-label">{today.toUpperCase()}</span>
-          <span className={
-            `hours-readout${isClosed ? ' hours-readout--closed' : isOpen ? ' hours-readout--open' : ''}`
-          }>
-            {isClosed ? 'CLOSED' : isOpen ? `OPEN · ${todayHours}` : '—'}
+          <span className={`hours-readout${badge ? ` ${badge.cls}` : ''}`}>
+            {badge ? badge.label : '—'}
           </span>
         </div>
         <div className="hours-week">
@@ -91,6 +113,11 @@ export default function PlaceCard({ place, onEdit, onDelete, incomplete }) {
               <span className="maps-link maps-link--none">▸ NO MAP LINK</span>
             )
           }
+          {place.untappdUrl && (
+            <a className="maps-link" href={place.untappdUrl} target="_blank" rel="noreferrer">
+              ▸ UNTAPPD
+            </a>
+          )}
           {place.websiteUrl && (
             <a className="website-link" href={place.websiteUrl} target="_blank" rel="noreferrer">
               ▸ WEBSITE
