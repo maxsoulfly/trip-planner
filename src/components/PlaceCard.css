@@ -132,8 +132,8 @@
   color: var(--dim);
   letter-spacing: 0;
 }
-.pip--open    { color: var(--bg); background: var(--amber); border-color: var(--amber); }
-.pip--closed  { opacity: .35; }
+.pip--open    { border: 1.5px solid var(--amber); color: var(--dim); }
+.pip--closed  { opacity: .25; }
 /* Today — three states, each with a 2px bottom shadow as the "now" marker.
    pip--today (open):    amber fill, bg text, bold — clearly open right now.
    pip--today-unknown:   rust border, dim text — we don't know if it's open.

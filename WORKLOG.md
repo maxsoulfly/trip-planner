@@ -2,6 +2,20 @@
 
 ---
 
+### 2026-06-17 — Fix: today pip contrast, perm-closed stamp, Enter to save
+
+- **Done:**
+    - `src/components/PlaceCard.css` — `.pip--open` (non-today): removed amber fill; now `border: 1.5px solid var(--amber); color: var(--dim)` — amber outline only, no background. Only `pip--today` retains the amber fill. `.pip--closed`: opacity changed from `.35` to `.25` to step further back.
+    - `src/components/PlaceCard.jsx` — `STAMP.permanently_closed` label: `'✕ CLOSED'` → `'✕ PERM. CLOSED'` to avoid confusion with the "CLOSED TODAY" runtime badge.
+    - `src/components/PlaceForm.jsx` — added `handleSubmitRef = useRef(null)`; assigned `handleSubmitRef.current = handleSubmit` on every render (stable ref pattern — avoids stale closure without listing all form state as deps). Modified the existing ESC `useEffect` to also listen for `Enter`: skips textareas (`document.activeElement?.tagName !== 'TEXTAREA'`), calls `handleSubmitRef.current(e)`. Changed `e.preventDefault()` → `e?.preventDefault()` in `handleSubmit` so it can be called without a synthetic event.
+    - `src/components/TripForm.jsx` — same three changes as PlaceForm: `handleSubmitRef`, render-time assignment, Enter branch in ESC listener, `e?.preventDefault()` in `handleSubmit`.
+- **Deviations:** Used a ref (`handleSubmitRef`) rather than listing all form state in the Enter `useEffect` deps — same net effect, avoids effect re-registration on every keystroke.
+- **Schema/contract changes:** None.
+- **Known issues / TODO:** None.
+- **Next:** Data cleanup, then tag v0.1.
+
+---
+
 ### 2026-06-17 — Fix: today pip state for unknown and closed hours
 
 - **Done:**

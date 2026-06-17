@@ -105,11 +105,21 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
   const firstRef        = useRef(null);
   const backdropRef     = useRef(null);
   const mouseDownTarget = useRef(null);
+  const handleSubmitRef = useRef(null);
 
-  // Focus first field on open; ESC to close.
+  // Keep ref current so the keydown handler always calls the latest handleSubmit.
+  handleSubmitRef.current = handleSubmit;
+
+  // Focus first field on open; ESC to close; Enter to save (not in textareas).
   useEffect(() => {
     firstRef.current?.focus();
-    function onKey(e) { if (e.key === 'Escape') onClose(); }
+    function onKey(e) {
+      if (e.key === 'Escape') { onClose(); return; }
+      if (e.key === 'Enter' && document.activeElement?.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        handleSubmitRef.current(e);
+      }
+    }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
@@ -240,7 +250,7 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
   }
 
   async function handleSubmit(e) {
-    e.preventDefault();
+    e?.preventDefault();
     if (!name.trim()) { setError('Name is required.'); return; }
     setBusy(true);
     setError('');

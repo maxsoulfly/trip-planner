@@ -10,7 +10,7 @@ const STAMP = {
   wishlist:           { label: '☆ FLAGGED', cls: 'stamp--flagged' },
   planned:            { label: '◐ MARKED',  cls: 'stamp--marked'  },
   visited:            { label: '✓ SECURED', cls: 'stamp--secured' },
-  permanently_closed: { label: '✕ CLOSED',  cls: 'stamp--dead'   },
+  permanently_closed: { label: '✕ PERM. CLOSED', cls: 'stamp--dead' },
 };
 
 function todayWeekdayKey() {
