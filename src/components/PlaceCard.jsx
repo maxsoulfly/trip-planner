@@ -89,7 +89,7 @@ export default function PlaceCard({ place, onEdit, onDelete, incomplete }) {
             return (
               <div
                 key={w.key}
-                className={`pip-wrapper${isToday ? ' pip-wrapper--today' : ''}`}
+                className={`pip-wrapper${isToday ? ` pip-wrapper--today${open ? ' pip-wrapper--open' : ' pip-wrapper--closed'}` : ''}`}
               >
                 <span
                   className={`hours-pip${open ? ' pip--open' : ' pip--closed'}`}
