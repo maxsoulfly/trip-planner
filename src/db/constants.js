@@ -16,7 +16,8 @@ export const PLACE_TYPES = [
   { key: 'cafe',          label: 'Café',          emoji: '☕' },
   { key: 'museum',        label: 'Museum',        emoji: '🏛️' },
   { key: 'activity',      label: 'Activity',      emoji: '⛳' },
-  { key: 'shop',          label: 'Shop',          emoji: '🛒' },
+  { key: 'shop',          label: 'Shop',          emoji: '🏪' },
+  { key: 'supermarket',   label: 'Supermarket',   emoji: '🛒' },
   { key: 'accommodation', label: 'Accommodation', emoji: '🏠' },
   { key: 'transport',     label: 'Transport',     emoji: '🚆' },
   { key: 'other',         label: 'Other',         emoji: '📍' },
@@ -34,9 +35,10 @@ export const BLOCKS = [
 
 // Where a place sits in your pipeline.
 export const STATUSES = [
-  { key: 'wishlist', label: 'Wishlist', emoji: '☆' },
-  { key: 'planned',  label: 'Planned',  emoji: '◐' },
-  { key: 'visited',  label: 'Visited',  emoji: '✓' },
+  { key: 'wishlist',           label: 'Wishlist',           emoji: '☆' },
+  { key: 'planned',            label: 'Planned',            emoji: '◐' },
+  { key: 'visited',            label: 'Visited',            emoji: '✓' },
+  { key: 'permanently_closed', label: 'Permanently closed', emoji: '✕' },
 ];
 
 // Weekday keys used by Place.openingHours. Monday-first to match Europe.

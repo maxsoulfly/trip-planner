@@ -22,7 +22,7 @@ export default function PlacePicker({ date, block, trip, places, onConfirm, onCl
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  const placesList = Object.values(places);
+  const placesList = Object.values(places).filter((p) => p.status !== 'permanently_closed');
   const filtered = placesList.filter((p) => {
     if (!showAll && trip.cities?.length > 0 && !trip.cities.includes(p.city)) return false;
     if (filterType && p.type !== filterType) return false;

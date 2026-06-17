@@ -64,10 +64,25 @@ function parseHoursValue(s) {
   const m = s.match(/^(.+?)\s*[–—]\s*(.+)$/) || s.match(/^(.+?)\s+-\s+(.+)$/);
   if (!m) return undefined;
 
-  const open  = parseTime(m[1]);
-  const close = parseTime(m[2]);
-  if (open && close) return { open, close };
-  return undefined;
+  const rawOpen  = m[1].trim();
+  const rawClose = m[2].trim();
+
+  let open  = parseTime(rawOpen);
+  const close = parseTime(rawClose);
+  if (!open || !close) return undefined;
+
+  // PM inference: when the close side has an explicit "pm" suffix and the open
+  // side has no am/pm, treat the open side as pm too — but only if that produces
+  // a logical range (open < close). Example: "2–10:30 pm" → 14:00–22:30.
+  // This does NOT fire when close is 24h ("10–22:00") because there is no "pm".
+  const openHasAmPm = /\b(am|pm)\b/i.test(rawOpen);
+  const closeHasPm  = /\bpm\b/i.test(rawClose);
+  if (!openHasAmPm && closeHasPm) {
+    const openAsPm = parseTime(rawOpen + ' pm');
+    if (openAsPm && openAsPm < close) open = openAsPm;
+  }
+
+  return { open, close };
 }
 
 // Parse a day-name segment (possibly a range like "Monday–Friday") → array of keys.

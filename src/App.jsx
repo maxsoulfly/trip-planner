@@ -16,6 +16,7 @@ const THEME_CYCLE = ['dark', 'light', 'system'];
 const THEME_LABEL = { dark: '◐ DARK', light: '☀ LIGHT', system: '⊙ SYS' };
 
 function isIncomplete(p) {
+  if (p.status === 'permanently_closed') return false;
   if (p.type === 'other') return true;
   const hoursTypes = ['taproom','bottle_shop','brewpub','bar',
                       'restaurant','cafe','museum','activity','shop'];

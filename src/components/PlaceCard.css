@@ -44,6 +44,7 @@
 .stamp--secured { color: var(--amber); }
 .stamp--marked  { color: var(--steel); }
 .stamp--flagged { color: var(--dim); }
+.stamp--dead    { color: var(--rust); transform: rotate(-7deg); }
 
 /* ===== CARD BODY ===== */
 
@@ -133,7 +134,17 @@
 }
 .pip--open    { color: var(--bg); background: var(--amber); border-color: var(--amber); }
 .pip--closed  { opacity: .35; }
-.pip--today   { box-shadow: 0 0 0 1px var(--amber); }
+/* Today always renders inverted (amber fill / bg text) regardless of open state,
+   with a 2px amber underline and bold larger text so it pops at a glance. */
+.pip--today {
+  background: var(--amber);
+  color: var(--bg);
+  border-color: var(--amber);
+  font-weight: 700;
+  font-size: 13px;
+  opacity: 1;
+  box-shadow: 0 2px 0 0 var(--amber);
+}
 
 /* ===== CARD FOOTER ===== */
 

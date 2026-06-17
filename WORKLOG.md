@@ -2,6 +2,24 @@
 
 ---
 
+### 2026-06-17 — Commit A: pm inference, today pip, permanently closed, supermarket, scheduling chips
+
+- **Done:**
+    - `src/utils/hoursParser.js` — `parseHoursValue` now applies pm inference: after both sides parse, if `rawClose` has an explicit `pm` suffix and `rawOpen` has no `am`/`pm`, the function appends `' pm'` to `rawOpen` and retries; uses the pm result only if it produces a logical range (`open < close`). Example: `"2–10:30 pm"` → `14:00–22:30` instead of `02:00–22:30`. 24h ranges like `"10–22:00"` are unaffected (no `pm` keyword on close side). Inference rule documented in a comment.
+    - `src/db/constants.js` — three schema changes: (1) `shop` emoji changed from `🛒` to `🏪` to differentiate it; (2) new `supermarket` entry (`🛒`) inserted after `shop`; (3) new `permanently_closed` status (`✕`, `'Permanently closed'`) added as last entry in `STATUSES`. All downstream UI picks up via `PLACE_TYPES` and `STATUSES` arrays.
+    - `src/components/PlaceCard.jsx` — added `permanently_closed` entry to the `STAMP` map: `{ label: '✕ CLOSED', cls: 'stamp--dead' }`.
+    - `src/components/PlaceCard.css` — (1) `.pip--today` rewritten: full amber-inverted style (`background: var(--amber)`, `color: var(--bg)`, `border-color: var(--amber)`, `font-weight: 700`, `font-size: 13px`, `opacity: 1`, `box-shadow: 0 2px 0 0 var(--amber)` for underline). Since `.pip--today` is declared after `.pip--closed`/`.pip--open`/`.pip--unknown` in the file, it overrides all state-specific styles including the 0.35 opacity on closed days. (2) Added `.stamp--dead { color: var(--rust); transform: rotate(-7deg); }` — more aggressive rotation than the base stamp to signal a dead place.
+    - `src/App.jsx` — `isIncomplete`: added early return `if (p.status === 'permanently_closed') return false` at the top, so archived closed places are never flagged as incomplete.
+    - `src/components/PlacePicker.jsx` — `placesList` now filters `p.status !== 'permanently_closed'` before the city/type/search filter chain, so permanently closed places never appear in slot assignment.
+    - `src/components/PlaceForm.jsx` — added `SCHEDULING_TAGS` module-level constant (`['breakfast', 'specialty-coffee', 'brunch', 'lunch', 'dinner', 'late-night']`). Added `toggleSchedulingTag(tag)` function: parses current `tags` string via existing `parseTags`, adds or removes the tag, joins back with `', '`. In NOTES & TAGS fieldset, added a `<div className="sched-hints">` block above the freeform tags input: label "SCHEDULING HINTS" + a row of toggle chips; each chip calls `toggleSchedulingTag` on click and gets class `sched-chip--on` when the tag is present in `parseTags(tags)`.
+    - `src/components/PlaceForm.css` — added `.sched-hints`, `.sched-hints-label`, `.sched-chips`, `.sched-chip`, `.sched-chip--on` styles. Chips are mono pill buttons (999px radius), `--line` border and `--dim` text when off, `--amber` border and text when on. No new fieldset or DOM structure needed outside the existing `form-section`.
+- **Deviations:** None.
+- **Schema/contract changes:** `constants.js` — added `supermarket` to `PLACE_TYPES`, changed `shop` emoji, added `permanently_closed` to `STATUSES`. No `db.js` change (these are display-only enums; stored string values are self-describing). No `repo.js` change.
+- **Known issues / TODO:** Existing `shop`-type places in the DB retain the `shop` key — they'll now render with `🏪` instead of `🛒`, which is the intended change. Existing places with `status: 'wishlist'` etc. are unaffected.
+- **Next:** Manual data cleanup (city merges), then tag v0.1.
+
+---
+
 ### 2026-06-17 — Four small fixes: postcode, hours badge, Untappd, type-suggest-after-hours
 
 - **Done:**

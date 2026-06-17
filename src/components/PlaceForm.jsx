@@ -5,6 +5,8 @@ import { parseMapsUrl } from '../utils/mapsParser.js';
 import { parseGoogleHours } from '../utils/hoursParser.js';
 import './PlaceForm.css';
 
+const SCHEDULING_TAGS = ['breakfast', 'specialty-coffee', 'brunch', 'lunch', 'dinner', 'late-night'];
+
 // Ordered — first match wins. More-specific phrases come before shorter ones.
 const TYPE_KEYWORDS = [
   ['bottle_shop',   ['beer shop', 'bottle shop', 'beer store', 'beerstore']],
@@ -169,6 +171,15 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
     e.preventDefault();
     setHoursPaste(text);
     handleHoursParse(text);
+  }
+
+  function toggleSchedulingTag(tag) {
+    const current = parseTags(tags);
+    if (current.includes(tag)) {
+      setTags(current.filter((t) => t !== tag).join(', '));
+    } else {
+      setTags([...current, tag].join(', '));
+    }
   }
 
   function setDayOpen(key, open) {
@@ -447,6 +458,24 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
           {/* ---- Notes & Tags ---- */}
           <fieldset className="form-section">
             <legend className="form-legend">NOTES & TAGS</legend>
+            <div className="sched-hints">
+              <span className="sched-hints-label">SCHEDULING HINTS</span>
+              <div className="sched-chips">
+                {SCHEDULING_TAGS.map((tag) => {
+                  const active = parseTags(tags).includes(tag);
+                  return (
+                    <button
+                      key={tag}
+                      type="button"
+                      className={`sched-chip${active ? ' sched-chip--on' : ''}`}
+                      onClick={() => toggleSchedulingTag(tag)}
+                    >
+                      {tag}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
             <label className="form-row">
               <span className="form-label">TAGS (comma-separated)</span>
               <input className="form-input" type="text"

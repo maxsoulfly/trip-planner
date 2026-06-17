@@ -7,9 +7,10 @@ const JS_DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 const DAY_ABBR    = { mon:'M', tue:'T', wed:'W', thu:'T', fri:'F', sat:'S', sun:'S' };
 
 const STAMP = {
-  wishlist: { label: '☆ FLAGGED', cls: 'stamp--flagged' },
-  planned:  { label: '◐ MARKED',  cls: 'stamp--marked'  },
-  visited:  { label: '✓ SECURED', cls: 'stamp--secured' },
+  wishlist:           { label: '☆ FLAGGED', cls: 'stamp--flagged' },
+  planned:            { label: '◐ MARKED',  cls: 'stamp--marked'  },
+  visited:            { label: '✓ SECURED', cls: 'stamp--secured' },
+  permanently_closed: { label: '✕ CLOSED',  cls: 'stamp--dead'   },
 };
 
 function todayWeekdayKey() {
