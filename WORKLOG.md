@@ -2,6 +2,40 @@
 
 ---
 
+### 2026-06-17 — Fix: today marker triangles absolutely positioned
+
+- **Done:**
+    - `src/components/PlaceCard.css` — `::before` / `::after` on `.pip-wrapper--today` changed from block flow elements to `position: absolute; left: 50%; transform: translateX(-50%)`. `::before` (▼) anchored `bottom: 100%; margin-bottom: 1px`; `::after` (▲) anchored `top: 100%; margin-top: 1px`. Both use `border: 5px` (reduced from 6px). Color: dim by default; amber via `.pip-wrapper--open` override. `pointer-events: none` on both. No JSX changes.
+- **Deviations:** None.
+- **Schema/contract changes:** None.
+- **Known issues / TODO:** None.
+- **Next:** Data cleanup, then tag v0.1.
+
+---
+
+### 2026-06-17 — Fix: today marker as bracketing triangles pointing toward pip
+
+- **Done:**
+    - `src/components/PlaceCard.css` — replaced single `::after` downward triangle with two pseudo-elements: `::before` (▼, points down toward pip, `border-top: 6px solid`, `margin: 0 auto 2px`) and `::after` (▲, points up toward pip, `border-bottom: 6px solid`, `margin: 2px auto 0`). Added `position: relative` to `.pip-wrapper--today`. Both triangles colored via `pip-wrapper--open` / `pip-wrapper--closed` modifier overrides (amber / dim); fallback is `var(--steel)`. No JSX changes.
+- **Deviations:** None.
+- **Schema/contract changes:** None.
+- **Known issues / TODO:** None.
+- **Next:** Data cleanup, then tag v0.1.
+
+---
+
+### 2026-06-17 — Fix: today marker triangle, color matches open/closed state
+
+- **Done:**
+    - `src/components/PlaceCard.jsx` — today's wrapper now gets two classes alongside `pip-wrapper--today`: `pip-wrapper--open` if the day has hours, `pip-wrapper--closed` otherwise. One-liner class string change, no structural JSX change.
+    - `src/components/PlaceCard.css` — `.pip-wrapper--today::after` changed from 4×4 circle to a downward CSS triangle (`border-left/right: 4px transparent; border-top: 6px solid`). Added two overrides: `.pip-wrapper--today.pip-wrapper--open::after { border-top-color: var(--amber) }` and `.pip-wrapper--today.pip-wrapper--closed::after { border-top-color: var(--dim) }`. Fallback color is `var(--steel)`.
+- **Deviations:** None.
+- **Schema/contract changes:** None.
+- **Known issues / TODO:** None.
+- **Next:** Data cleanup, then tag v0.1.
+
+---
+
 ### 2026-06-17 — Fix: separate today marker from open/closed pip design
 
 - **Done:**

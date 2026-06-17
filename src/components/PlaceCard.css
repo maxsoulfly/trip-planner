@@ -132,16 +132,34 @@
   flex-direction: column;
   align-items: center;
 }
-/* Small steel dot below today's pip — neutral "this is now" marker. */
+/* Two absolutely-positioned triangles bracketing today's pip — ▼ above, ▲ below.
+   Absolute so they don't push the pip out of its square. */
+.pip-wrapper--today { position: relative; }
+
+.pip-wrapper--today::before,
 .pip-wrapper--today::after {
   content: '';
-  display: block;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--steel);
-  margin: 2px auto 0;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  pointer-events: none;
 }
+.pip-wrapper--today::before {
+  border-top: 5px solid var(--dim);
+  bottom: 100%;
+  margin-bottom: 1px;
+}
+.pip-wrapper--today::after {
+  border-bottom: 5px solid var(--dim);
+  top: 100%;
+  margin-top: 1px;
+}
+.pip-wrapper--today.pip-wrapper--open::before { border-top-color: var(--amber); }
+.pip-wrapper--today.pip-wrapper--open::after  { border-bottom-color: var(--amber); }
 
 .hours-pip {
   width: 100%;
