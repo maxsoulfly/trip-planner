@@ -59,7 +59,7 @@ Canonical spellings to enforce everywhere (importer + any prefill):
   Krakow / Cracow / Cracov → Kraków
   Warsaw / Warsawa → Warszawa (or keep Warsaw — Maxx to decide canonical)
 A city merge tool lives in AdminModal: pick source city → target city →
-reassign all places. Implement as part of step 7 Commit B.
+reassign all places.
 
 ## isIncomplete definition (CORRECTED)
 A place is incomplete if ANY of:
@@ -78,73 +78,19 @@ everything. Maps URL is optional, not a completeness signal.
    slot assignment, flights, accommodation, ad-hoc items.
 5. **DONE** — HTML day-sheet export (offline, tap-to-Maps).
 6. **DONE** — XLSX importer: 203 places · 9 cities from Travel_Plans_Yana.xlsx.
-7. **IN PROGRESS** — Polish:
-
-   **Commit A — DONE (needs 3 bug fixes before committing):**
-   See "Step 7 fixes" below.
-
-   **Commit B — UI polish + schema v2:**
-   - Theme toggle (dark/light/system) in statusbar
-   - Compact list view + bulk delete for place library
-   - Modal CSS extraction to styles.css
-   - PlaceForm modal header: fix CACHE → PLACE
-   - Slot reorder: up/down arrows in SlotCell
-   - Trip list: fix sort (empty startDate → bottom)
-   - window.confirm → inline confirmation for all deletes
-   - websiteUrl field (schema version(2) bump)
-   - City merge tool in AdminModal
-   - City normalization in xlsxImport.js
-   - Name-based type suggestion on prefill (Museum/Muzeum → museum,
-     Hotel/Hostel → accommodation, etc.)
-   - Plus code address prefill: extract city/country from suffix
-     ("62JF+RM Warsaw, Poland" → city: Warsaw, country: Poland)
-
-## Step 7 fixes (do BEFORE committing Commit A)
-
-### Fix 1 — isIncomplete definition
-In App.jsx, replace the current isIncomplete helper with:
-  function isIncomplete(p) {
-    if (p.type === 'other') return true;
-    const hoursTypes = ['taproom','bottle_shop','brewpub','bar',
-                        'restaurant','cafe','museum','activity','shop'];
-    if (hoursTypes.includes(p.type) &&
-        Object.keys(p.openingHours || {}).length === 0) return true;
-    return false;
-  }
-Do NOT flag on missing googleMapsUrl — it's optional, not a
-completeness signal. This fix eliminates the false positives.
-
-### Fix 2 — Modal backdrop closes on drag
-The modal backdrop onClick fires when mouseup lands outside after a
-drag that started inside a field. Fix: in ALL modals that have a
-backdrop close handler (PlaceForm, TripForm, CsvImport, XlsxImport,
-AdminModal, PlacePicker), track mousedown target and only close if
-both mousedown AND mouseup were on the backdrop element itself.
-Standard pattern:
-  const backdropRef = useRef(null);
-  const mouseDownTarget = useRef(null);
-  <div ref={backdropRef}
-    onMouseDown={e => mouseDownTarget.current = e.target}
-    onClick={e => {
-      if (e.target === backdropRef.current &&
-          mouseDownTarget.current === backdropRef.current) onClose();
-    }}>
-
-### Fix 3 — Maps URL paste → auto-parse lat/lng
-When user pastes into the Google Maps URL field in PlaceForm, it
-should auto-trigger parseMapsUrl and fill lat/lng (and name if empty).
-Currently this only fires in the prefill strip, not the URL field
-itself. Add an onPaste handler to the googleMapsUrl input that calls
-parseMapsUrl and merges lat, lng, and name (if name is currently empty)
-into form state. Same pattern as the existing prefill strip.
+7. **DONE** — Polish: theme toggle, compact list view, bulk delete, slot reorder,
+   inline confirms, websiteUrl (schema v2), city merge tool, city normalization,
+   name-based type detection, plus code prefill, Maps URL paste auto-parse,
+   isIncomplete fix, modal backdrop drag fix.
+8. **DONE** — Trip XLSX export/import (replace-on-import), click-to-edit place
+   in grid, drop Trip-level accommodation field.
 
 ## Design language — "post-apocalyptic field terminal"
 A salvaged-tech / amber-CRT / survival-field-manual feel.
 Reference mock: `design-mock.html`.
 
 - **Theming:** CSS custom properties + `[data-theme]` on `<html>`.
-  Three themes: `dark` (default), `light`, `system`. Tokens wired since
-  step 2. Visible toggle ships in Commit B.
+  Three themes: `dark` (default), `light`, `system`. Visible toggle in statusbar.
   Light mode = printed field manual (manila paper + ink), not inverted dark.
 
 - **Palette — dark:** `--bg:#0E0E0F` · `--panel:#161518` · `--panel2:#1E1C20` ·
