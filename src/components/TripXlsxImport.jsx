@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
 import { parseTripXlsx } from '../utils/importTripXlsx.js';
-import { addPlace, addScheduleItem, getAllPlaces } from '../db/repo.js';
+import { addPlace, addScheduleItem, getAllPlaces, deleteScheduleItemsByTrip } from '../db/repo.js';
 import './TripXlsxImport.css';
 
 export default function TripXlsxImport({ trip, onDone, onClose }) {
@@ -36,14 +36,17 @@ export default function TripXlsxImport({ trip, onDone, onClose }) {
     setBusy(true);
     setError('');
     try {
-      // Create stub places and build name → id map
+      // 1. Create stub places and build name → id map
       const stubIdMap = {};
       for (const stub of parsed.stubPlaces) {
         const place = await addPlace(stub);
         stubIdMap[stub.name.trim().toLowerCase()] = place.id;
       }
 
-      // Insert schedule items
+      // 2. Replace existing schedule
+      await deleteScheduleItemsByTrip(trip.id);
+
+      // 3. Insert new schedule items
       let added = 0;
       for (const item of parsed.toSchedule) {
         const placeId = item.placeId || stubIdMap[item.stubName];
@@ -146,13 +149,17 @@ export default function TripXlsxImport({ trip, onDone, onClose }) {
                 </div>
               )}
 
+              <p className="txi-replace-warn">
+                This will replace all currently scheduled items for this trip.
+              </p>
+
               <div className="txi-actions">
                 <button
                   className="txi-btn-primary"
                   onClick={handleConfirm}
                   disabled={busy || totalItems === 0}
                 >
-                  {busy ? 'IMPORTING…' : `◈ ADD ${totalItems} ITEMS`}
+                  {busy ? 'IMPORTING…' : `◈ REPLACE SCHEDULE (${totalItems} ITEMS)`}
                 </button>
                 <button className="txi-btn-ghost" onClick={() => setStep('upload')} disabled={busy}>
                   BACK

@@ -132,6 +132,14 @@
 .txi-result-line--ok   { color: var(--amber); }
 .txi-result-line--warn { color: var(--steel); }
 
+.txi-replace-warn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--rust);
+  letter-spacing: .04em;
+  margin: 0;
+}
+
 /* ===== ACTION BUTTONS ===== */
 
 .txi-actions {

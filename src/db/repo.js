@@ -232,6 +232,9 @@ export const getScheduleForTrip = (tripId) =>
 
 export const deleteScheduleItem = (id) => db.scheduleItems.delete(id);
 
+export const deleteScheduleItemsByTrip = (tripId) =>
+  db.scheduleItems.where('tripId').equals(tripId).delete();
+
 // ----- Whole-db helpers (handy during development) -------------------------
 
 export async function resetAll() {

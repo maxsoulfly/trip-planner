@@ -2,6 +2,19 @@
 
 ---
 
+### 2026-06-19 — Fix: xlsx import replaces schedule instead of merging
+
+- **Done:**
+    - `src/db/repo.js` — added `deleteScheduleItemsByTrip(tripId)`: `db.scheduleItems.where('tripId').equals(tripId).delete()`.
+    - `src/components/TripXlsxImport.jsx` — `handleConfirm` now: (1) creates stubs, (2) calls `deleteScheduleItemsByTrip` to wipe the existing schedule, (3) inserts new items. Added `"This will replace all currently scheduled items for this trip."` warning above the confirm button (rust color). Button label changed to `◈ REPLACE SCHEDULE (N ITEMS)`.
+    - `src/components/TripXlsxImport.css` — added `.txi-replace-warn` (rust, mono, small).
+- **Deviations:** None.
+- **Schema/contract changes:** None.
+- **Known issues / TODO:** None.
+- **Next:** Commit B remaining items.
+
+---
+
 ### 2026-06-19 — Trips: xlsx export/import, click-to-edit place, drop accommodation field
 
 - **Done:**
