@@ -2,6 +2,17 @@
 
 ---
 
+### 2026-06-17 — Fix: wire pip-wrapper--open/closed JSX classes for triangle color
+
+- **Done:**
+    - `src/components/PlaceCard.jsx` — today's `pip-wrapper` div now includes `pip-wrapper--open` or `pip-wrapper--closed` alongside `pip-wrapper--today` depending on whether that day has hours. These classes were referenced in PlaceCard.css (absolute-positioned triangle color overrides) but missing from the JSX — the triangles fell back to `var(--dim)` regardless of hours state.
+- **Deviations:** This JSX change was authored during the "triangle color matches open/closed" step but accidentally omitted from that commit. Committed separately as a hotfix.
+- **Schema/contract changes:** None.
+- **Known issues / TODO:** None.
+- **Next:** Commit B remaining items (theme toggle, compact list, city merge, websiteUrl, etc.).
+
+---
+
 ### 2026-06-17 — Fix: today marker triangles absolutely positioned
 
 - **Done:**
