@@ -1,0 +1,183 @@
+/* TripXlsxImport modal — body styles only.
+   Shell (.modal-backdrop, .modal-panel, .modal-header, etc.) is in styles.css. */
+
+.txi-panel { max-width: 440px; }
+
+.txi-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+  max-height: calc(100vh - 140px);
+}
+
+.txi-error {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--rust);
+  background: rgba(204, 75, 46, .1);
+  border: 1px solid var(--rust);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+/* ===== UPLOAD STEP ===== */
+
+.txi-hint {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--dim);
+  letter-spacing: .03em;
+  line-height: 1.6;
+  margin: 0 0 12px;
+}
+.txi-hint code {
+  color: var(--amber);
+  font-size: 11px;
+}
+
+.txi-file-label { display: inline-block; cursor: pointer; }
+
+.txi-file-btn {
+  display: inline-block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  background: var(--amber);
+  color: var(--bg);
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: opacity .15s;
+}
+.txi-file-label:hover .txi-file-btn { opacity: .85; }
+
+/* ===== PREVIEW STEP ===== */
+
+.txi-summary {
+  background: var(--panel2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.txi-summary-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.txi-summary-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .14em;
+  color: var(--dim);
+}
+
+.txi-summary-val {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.txi-summary-val--ok   { color: var(--amber); }
+.txi-summary-val--warn { color: var(--steel); }
+
+.txi-warnings {
+  background: var(--panel2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 14px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.txi-warn-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  color: var(--steel);
+  margin-bottom: 6px;
+}
+
+.txi-warn-item {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--dim);
+  letter-spacing: .02em;
+  line-height: 1.6;
+  padding-left: 8px;
+}
+
+/* ===== DONE STEP ===== */
+
+.txi-result {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.txi-result-line {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .04em;
+}
+.txi-result-line--ok   { color: var(--amber); }
+.txi-result-line--warn { color: var(--steel); }
+
+/* ===== ACTION BUTTONS ===== */
+
+.txi-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.txi-btn-primary {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  background: var(--amber);
+  color: var(--bg);
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: opacity .15s;
+}
+.txi-btn-primary:hover:not(:disabled) { opacity: .85; }
+.txi-btn-primary:disabled { opacity: .5; cursor: default; }
+
+.txi-btn-ghost {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  background: transparent;
+  color: var(--dim);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.txi-btn-ghost:hover:not(:disabled) { color: var(--ink); border-color: var(--steel); }
+.txi-btn-ghost:disabled { opacity: .5; cursor: default; }
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}

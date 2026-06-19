@@ -98,6 +98,17 @@
 
 .sc-item--adhoc .sc-item-name { color: var(--dim); }
 
+/* Place name as clickable edit button */
+.sc-item-name--link {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  transition: color .12s;
+}
+.sc-item-name--link:hover { color: var(--amber); }
+
 .sc-item-controls {
   display: flex;
   gap: 1px;

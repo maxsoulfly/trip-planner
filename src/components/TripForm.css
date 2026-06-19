@@ -159,38 +159,3 @@
 .tf-flight-num { width: 100px; }
 .tf-grow       { flex: 1; }
 
-/* ===== ACCOMMODATION ===== */
-
-.tf-hint {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  color: var(--dim);
-  letter-spacing: .04em;
-  line-height: 1.5;
-  margin: 0;
-}
-
-.accom-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.accom-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-}
-.accom-row input[type="checkbox"] { cursor: pointer; accent-color: var(--amber); }
-.accom-name {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 12px;
-  color: var(--ink);
-  flex: 1;
-}
-.accom-city {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
-  color: var(--dim);
-  letter-spacing: .08em;
-}

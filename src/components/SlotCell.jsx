@@ -1,7 +1,7 @@
 import { typeMeta } from '../db/constants.js';
 import './SlotCell.css';
 
-export default function SlotCell({ block, items, places, flightCards, onAdd, onRemove, onMoveUp, onMoveDown }) {
+export default function SlotCell({ block, items, places, flightCards, onAdd, onRemove, onMoveUp, onMoveDown, onEditPlace }) {
   const sortedItems = items.slice().sort((a, b) => a.order - b.order);
 
   return (
@@ -38,7 +38,15 @@ export default function SlotCell({ block, items, places, flightCards, onAdd, onR
           return (
             <div key={item.id} className="sc-item sc-item--place">
               <span className="sc-item-icon">{typeMeta(place?.type)?.emoji || '📍'}</span>
-              <span className="sc-item-name">{place?.name || '(deleted)'}</span>
+              {place && onEditPlace ? (
+                <button
+                  className="sc-item-name sc-item-name--link"
+                  onClick={() => onEditPlace(place)}
+                  title={`Edit ${place.name}`}
+                >{place.name}</button>
+              ) : (
+                <span className="sc-item-name">{place?.name || '(deleted)'}</span>
+              )}
               <span className="sc-item-controls">
                 <button
                   className="sc-move-btn"

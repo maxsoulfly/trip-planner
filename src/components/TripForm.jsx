@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { addTrip, putTrip, getAllPlaces } from '../db/repo.js';
+import { addTrip, putTrip } from '../db/repo.js';
 import './TripForm.css';
 
 const EMPTY_FLIGHT = { airline: '', number: '', from: '', to: '', depTime: '', arrTime: '' };
@@ -78,9 +78,6 @@ export default function TripForm({ initialData, onSave, onClose }) {
   const [outbound,     setOutbound]     = useState(normalizeFlight(initialData?.outboundFlight));
   const [hasInbound,   setHasInbound]   = useState(Boolean(initialData?.inboundFlight));
   const [inbound,      setInbound]      = useState(normalizeFlight(initialData?.inboundFlight));
-  const [accomIds,     setAccomIds]     = useState(initialData?.accommodationPlaceIds || []);
-  const [accomPlaces,  setAccomPlaces]  = useState([]);
-  const [accomSearch,  setAccomSearch]  = useState('');
   const [busy,         setBusy]         = useState(false);
   const [error,        setError]        = useState('');
 
@@ -107,26 +104,6 @@ export default function TripForm({ initialData, onSave, onClose }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  // Load accommodation places from the library for the checklist.
-  useEffect(() => {
-    getAllPlaces().then((ps) =>
-      setAccomPlaces(ps.filter((p) => p.type === 'accommodation'))
-    );
-  }, []);
-
-  const filteredAccom = accomSearch.trim()
-    ? accomPlaces.filter((p) => {
-        const q = accomSearch.trim().toLowerCase();
-        return p.name.toLowerCase().includes(q) || (p.city || '').toLowerCase().includes(q);
-      })
-    : accomPlaces;
-
-  function toggleAccomId(id, checked) {
-    setAccomIds((ids) =>
-      checked ? [...ids, id] : ids.filter((x) => x !== id)
-    );
-  }
-
   async function handleSubmit(e) {
     e?.preventDefault();
     if (!title.trim())  { setError('Title is required.'); return; }
@@ -144,7 +121,6 @@ export default function TripForm({ initialData, onSave, onClose }) {
       endDate,
       outboundFlight:        hasOutbound ? { ...outbound } : null,
       inboundFlight:         hasInbound  ? { ...inbound  } : null,
-      accommodationPlaceIds: accomIds,
       notes:                 notes.trim(),
     };
 
@@ -262,45 +238,6 @@ export default function TripForm({ initialData, onSave, onClose }) {
             </label>
             {hasInbound && (
               <FlightFields value={inbound} onChange={setInbound} />
-            )}
-          </fieldset>
-
-          {/* ---- Accommodation ---- */}
-          <fieldset className="form-section">
-            <legend className="form-legend">ACCOMMODATION</legend>
-            {accomPlaces.length === 0 ? (
-              <p className="tf-hint">
-                No accommodation in your library yet.
-                Add places of type "Accommodation" to the place library first.
-              </p>
-            ) : (
-              <>
-                <input
-                  className="form-input"
-                  type="search"
-                  placeholder="FILTER BY NAME OR CITY…"
-                  value={accomSearch}
-                  onChange={(e) => setAccomSearch(e.target.value)}
-                  aria-label="Filter accommodation"
-                />
-                {filteredAccom.length === 0 ? (
-                  <p className="tf-hint">No matches.</p>
-                ) : (
-                  <div className="accom-list">
-                    {filteredAccom.map((p) => (
-                      <label key={p.id} className="accom-row">
-                        <input
-                          type="checkbox"
-                          checked={accomIds.includes(p.id)}
-                          onChange={(e) => toggleAccomId(p.id, e.target.checked)}
-                        />
-                        <span className="accom-name">{p.name}</span>
-                        {p.city && <span className="accom-city">{p.city.toUpperCase()}</span>}
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </>
             )}
           </fieldset>
 

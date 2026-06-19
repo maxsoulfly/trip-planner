@@ -3,14 +3,19 @@ import { getScheduleForTrip, getAllPlaces, deleteScheduleItem, putScheduleItem }
 import { BLOCKS } from '../db/constants.js';
 import { daysInRange, formatDayHeader } from '../utils/dates.js';
 import { generateDaySheet } from '../utils/exportHtml.js';
+import { exportTripXlsx } from '../utils/exportTripXlsx.js';
 import SlotCell from './SlotCell.jsx';
 import PlacePicker from './PlacePicker.jsx';
+import PlaceForm from './PlaceForm.jsx';
+import TripXlsxImport from './TripXlsxImport.jsx';
 import './TripGrid.css';
 
 export default function TripGrid({ trip, onBack }) {
-  const [scheduleItems, setScheduleItems] = useState([]);
-  const [places, setPlaces] = useState({}); // id → place, keyed for O(1) lookup
-  const [picker, setPicker] = useState(null); // null | { date, block }
+  const [scheduleItems,  setScheduleItems]  = useState([]);
+  const [places,         setPlaces]         = useState({}); // id → place
+  const [picker,         setPicker]         = useState(null);  // null | { date, block }
+  const [editingPlace,   setEditingPlace]   = useState(null);  // null | Place
+  const [showXlsxImport, setShowXlsxImport] = useState(false);
 
   async function load() {
     const [items, allPlaces] = await Promise.all([
@@ -47,7 +52,12 @@ export default function TripGrid({ trip, onBack }) {
     load();
   }
 
-  function handleExport() {
+  function handlePlaceSaved() {
+    setEditingPlace(null);
+    load();
+  }
+
+  function handleExportHtml() {
     const html = generateDaySheet(trip, scheduleItems, places);
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     const url  = URL.createObjectURL(blob);
@@ -60,17 +70,15 @@ export default function TripGrid({ trip, onBack }) {
     URL.revokeObjectURL(url);
   }
 
+  function handleExportXlsx() {
+    exportTripXlsx(trip, scheduleItems, places);
+  }
+
   const days = (trip.startDate && trip.endDate)
     ? daysInRange(trip.startDate, trip.endDate)
     : [];
 
-  // Accommodation names for the header strip — looked up from the places map.
-  const accomNames = (trip.accommodationPlaceIds || [])
-    .map((id) => places[id]?.name)
-    .filter(Boolean);
-
   // Outbound flight → morning of startDate; inbound → morning of endDate.
-  // Both can appear on the same day if trip is a single day.
   function flightCardsForSlot(date, blockKey) {
     if (blockKey !== 'morning') return [];
     const cards = [];
@@ -93,16 +101,12 @@ export default function TripGrid({ trip, onBack }) {
         {trip.cities?.length > 0 && (
           <span className="tg-cities">{trip.cities.join(' · ').toUpperCase()}</span>
         )}
-        <button className="tg-export" onClick={handleExport}>EXPORT HTML</button>
-      </div>
-
-      {/* ── Accommodation strip (trip-level, not per-night cell) ── */}
-      {accomNames.length > 0 && (
-        <div className="tg-accom-strip">
-          <span className="tg-accom-label">🏠 ACCOMMODATION</span>
-          <span className="tg-accom-names">{accomNames.join(' · ')}</span>
+        <div className="tg-toolbar">
+          <button className="tg-toolbar-btn" onClick={handleExportHtml}>EXPORT HTML</button>
+          <button className="tg-toolbar-btn" onClick={handleExportXlsx}>EXPORT XLSX</button>
+          <button className="tg-toolbar-btn" onClick={() => setShowXlsxImport(true)}>IMPORT XLSX</button>
         </div>
-      )}
+      </div>
 
       {/* ── Day × block grid ── */}
       {days.length === 0 ? (
@@ -127,6 +131,7 @@ export default function TripGrid({ trip, onBack }) {
                     onRemove={handleRemove}
                     onMoveUp={(item) => handleMoveItem(item, 'up')}
                     onMoveDown={(item) => handleMoveItem(item, 'down')}
+                    onEditPlace={(place) => setEditingPlace(place)}
                   />
                 );
               })}
@@ -144,6 +149,24 @@ export default function TripGrid({ trip, onBack }) {
           places={places}
           onConfirm={handlePickerConfirm}
           onClose={() => setPicker(null)}
+        />
+      )}
+
+      {/* ── Edit place modal (click-to-edit from grid) ── */}
+      {editingPlace && (
+        <PlaceForm
+          initialData={editingPlace}
+          onSave={handlePlaceSaved}
+          onClose={() => setEditingPlace(null)}
+        />
+      )}
+
+      {/* ── XLSX import modal ── */}
+      {showXlsxImport && (
+        <TripXlsxImport
+          trip={trip}
+          onDone={() => { setShowXlsxImport(false); load(); }}
+          onClose={() => setShowXlsxImport(false)}
         />
       )}
     </div>

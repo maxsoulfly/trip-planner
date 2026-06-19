@@ -2,6 +2,27 @@
 
 ---
 
+### 2026-06-19 — Trips: xlsx export/import, click-to-edit place, drop accommodation field
+
+- **Done:**
+    - `src/utils/exportTripXlsx.js` — new pure utility. `exportTripXlsx(trip, scheduleItems, placesMap)` writes a two-header-row (dates + cities) spreadsheet with 5 block groups × 3 sub-rows, triggers browser download as `[title]-schedule.xlsx`.
+    - `src/utils/importTripXlsx.js` — new pure parser. `parseTripXlsx(workbook, trip, allPlaces)` → `{ toSchedule, stubPlaces, warnings }`. Matches place names (normalized, city-preferred) against the library; unmatched names become stubs. Items with stubs carry `stubName` instead of `placeId` for the UI to resolve after addPlace().
+    - `src/components/TripXlsxImport.jsx` + `TripXlsxImport.css` — new modal. File picker → parse → summary (matched/stubs/warnings) → confirm. On confirm: creates stub places, inserts all schedule items, returns to grid.
+    - `src/components/TripGrid.jsx` — removed accommodation strip; replaced single EXPORT HTML button with a `.tg-toolbar` group (EXPORT HTML · EXPORT XLSX · IMPORT XLSX); wired `onEditPlace` prop to SlotCell; added `editingPlace` + `showXlsxImport` state; renders PlaceForm and TripXlsxImport modals.
+    - `src/components/TripGrid.css` — removed `.tg-accom-*` classes; replaced `.tg-export` with `.tg-toolbar` + `.tg-toolbar-btn`.
+    - `src/components/SlotCell.jsx` — added `onEditPlace` prop; place name renders as a `<button class="sc-item-name--link">` when the prop is provided, else plain span.
+    - `src/components/SlotCell.css` — added `.sc-item-name--link` (reset button, cursor pointer, amber hover).
+    - `src/components/TripForm.jsx` — removed accommodation field: dropped `getAllPlaces` import, `accomIds/accomPlaces/accomSearch` state, `filteredAccom`, `toggleAccomId`, the load useEffect, `accommodationPlaceIds` in the data object, and the ACCOMMODATION fieldset.
+    - `src/components/TripForm.css` — removed `.accom-*` styles.
+- **Deviations:**
+    - `accommodationPlaceIds` is still written by existing trip records in IndexedDB and still used by `addTrip` default (harmless, just silently ignored). No schema bump needed.
+    - TripGrid no longer renders the accommodation strip; old trips with accommodation data are unaffected — the data is just not displayed.
+- **Schema/contract changes:** None. `accommodationPlaceIds` field left in Dexie schema and `addTrip` default; data in existing records preserved.
+- **Known issues / TODO:** Import does not detect duplicate schedule items (re-importing the same file adds duplicates). Fine for v1.
+- **Next:** Commit B remaining items (theme toggle, compact list, city merge, websiteUrl, etc.).
+
+---
+
 ### 2026-06-17 — Fix: wire pip-wrapper--open/closed JSX classes for triangle color
 
 - **Done:**
