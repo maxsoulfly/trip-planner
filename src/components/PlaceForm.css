@@ -273,7 +273,8 @@
 }
 .type-suggest-dismiss:hover { opacity: 1; }
 
-.form-hours-hint {
+.form-hours-hint,
+.form-hint {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 10px;
   color: var(--dim);
@@ -462,6 +463,7 @@
 .blob-line-role--url     { color: var(--steel); }
 .blob-line-role--hours   { color: var(--dim); }
 .blob-line-role--address { color: var(--steel); }
+.blob-line-role--social  { color: var(--dim); opacity: .55; }
 
 .blob-ext-row {
   font-family: 'IBM Plex Mono', monospace;

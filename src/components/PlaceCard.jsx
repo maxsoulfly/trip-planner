@@ -30,7 +30,8 @@ function getStatusBadge(openingHours, todayKey) {
   const [openH,  openM]  = entry.open.split(':').map(Number);
   const [closeH, closeM] = entry.close.split(':').map(Number);
   const openMins  = openH  * 60 + openM;
-  const closeMins = closeH * 60 + closeM;
+  // "00:00" midnight-close is stored as 0 minutes; treat as 1440 so the range check works.
+  const closeMins = (closeH * 60 + closeM) || (24 * 60);
 
   if (nowMins >= openMins && nowMins < closeMins) {
     return { label: 'OPEN', cls: 'hours-readout--open' };

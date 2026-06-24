@@ -1,9 +1,29 @@
 // Preview panel for the QUICK PASTE blob — shows classified lines on the left
 // and extracted values on the right. Address chips are relabellable via onCycleRole.
 
+// Human-readable labels for the left-column role chips.
+const ROLE_DISPLAY = {
+  'name':          'name',
+  'hours':         'hours',
+  'address':       'address',
+  'url-maps':      'maps',
+  'url-untappd':   'untappd',
+  'url-website':   'website',
+  'url-facebook':  'social',
+  'url-instagram': 'social',
+};
+
+// CSS suffix for colour; social/facebook/instagram share 'social'.
+function roleCss(role) {
+  if (role === 'url-facebook' || role === 'url-instagram') return 'social';
+  if (role.startsWith('url-')) return 'url';
+  return role;
+}
+
 export default function BlobPreview({ result, onCycleRole }) {
   const { lines, extracted } = result;
-  const { name, url, lat, lng, shortUrl, openingHours, addrSegments } = extracted;
+  const { name, url, lat, lng, shortUrl, openingHours,
+          addrSegments, untappdUrl, websiteUrl, facebookUrl } = extracted;
 
   const hoursDayCount = openingHours ? Object.keys(openingHours).length : 0;
 
@@ -14,7 +34,9 @@ export default function BlobPreview({ result, onCycleRole }) {
         <div className="blob-col-label">LINES</div>
         {lines.map((line, i) => (
           <div key={i} className="blob-line-chip">
-            <span className={`blob-line-role blob-line-role--${line.role}`}>{line.role}</span>
+            <span className={`blob-line-role blob-line-role--${roleCss(line.role)}`}>
+              {ROLE_DISPLAY[line.role] ?? line.role}
+            </span>
             <span className="blob-line-text" title={line.raw}>{line.raw}</span>
           </div>
         ))}
@@ -39,7 +61,7 @@ export default function BlobPreview({ result, onCycleRole }) {
 
         {!shortUrl && url && (
           <div className="blob-ext-row">
-            <span className="blob-ext-label">URL</span>
+            <span className="blob-ext-label">MAPS URL</span>
             <span className="blob-ext-value">{url.length > 40 ? url.slice(0, 40) + '…' : url}</span>
           </div>
         )}
@@ -55,6 +77,27 @@ export default function BlobPreview({ result, onCycleRole }) {
           <div className="blob-ext-row">
             <span className="blob-ext-label">HOURS</span>
             <span className="blob-ext-value">{hoursDayCount} day{hoursDayCount !== 1 ? 's' : ''} parsed</span>
+          </div>
+        )}
+
+        {websiteUrl && (
+          <div className="blob-ext-row">
+            <span className="blob-ext-label">WEBSITE</span>
+            <span className="blob-ext-value">{websiteUrl.length > 40 ? websiteUrl.slice(0, 40) + '…' : websiteUrl}</span>
+          </div>
+        )}
+
+        {untappdUrl && (
+          <div className="blob-ext-row">
+            <span className="blob-ext-label">UNTAPPD</span>
+            <span className="blob-ext-value">{untappdUrl.length > 40 ? untappdUrl.slice(0, 40) + '…' : untappdUrl}</span>
+          </div>
+        )}
+
+        {facebookUrl && (
+          <div className="blob-ext-row">
+            <span className="blob-ext-label">SOCIAL</span>
+            <span className="blob-ext-value" style={{ color: 'var(--dim)', opacity: .6 }}>seen · not applied</span>
           </div>
         )}
 
@@ -78,7 +121,8 @@ export default function BlobPreview({ result, onCycleRole }) {
           </div>
         )}
 
-        {!name && !url && hoursDayCount === 0 && !addrSegments?.length && (
+        {!name && !url && hoursDayCount === 0 && !addrSegments?.length
+         && !websiteUrl && !untappdUrl && (
           <span className="blob-ext-value" style={{ color: 'var(--dim)', opacity: .6 }}>
             Nothing extracted
           </span>

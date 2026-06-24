@@ -1,48 +1,71 @@
 // Pure blob parser — no React, no Dexie.
 //
 // parseBlob(text) → { lines, extracted }
-//   lines:     [{ raw, role }]  role = name|url|hours|address
+//   lines:     [{ raw, role }]
+//     role = name | url-maps | url-untappd | url-website | url-facebook |
+//            url-instagram | hours | address
 //   extracted: { name, url, lat, lng, nameFromUrl, shortUrl,
-//                openingHours, addrSegments, addrDerived }
+//                openingHours, addrSegments, addrDerived,
+//                untappdUrl, websiteUrl, facebookUrl }
 
-import { parseMapsUrl }          from './mapsParser.js';
-import { parseGoogleHours }      from './hoursParser.js';
-import { findCountry }           from './countries.js';
+import { parseMapsUrl }               from './mapsParser.js';
+import { parseGoogleHours }           from './hoursParser.js';
+import { findCountry }                from './countries.js';
 import { parseAddress, deriveFields } from './addressParser.js';
 
-const WEEKDAY_RE    = /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|Mon|Tue|Wed|Thu|Fri|Sat|Sun)\b/i;
-// Format A value lines: "2–11 PM", "12 PM–12 AM"
-const TIME_VALUE_RE = /^\d{1,2}(?::\d{2})?\s*(am|pm)\s*[–—-]/i;
-const CLOSED_RE     = /^(Closed|Open 24 hours)$/i;
+// Whole-line weekday name (bare "Monday" or range "Monday–Friday" or "Mon–Fri").
+const WEEKDAY_RE = /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|Mon|Tue|Wed|Thu|Fri|Sat|Sun)\b/i;
+
+// Format A time-value lines. am/pm before the dash is optional to catch "2–11 pm".
+const TIME_VALUE_RE = /^\d{1,2}(?::\d{2})?\s*(?:am|pm)?\s*[–—-]/i;
+
+const CLOSED_RE = /^(Closed|Open 24 hours)$/i;
+
+function classifyUrl(line) {
+  if (!/^https?:\/\//i.test(line)) return null;
+  if (/google\.com\/maps|maps\.app\.goo\.gl/i.test(line))  return 'url-maps';
+  if (/untappd\.com/i.test(line))                           return 'url-untappd';
+  if (/facebook\.com|fb\.com/i.test(line))                  return 'url-facebook';
+  if (/instagram\.com/i.test(line))                         return 'url-instagram';
+  return 'url-website';
+}
 
 function classifyLine(raw) {
-  if (/^https?:\/\//i.test(raw) && /google\.com\/maps|maps\.app\.goo\.gl/i.test(raw)) return 'url';
+  const urlRole = classifyUrl(raw);
+  if (urlRole) return urlRole;
   if (WEEKDAY_RE.test(raw) || CLOSED_RE.test(raw) || TIME_VALUE_RE.test(raw)) return 'hours';
   if (/,/.test(raw) && (/\d/.test(raw) || findCountry(raw))) return 'address';
   return 'name';
 }
 
+const EMPTY_EXTRACTED = {
+  name: null, url: null, lat: null, lng: null, nameFromUrl: null, shortUrl: false,
+  openingHours: null, addrSegments: null, addrDerived: null,
+  untappdUrl: null, websiteUrl: null, facebookUrl: null,
+};
+
 export function parseBlob(text) {
-  if (!text?.trim()) {
-    return { lines: [], extracted: { name: null, url: null, lat: null, lng: null,
-      nameFromUrl: null, shortUrl: false, openingHours: null, addrSegments: null, addrDerived: null } };
-  }
+  if (!text?.trim()) return { lines: [], extracted: { ...EMPTY_EXTRACTED } };
 
   const lines = text.split('\n')
     .map(raw => raw.trim())
     .filter(Boolean)
     .map(raw => ({ raw, role: classifyLine(raw) }));
 
-  // Extract from classified lines
-  const nameLine    = lines.find(l => l.role === 'name');
-  const urlLine     = lines.find(l => l.role === 'url');
-  const addrLine    = lines.find(l => l.role === 'address');
-  const hoursLines  = lines.filter(l => l.role === 'hours');
+  const nameLine   = lines.find(l => l.role === 'name');
+  const mapsLine   = lines.find(l => l.role === 'url-maps');
+  const addrLine   = lines.find(l => l.role === 'address');
+  const hoursLines = lines.filter(l => l.role === 'hours');
 
-  // URL → coords + nameFromUrl
+  // URL sub-types
+  const untappdLine  = lines.find(l => l.role === 'url-untappd');
+  const websiteLine  = lines.find(l => l.role === 'url-website');
+  const facebookLine = lines.find(l => l.role === 'url-facebook' || l.role === 'url-instagram');
+
+  // Maps URL → coords + nameFromUrl
   let url = null, lat = null, lng = null, nameFromUrl = null, shortUrl = false;
-  if (urlLine) {
-    url = urlLine.raw;
+  if (mapsLine) {
+    url = mapsLine.raw;
     const parsed = parseMapsUrl(url);
     if (parsed.short) {
       shortUrl = true;
@@ -53,17 +76,16 @@ export function parseBlob(text) {
     }
   }
 
-  // Name: explicit blob line wins over URL-decoded name
   const name = nameLine?.raw ?? nameFromUrl ?? null;
 
-  // Hours: join all hours lines, parse
+  // Hours: join all hours-classified lines (blanks already stripped by filter)
   let openingHours = null;
   if (hoursLines.length) {
     const parsed = parseGoogleHours(hoursLines.map(l => l.raw).join('\n'));
     if (Object.keys(parsed).length > 0) openingHours = parsed;
   }
 
-  // Address: first address line → segment chips
+  // Address chips
   let addrSegments = null, addrDerived = null;
   if (addrLine) {
     const result = parseAddress(addrLine.raw);
@@ -73,6 +95,12 @@ export function parseBlob(text) {
     }
   }
 
-  const extracted = { name, url, lat, lng, nameFromUrl, shortUrl, openingHours, addrSegments, addrDerived };
+  const extracted = {
+    name, url, lat, lng, nameFromUrl, shortUrl,
+    openingHours, addrSegments, addrDerived,
+    untappdUrl:  untappdLine?.raw  ?? null,
+    websiteUrl:  websiteLine?.raw  ?? null,
+    facebookUrl: facebookLine?.raw ?? null,
+  };
   return { lines, extracted };
 }

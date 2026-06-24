@@ -198,6 +198,9 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
     if (extracted.lat != null)  setLat(String(extracted.lat));
     if (extracted.lng != null)  setLng(String(extracted.lng));
     if (extracted.openingHours) setHours(h => ({ ...h, ...extracted.openingHours }));
+    if (extracted.untappdUrl)   setUntappdUrl(extracted.untappdUrl);
+    if (extracted.websiteUrl)   setWebsiteUrl(extracted.websiteUrl);
+    // facebookUrl → no place field; social links are shown in preview only
     // addrSegments → existing useEffect live-applies city/country/address
     if (extracted.addrSegments?.length) setAddrSegments(extracted.addrSegments);
 
@@ -586,6 +589,9 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
                 value={googleMapsUrl} onChange={(e) => setGoogleMapsUrl(e.target.value)}
                 onPaste={handleUrlFieldPaste}
                 placeholder="https://maps.google.com/…" />
+              {isEdit && (
+                <span className="form-hint">paste a Maps URL here to update name + coordinates</span>
+              )}
             </label>
           </fieldset>
 

@@ -2,6 +2,25 @@
 
 ---
 
+### 2026-06-24 — Step 11: Bug fixes (hours clock, blob alternating, blob URL routing, maps prefill hint)
+
+- **Done:**
+  - `src/components/PlaceCard.jsx` — Fix 1: the code was already using `getHours()`/`getMinutes()` (local time), not UTC — no UTC bug in the current codebase. The actual cause of "CLOSED TODAY when open" is that midnight-close ("00:00") produces `closeMins = 0`, making `nowMins < closeMins` always false for places open until midnight. Fixed with `const closeMins = (closeH * 60 + closeM) || (24 * 60)` — zero-close treated as 1440 (next-day midnight). One-liner change.
+  - `src/utils/blobParser.js` — Fix 2: extended `TIME_VALUE_RE` from `/^\d{1,2}(?::\d{2})?\s*(am|pm)\s*[–—-]/i` to `/^\d{1,2}(?::\d{2})?\s*(?:am|pm)?\s*[–—-]/i` (made am/pm before the dash optional). Now classifies "2–11 pm" (no am/pm on open side) as `hours` instead of `name`. Bare "Wednesday" lines already matched via `WEEKDAY_RE` — no change needed there.
+  - `src/utils/blobParser.js` — Fix 3: added `classifyUrl(line)` returning one of `url-maps | url-untappd | url-website | url-facebook | url-instagram`. Updated `classifyLine` to call it. Expanded `extracted` with `untappdUrl`, `websiteUrl`, `facebookUrl` fields. Updated empty-result sentinel accordingly.
+  - `src/components/BlobPreview.jsx` — Fix 3: added `ROLE_DISPLAY` map and `roleCss` helper to translate sub-type roles to display labels and CSS suffixes. `url-facebook`/`url-instagram` both display as `social` (dim). Added right-column rows for `websiteUrl`, `untappdUrl` (shown with truncated value), `facebookUrl` ("seen · not applied" in dim). Updated empty-state check.
+  - `src/components/PlaceForm.jsx` — Fix 3: `applyBlob` now writes `untappdUrl` and `websiteUrl` fields; `facebookUrl` is a no-op.
+  - `src/components/PlaceForm.jsx` — Fix 4: `onPaste={handleUrlFieldPaste}` was already wired on the GOOGLE MAPS URL input unconditionally (not gated by `!isEdit`). Change is UX-only: added `{isEdit && <span className="form-hint">paste a Maps URL here to update name + coordinates</span>}` below the input.
+  - `src/components/PlaceForm.css` — Added `.form-hint` alongside `.form-hours-hint` (same styles). Added `.blob-line-role--social { color: var(--dim); opacity: .55; }` for social link lines in blob preview.
+- **Deviations:**
+  - Fix 1 diagnosis in the brief (UTC vs local time) did not match the actual code — `getHours()` was already in use. Applied the real fix (midnight closeMins=0) instead.
+  - Fix 2: blank lines between Format A pairs not explicitly preserved in the join (brief mentioned this). `parseGoogleHours` handles alternating format without needing blank separators; the existing `filter(Boolean)` already removes them. No change needed.
+- **Schema/contract changes:** None.
+- **Known issues / TODO:** Overnight wrapping (e.g., 22:00–02:00) still not handled by `getStatusBadge` — at 01:00, the place shows as not open. Low priority for now.
+- **Next:** Venue traits or flight email parser.
+
+---
+
 ### 2026-06-24 — Step 10: Blob notepad smart-paste
 
 - **Done:**
