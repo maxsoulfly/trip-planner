@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getAllPlaces, deletePlace, getAllTrips, deleteTripCascade } from './db/repo.js';
-import { PLACE_TYPES, STATUSES } from './db/constants.js';
+import { PLACE_TYPES, STATUSES, VENUE_TRAITS } from './db/constants.js';
 import PlaceCard from './components/PlaceCard.jsx';
 import PlaceList from './components/PlaceList.jsx';
 import PlaceForm from './components/PlaceForm.jsx';
@@ -11,6 +11,8 @@ import TripList    from './components/TripList.jsx';
 import TripForm  from './components/TripForm.jsx';
 import TripGrid  from './components/TripGrid.jsx';
 import './App.css';
+
+const parseTags = (str) => (str ? String(str).split(',').map((s) => s.trim()).filter(Boolean) : []);
 
 const THEME_CYCLE = ['dark', 'light', 'system'];
 const THEME_LABEL = { dark: '◐ DARK', light: '☀ LIGHT', system: '⊙ SYS' };
@@ -43,6 +45,7 @@ export default function App() {
   const [filterCity,   setFilterCity]   = useState('');
   const [filterType,   setFilterType]   = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [filterTrait,  setFilterTrait]  = useState('');
   const [listView,     setListView]     = useState(false);
   const [modal,        setModal]        = useState(null);
   const [showImport,       setShowImport]       = useState(false);
@@ -92,12 +95,13 @@ export default function App() {
       if (filterCity       && p.city   !== filterCity)   return false;
       if (filterType       && p.type   !== filterType)   return false;
       if (filterStatus     && p.status !== filterStatus) return false;
+      if (filterTrait      && !(p.tags || []).includes(filterTrait)) return false;
       if (filterIncomplete && !isIncomplete(p))          return false;
       if (q && ![p.name, p.city, p.country, p.notes, ...(p.tags || [])]
         .join(' ').toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [places, search, filterCity, filterType, filterStatus, filterIncomplete]);
+  }, [places, search, filterCity, filterType, filterStatus, filterTrait, filterIncomplete]);
 
   // Inline confirm is now handled inside PlaceCard — handler just deletes.
   async function handleDeletePlace(place) {
@@ -190,6 +194,13 @@ export default function App() {
               <option value="">ALL STATUS</option>
               {STATUSES.map((s) => (
                 <option key={s.key} value={s.key}>{s.emoji} {s.label.toUpperCase()}</option>
+              ))}
+            </select>
+            <select className="toolbar__select" value={filterTrait}
+              onChange={(e) => setFilterTrait(e.target.value)} aria-label="Filter by trait">
+              <option value="">ALL TRAITS</option>
+              {VENUE_TRAITS.map((t) => (
+                <option key={t.key} value={t.key}>{t.emoji} {t.label.toUpperCase()}</option>
               ))}
             </select>
             <button

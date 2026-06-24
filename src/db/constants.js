@@ -43,6 +43,20 @@ export const STATUSES = [
   { key: 'permanently_closed', label: 'Permanently closed', emoji: '✕' },
 ];
 
+// Controlled secondary tags — "what else is this place beyond its primary type."
+// Stored as plain strings in the existing tags array alongside free tags.
+// Locked vocabulary — do not extend without confirming with Maxx.
+export const VENUE_TRAITS = [
+  { key: 'craft-beer',    label: 'Craft Beer',    emoji: '🍺' },
+  { key: 'taps-on-site',  label: 'Taps On-Site',  emoji: '🚰' },
+  { key: 'bottles-to-go', label: 'Bottles To-Go',  emoji: '🛍' },
+  { key: 'food',          label: 'Food',           emoji: '🍽' },
+  { key: 'wine',          label: 'Wine',           emoji: '🍷' },
+  { key: 'cocktails',     label: 'Cocktails',      emoji: '🍸' },
+  { key: 'coffee',        label: 'Coffee',         emoji: '☕' },
+  { key: 'outdoor',       label: 'Outdoor',        emoji: '🌿' },
+];
+
 // Weekday keys used by Place.openingHours. Monday-first to match Europe.
 export const WEEKDAYS = [
   { key: 'mon', label: 'Mon' },

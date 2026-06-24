@@ -2,6 +2,20 @@
 
 ---
 
+### 2026-06-24 — Step 13: Venue traits — controlled secondary tags
+
+- **Done:**
+  - `src/db/constants.js` — added `VENUE_TRAITS` export (8 entries: `craft-beer`, `taps-on-site`, `bottles-to-go`, `food`, `wine`, `cocktails`, `coffee`, `outdoor`). No `db.js` version bump — traits are stored as plain strings in the existing `tags` array.
+  - `src/components/PlaceForm.jsx` — added `VENUE_TRAITS` to import; added `toggleTrait(key)` handler (same pattern as `toggleSchedulingTag`); added VENUE TRAITS chip row inside NOTES & TAGS fieldset, above the existing SCHEDULING HINTS chips.
+  - `src/components/PlaceForm.css` — added `/* VENUE TRAIT CHIPS */` section before the scheduling hints section. `.trait-chip` follows the same mono pill shape as `.sched-chip`; active state uses `var(--amber)` border + color for consistency.
+  - `src/App.jsx` — added `VENUE_TRAITS` to constants import; added module-level `parseTags` helper (not used by filter logic directly — `p.tags` is already an array — but available for future use); added `filterTrait` state; added `!(p.tags || []).includes(filterTrait)` guard to `useMemo` filter; added `filterTrait` to dependency array; added trait `<select>` in toolbar after the status filter, reusing `.toolbar__select` class (no new CSS needed).
+- **Deviations:** None. `parseTags` in App.jsx is a clean one-liner and doesn't hurt.
+- **Schema/contract changes:** `VENUE_TRAITS` is a new constants export. No `db.js`, `repo.js`, or `xlsxImport.js` changes. Existing places with no trait tags are unaffected.
+- **Known issues / TODO:** `parseTags` in App.jsx is defined but the filter directly uses `Array.includes` on `p.tags`. Could remove it — left as a utility in case anything else in App.jsx needs it later.
+- **Next:** Blob notepad smart-paste (Step 10 plan already complete); candidate next items: blob improvements, flight email parser, or venue trait display on PlaceCard.
+
+---
+
 ### 2026-06-24 — Step 12: Blob display, city parse, URL routing; card Maps link; brewery + park types
 
 - **Done:**

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { addPlace, putPlace, getAllPlaces, mergePlaces as doMergePlaces, countScheduleItemsByPlace } from '../db/repo.js';
-import { PLACE_TYPES, STATUSES, WEEKDAYS, typeMeta } from '../db/constants.js';
+import { PLACE_TYPES, STATUSES, WEEKDAYS, VENUE_TRAITS, typeMeta } from '../db/constants.js';
 import { parseMapsUrl } from '../utils/mapsParser.js';
 import { parseGoogleHours } from '../utils/hoursParser.js';
 import { parseAddress, deriveFields } from '../utils/addressParser.js';
@@ -275,6 +275,14 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
     } else {
       setTags([...current, tag].join(', '));
     }
+  }
+
+  function toggleTrait(key) {
+    const current = parseTags(tags);
+    const next = current.includes(key)
+      ? current.filter((t) => t !== key)
+      : [...current, key];
+    setTags(next.join(', '));
   }
 
   function setDayOpen(key, open) {
@@ -617,6 +625,24 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
           {/* ---- Notes & Tags ---- */}
           <fieldset className="form-section">
             <legend className="form-legend">NOTES & TAGS</legend>
+            <div className="trait-hints">
+              <span className="trait-hints-label">VENUE TRAITS</span>
+              <div className="trait-chips">
+                {VENUE_TRAITS.map((t) => {
+                  const active = parseTags(tags).includes(t.key);
+                  return (
+                    <button
+                      key={t.key}
+                      type="button"
+                      className={`trait-chip${active ? ' trait-chip--on' : ''}`}
+                      onClick={() => toggleTrait(t.key)}
+                    >
+                      {t.emoji} {t.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
             <div className="sched-hints">
               <span className="sched-hints-label">SCHEDULING HINTS</span>
               <div className="sched-chips">

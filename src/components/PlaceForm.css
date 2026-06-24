@@ -282,6 +282,59 @@
   margin: 4px 0 0;
 }
 
+/* ===== VENUE TRAIT CHIPS ===== */
+
+.trait-hints {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.trait-hints-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.trait-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.trait-chip {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .04em;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px 9px;
+  color: var(--dim);
+  cursor: pointer;
+  transition: border-color .12s, color .12s;
+}
+
+.trait-chip--on {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+.trait-chip:hover {
+  border-color: var(--steel);
+  color: var(--ink);
+}
+
+.trait-chip--on:hover {
+  border-color: var(--amber);
+  color: var(--amber);
+  opacity: .8;
+}
+
 /* ===== SCHEDULING HINT CHIPS ===== */
 
 .sched-hints {
