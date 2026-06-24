@@ -2,6 +2,28 @@
 
 ---
 
+### 2026-06-24 — Step 12: Blob display, city parse, URL routing; card Maps link; brewery + park types
+
+- **Done:**
+  - `src/components/BlobPreview.jsx` — Fix 1: added `truncUrl(s, max=40)` helper; applied it to left-column URL line text (`line.role.startsWith('url-')` → truncate). Right-column values already had JS truncation.
+  - `src/components/PlaceForm.css` — Fix 1: added `min-width: 0` to `.blob-lines-col` and `.blob-extracted-col` (required for CSS grid children to clip content); added `overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%` to `.blob-ext-value` so right-column values also clip cleanly.
+  - `src/utils/addressParser.js` — Fix 3: added lone-digit guard at top of `classifySegment` — `/^\d{1,3}$/` returns `'ignore'` so building-number prefixes split off by a comma (e.g. `6` in `6, ul. "Hristo Belchev" str, ...`) don't become city chips.
+  - `src/utils/addressParser.js` — Fix 5: changed `deriveFields` to take the **last** city chip instead of joining all city chips with `' '`. `Sofia Center` + `Sofia` → `city: Sofia`. Single-city cases unchanged.
+  - `src/db/constants.js` — Feature 7: added `{ key: 'brewery', emoji: '🏭', label: 'Brewery' }` after `brewpub`; added `{ key: 'park', emoji: '🌳', label: 'Park / Cemetery' }` after `museum`. No db.js bump needed — type is a plain string.
+  - `src/components/PlaceForm.jsx` — Feature 7: added `brewery` entry to `TYPE_KEYWORDS` with keywords `['brewery', 'browar', 'brauerei', 'pivovar']` (moved from `brewpub`). Removed those four from `brewpub` (which retains `brewpub`, `brew pub`, `beer & food`, `beer and food`, `brewing`). Added `park` entry with `['park', 'cemetery', 'cmentarz', 'hřbitov', 'garden', 'jardín', 'zoo', 'botanical']`. `brasserie` left under `restaurant` — it's a French restaurant style, not a production brewery.
+  - `src/components/PlaceCard.jsx` — Feature 6: computed `mapsHref` (googleMapsUrl → coords → name+city search fallback). Wrapped `<h2>` content in `<a className="card-name-link">`. Existing `▸ GOOGLE MAPS` link in card-links preserved.
+  - `src/components/PlaceCard.css` — Feature 6: added `.card-name-link` (inherits font/size/weight/color from `.card-title`, `text-decoration: none`) + hover (`color: var(--amber); text-decoration: underline`).
+- **Verified no-change (bugs not present in current code):**
+  - Fix 2 (blank lines as empty name chips): `filter(Boolean)` already strips blank lines from the `lines` array before classification. No empty chips possible. No code change.
+  - Fix 4 (websiteUrl http:// not applied): `classifyUrl` correctly uses `/^https?:\/\//i` (both schemes handled). State setter `setWebsiteUrl` matches state variable `websiteUrl`. No code change.
+- **Deviations:**
+  - `brasserie` keyword not moved to `brewery` — it's under `restaurant` and a brasserie is a French restaurant serving brasserie food, not a production brewery. Brief listed it as a candidate but said "check first."
+- **Schema/contract changes:** `PLACE_TYPES` in constants.js has 2 new entries. Non-breaking (additive string enum). No `db.js` version bump.
+- **Known issues / TODO:** None new.
+- **Next:** Venue traits or flight email parser.
+
+---
+
 ### 2026-06-24 — Step 11: Bug fixes (hours clock, blob alternating, blob URL routing, maps prefill hint)
 
 - **Done:**

@@ -46,6 +46,9 @@ function isPostcodeToken(token) {
 function classifySegment(segment) {
   const trimmed = segment.trim();
 
+  // Lone digit(s) — building-number prefix split off by a comma (e.g. "6, ul. Foo")
+  if (/^\d{1,3}$/.test(trimmed)) return 'ignore';
+
   // Check whole segment first (catches UK postcodes with internal space)
   if (isPostcodeToken(trimmed)) return 'postcode';
 
@@ -126,19 +129,21 @@ export function parseAddress(text) {
 // address = 'street' + 'postcode' chips joined with ', ' (original order)
 // 'ignore' chips contribute to nothing.
 export function deriveFields(segments) {
-  const cityParts = [];
+  const cityChips = [];
   let country = '';
   const addrParts = [];
 
   for (const seg of segments) {
-    if (seg.role === 'city')    { cityParts.push(seg.raw); }
+    if (seg.role === 'city')    { cityChips.push(seg.raw); }
     else if (seg.role === 'country') { country = seg.raw; }
     else if (seg.role === 'street' || seg.role === 'postcode') { addrParts.push(seg.raw); }
     // 'ignore' → nothing
   }
 
+  // Take the last city chip: in Google Maps format the actual city name consistently
+  // appears closer to the country than the district/neighbourhood does.
   return {
-    city:    cityParts.join(' '),
+    city:    cityChips.length ? cityChips[cityChips.length - 1] : '',
     country,
     address: addrParts.join(', '),
   };

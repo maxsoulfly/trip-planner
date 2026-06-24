@@ -13,12 +13,14 @@ const SCHEDULING_TAGS = ['breakfast', 'specialty-coffee', 'brunch', 'lunch', 'di
 // Ordered — first match wins. More-specific phrases come before shorter ones.
 const TYPE_KEYWORDS = [
   ['bottle_shop',   ['beer shop', 'bottle shop', 'beer store', 'beerstore']],
-  ['brewpub',       ['brewpub', 'brew pub', 'beer & food', 'beer and food', 'brewery', 'browar', 'brauerei', 'brewing', 'pivovar']],
+  ['brewery',       ['brewery', 'browar', 'brauerei', 'pivovar']],
+  ['brewpub',       ['brewpub', 'brew pub', 'beer & food', 'beer and food', 'brewing']],
   ['taproom',       ['taproom', 'tap room', 'beer bar', 'craft beer', 'beer']],
   ['restaurant',    ['restaurant', 'bistro', 'brasserie', 'ristorante']],
   ['cafe',          ['café', 'cafe', 'coffee', 'kawiarnia', 'kaffee']],
   ['bar',           ['bar']],
   ['museum',        ['museum', 'muzeum', 'muzej', 'gallery', 'galeria', 'galeri']],
+  ['park',          ['park', 'cemetery', 'cmentarz', 'hřbitov', 'garden', 'jardín', 'zoo', 'botanical']],
   ['accommodation', ['hotel', 'hostel', 'noclegi', 'apartment', 'apartament', 'pension', 'inn']],
 ];
 

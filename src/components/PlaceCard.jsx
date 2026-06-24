@@ -59,6 +59,11 @@ export default function PlaceCard({ place, onEdit, onDelete, incomplete }) {
     place.lat != null && place.lng != null ? `${place.lat}, ${place.lng}` : null,
   ].filter(Boolean);
 
+  const mapsHref = place.googleMapsUrl
+    || (place.lat && place.lng
+        ? `https://www.google.com/maps?q=${place.lat},${place.lng}`
+        : `https://www.google.com/maps/search/${encodeURIComponent((place.name + ' ' + (place.city || '')).trim())}`);
+
   return (
     <article className="card">
       <span className="card-corner" aria-hidden="true" />
@@ -69,7 +74,11 @@ export default function PlaceCard({ place, onEdit, onDelete, incomplete }) {
         {incomplete && <span className="card-stub" aria-label="Incomplete record">⚠</span>}
       </div>
 
-      <h2 className="card-title">{place.name}</h2>
+      <h2 className="card-title">
+        <a className="card-name-link" href={mapsHref} target="_blank" rel="noopener noreferrer">
+          {place.name}
+        </a>
+      </h2>
 
       {coordParts.length > 0 && (
         <div className="card-coords">{coordParts.join(' · ')}</div>

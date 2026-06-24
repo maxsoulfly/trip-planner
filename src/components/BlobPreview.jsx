@@ -1,6 +1,10 @@
 // Preview panel for the QUICK PASTE blob — shows classified lines on the left
 // and extracted values on the right. Address chips are relabellable via onCycleRole.
 
+function truncUrl(s, max = 40) {
+  return s.length > max ? s.slice(0, max - 1) + '…' : s;
+}
+
 // Human-readable labels for the left-column role chips.
 const ROLE_DISPLAY = {
   'name':          'name',
@@ -37,7 +41,9 @@ export default function BlobPreview({ result, onCycleRole }) {
             <span className={`blob-line-role blob-line-role--${roleCss(line.role)}`}>
               {ROLE_DISPLAY[line.role] ?? line.role}
             </span>
-            <span className="blob-line-text" title={line.raw}>{line.raw}</span>
+            <span className="blob-line-text" title={line.raw}>
+              {line.role.startsWith('url-') ? truncUrl(line.raw) : line.raw}
+            </span>
           </div>
         ))}
       </div>
