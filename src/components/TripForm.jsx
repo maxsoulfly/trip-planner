@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { addTrip, putTrip } from '../db/repo.js';
+import { parseFlightEmail } from '../utils/flightParser.js';
 import './TripForm.css';
 
 const EMPTY_FLIGHT = { airline: '', number: '', from: '', to: '', depTime: '', arrTime: '' };
@@ -78,8 +79,12 @@ export default function TripForm({ initialData, onSave, onClose }) {
   const [outbound,     setOutbound]     = useState(normalizeFlight(initialData?.outboundFlight));
   const [hasInbound,   setHasInbound]   = useState(Boolean(initialData?.inboundFlight));
   const [inbound,      setInbound]      = useState(normalizeFlight(initialData?.inboundFlight));
-  const [busy,         setBusy]         = useState(false);
-  const [error,        setError]        = useState('');
+  const [busy,            setBusy]            = useState(false);
+  const [error,           setError]           = useState('');
+  const [showFlightPaste, setShowFlightPaste] = useState(false);
+  const [flightPaste,     setFlightPaste]     = useState('');
+  const [flightParsed,    setFlightParsed]    = useState(null);
+  const [flightMsg,       setFlightMsg]       = useState('');
 
   const firstRef        = useRef(null);
   const backdropRef     = useRef(null);
@@ -141,6 +146,29 @@ export default function TripForm({ initialData, onSave, onClose }) {
   function handleBackdropClick(e) {
     if (e.target === backdropRef.current &&
         mouseDownTarget.current === backdropRef.current) onClose();
+  }
+
+  function handleFlightParse(text) {
+    const src = text ?? flightPaste;
+    if (!src.trim()) return;
+    const result = parseFlightEmail(src);
+    setFlightParsed(result);
+    const found = [result.outbound && 'outbound', result.inbound && 'inbound'].filter(Boolean);
+    setFlightMsg(found.length
+      ? `✓ found: ${found.join(' + ')} — review and apply`
+      : '⚠ no flight data found');
+  }
+
+  function applyFlightParse() {
+    if (!flightParsed) return;
+    if (flightParsed.outbound) { setOutbound(flightParsed.outbound); setHasOutbound(true); }
+    if (flightParsed.inbound)  { setInbound(flightParsed.inbound);   setHasInbound(true);  }
+    // Only prefill dates when form dates are currently empty.
+    if (flightParsed.startDate && !startDate) setStartDate(flightParsed.startDate);
+    if (flightParsed.endDate   && !endDate)   setEndDate(flightParsed.endDate);
+    setFlightParsed(null);
+    setFlightPaste('');
+    setFlightMsg('✓ applied — review flight fields below');
   }
 
   return (
@@ -207,6 +235,71 @@ export default function TripForm({ initialData, onSave, onClose }) {
                 value={notes} onChange={(e) => setNotes(e.target.value)}
                 placeholder="Anything worth knowing…" rows={2} />
             </label>
+
+            {/* Flight email paste — collapsible, most edits won't need it */}
+            <div className="flight-paste-section">
+              <button
+                type="button"
+                className="flight-paste-toggle"
+                onClick={() => setShowFlightPaste(s => !s)}
+              >
+                {showFlightPaste ? '▾' : '▸'} PASTE FLIGHT EMAIL
+              </button>
+              {showFlightPaste && (
+                <div className="flight-paste-body">
+                  <textarea
+                    className="flight-paste-textarea"
+                    rows={6}
+                    value={flightPaste}
+                    onChange={e => setFlightPaste(e.target.value)}
+                    onPaste={e => {
+                      const text = e.clipboardData?.getData('text/plain') || '';
+                      if (text) { e.preventDefault(); setFlightPaste(text); handleFlightParse(text); }
+                    }}
+                    placeholder="Paste Wizzair / Ryanair booking email text here"
+                  />
+                  <div className="flight-paste-actions">
+                    <button type="button" className="prefill-btn"
+                      onClick={() => handleFlightParse()}>PARSE</button>
+                    {flightMsg && (
+                      <span className={`flight-paste-msg${!flightParsed && flightMsg.startsWith('⚠') ? ' flight-paste-msg--warn' : ''}`}>
+                        {flightMsg}
+                      </span>
+                    )}
+                  </div>
+                  {flightParsed && (flightParsed.outbound || flightParsed.inbound) && (
+                    <div className="flight-paste-preview">
+                      {flightParsed.outbound && (
+                        <div className="fpp-leg">
+                          <span className="fpp-label">OUT</span>
+                          <span className="fpp-value">
+                            {flightParsed.outbound.number} · {flightParsed.outbound.from}→{flightParsed.outbound.to} · {flightParsed.outbound.depTime}
+                          </span>
+                        </div>
+                      )}
+                      {flightParsed.inbound && (
+                        <div className="fpp-leg">
+                          <span className="fpp-label">IN</span>
+                          <span className="fpp-value">
+                            {flightParsed.inbound.number} · {flightParsed.inbound.from}→{flightParsed.inbound.to} · {flightParsed.inbound.depTime}
+                          </span>
+                        </div>
+                      )}
+                      {(flightParsed.startDate || flightParsed.endDate) && (
+                        <div className="fpp-dates">
+                          {flightParsed.startDate && !startDate && `will set start: ${flightParsed.startDate}`}
+                          {flightParsed.endDate && !endDate && ` · will set end: ${flightParsed.endDate}`}
+                        </div>
+                      )}
+                      <button type="button" className="flight-paste-apply"
+                        onClick={applyFlightParse}>
+                        ◈ APPLY TO FLIGHT FIELDS
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </fieldset>
 
           {/* ---- Outbound flight ---- */}

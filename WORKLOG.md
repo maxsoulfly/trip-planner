@@ -2,6 +2,19 @@
 
 ---
 
+### 2026-06-24 — Step 15: Flight email parser
+
+- **Done:**
+  - `src/utils/flightParser.js` — NEW pure module. Exports `parseFlightEmail(text)` → `{ outbound, inbound, startDate, endDate }`. Two-pass strategy: (1) structured pass uses "GOING OUT"/"COMING BACK" section markers (Wizzair) or labeled "Flight Number:" anchors to assign data to each leg; (2) generic token-scan fallback for emails without explicit labels. Parses DD/MM/YYYY dates (Israeli locale) to YYYY-MM-DD. Airline prefix map: W6 Wizz Air, FR Ryanair, VY Vueling, U2 easyJet, LY El Al, 6H Israir, IZ Arkia. Unknown prefix → `airline: ''`. Never throws — returns all-null result for garbage input.
+  - `src/components/TripForm.jsx` — added import for `parseFlightEmail`; added `showFlightPaste`, `flightPaste`, `flightParsed`, `flightMsg` state; added `handleFlightParse` and `applyFlightParse` handlers. `applyFlightParse` writes to `setOutbound`/`setInbound` and enables `setHasOutbound`/`setHasInbound`; only sets `startDate`/`endDate` if those fields are currently empty. Collapsible `▸ PASTE FLIGHT EMAIL` section added inside DETAILS fieldset after the NOTES textarea — auto-parses on paste, manual PARSE button for non-auto cases.
+  - `src/components/TripForm.css` — added `/* FLIGHT EMAIL PASTE */` section: toggle button, textarea, PARSE button (`.prefill-btn`), feedback message, parsed-legs preview (`.fpp-leg`/`.fpp-value`/`.fpp-dates`), apply button. `prefill-btn` defined locally since TripForm imports its own CSS, not PlaceForm.css.
+- **Deviations:** `.prefill-btn` duplicated in TripForm.css — identical style to PlaceForm.css version, necessary because TripForm doesn't import PlaceForm.css.
+- **Schema/contract changes:** None — `outboundFlight`/`inboundFlight` fields already existed on Trip.
+- **Known issues / TODO:** Generic fallback `FLIGHT_NUM_BARE` may produce false positives on some email bodies (e.g. alphanumeric codes in booking references). Acceptable for best-effort.
+- **Next:** Trait display on PlaceCard or other pending features.
+
+---
+
 ### 2026-06-24 — Step 14: Fix overnight hours in getStatusBadge
 
 - **Done:**

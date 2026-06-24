@@ -159,3 +159,123 @@
 .tf-flight-num { width: 100px; }
 .tf-grow       { flex: 1; }
 
+/* ===== FLIGHT EMAIL PASTE ===== */
+
+.flight-paste-section {
+  margin-top: 4px;
+}
+
+.flight-paste-toggle {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  background: transparent;
+  border: none;
+  color: var(--dim);
+  cursor: pointer;
+  padding: 0;
+}
+.flight-paste-toggle:hover { color: var(--ink); }
+
+.flight-paste-body {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.flight-paste-textarea {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  background: var(--bg);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 8px;
+  resize: vertical;
+  width: 100%;
+  box-sizing: border-box;
+}
+.flight-paste-textarea:focus { border-color: var(--amber); outline: none; }
+.flight-paste-textarea::placeholder { color: var(--dim); opacity: .5; }
+
+/* Shared with PlaceForm's prefill button style */
+.prefill-btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  background: transparent;
+  color: var(--dim);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+  white-space: nowrap;
+}
+.prefill-btn:hover { color: var(--ink); border-color: var(--steel); }
+
+.flight-paste-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.flight-paste-msg {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--amber);
+}
+.flight-paste-msg--warn { color: var(--rust); }
+
+.flight-paste-preview {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.fpp-leg {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+.fpp-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .12em;
+  color: var(--dim);
+  min-width: 24px;
+}
+.fpp-value {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--amber);
+}
+.fpp-dates {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: var(--steel);
+}
+
+.flight-paste-apply {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  background: var(--amber);
+  color: var(--bg);
+  border: none;
+  border-radius: 4px;
+  padding: 5px 12px;
+  cursor: pointer;
+  margin-top: 4px;
+  align-self: flex-start;
+  transition: opacity .15s;
+}
+.flight-paste-apply:hover { opacity: .85; }
+
