@@ -4,6 +4,8 @@ import { PLACE_TYPES, STATUSES, WEEKDAYS, typeMeta } from '../db/constants.js';
 import { parseMapsUrl } from '../utils/mapsParser.js';
 import { parseGoogleHours } from '../utils/hoursParser.js';
 import { parseAddress, deriveFields } from '../utils/addressParser.js';
+import { parseBlob } from '../utils/blobParser.js';
+import BlobPreview from './BlobPreview.jsx';
 import './PlaceForm.css';
 
 const SCHEDULING_TAGS = ['breakfast', 'specialty-coffee', 'brunch', 'lunch', 'dinner', 'late-night'];
@@ -68,6 +70,9 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
   const [addrSegments, setAddrSegments] = useState([]);   // [{ id, raw, role }]
   const [hoursPaste,   setHoursPaste]   = useState('');
   const [hoursMsg,     setHoursMsg]     = useState(null); // { ok, text } | null
+  const [blobText,     setBlobText]     = useState('');
+  const [blobResult,   setBlobResult]   = useState(null); // parseBlob output | null
+  const [blobApplied,  setBlobApplied]  = useState(false);
 
   // ── Merge section state (edit mode only) ────────────────────────────────
   const [otherPlaces,    setOtherPlaces]    = useState([]);
@@ -153,10 +158,52 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
     handlePrefill(text);
   }
 
+  function handleBlobParse(text) {
+    const src = text ?? blobText;
+    if (!src.trim()) return;
+    setBlobResult(parseBlob(src));
+    setBlobApplied(false);
+  }
+
+  function handleBlobPaste(e) {
+    const text = e.clipboardData?.getData('text/plain') || '';
+    if (!text) return;
+    e.preventDefault();
+    setBlobText(text);
+    handleBlobParse(text);
+  }
+
   const ADDR_ROLE_CYCLE = { city: 'country', country: 'street', street: 'postcode', postcode: 'ignore', ignore: 'city' };
 
   function cycleSegmentRole(id) {
     setAddrSegments(segs => segs.map(s => s.id === id ? { ...s, role: ADDR_ROLE_CYCLE[s.role] } : s));
+  }
+
+  function cycleSegmentRoleInBlob(id) {
+    setBlobResult(prev => {
+      if (!prev?.extracted?.addrSegments) return prev;
+      const segs = prev.extracted.addrSegments.map(s =>
+        s.id === id ? { ...s, role: ADDR_ROLE_CYCLE[s.role] } : s
+      );
+      return { ...prev, extracted: { ...prev.extracted, addrSegments: segs, addrDerived: deriveFields(segs) } };
+    });
+  }
+
+  function applyBlob() {
+    if (!blobResult) return;
+    const { extracted } = blobResult;
+
+    if (extracted.name)         setName(extracted.name);
+    if (extracted.url)          setGoogleMapsUrl(extracted.url);
+    if (extracted.lat != null)  setLat(String(extracted.lat));
+    if (extracted.lng != null)  setLng(String(extracted.lng));
+    if (extracted.openingHours) setHours(h => ({ ...h, ...extracted.openingHours }));
+    // addrSegments → existing useEffect live-applies city/country/address
+    if (extracted.addrSegments?.length) setAddrSegments(extracted.addrSegments);
+
+    setBlobApplied(true);
+    setBlobResult(null);
+    setBlobText('');
   }
 
   function handleAddrParse(text) {
@@ -314,6 +361,51 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
 
         <form className="place-form" onSubmit={handleSubmit} noValidate>
           {error && <div className="form-error" role="alert">{error}</div>}
+
+          {/* ---- Quick paste ---- */}
+          <div className="form-section blob-section">
+            <span className="prefill-label">QUICK PASTE</span>
+            <p className="blob-hint">
+              Paste a Google Maps place block — name, URL, hours, address at once.
+            </p>
+            <div className="prefill-row">
+              <textarea
+                className="blob-textarea"
+                rows={5}
+                value={blobText}
+                onChange={e => setBlobText(e.target.value)}
+                onPaste={handleBlobPaste}
+                placeholder={"Craftownia\ncraft beer bar · Zabłocie 9, Kraków\nMonday: Closed\n...\nhttps://maps.google.com/..."}
+              />
+            </div>
+            <div className="prefill-row">
+              <button type="button" className="prefill-btn" onClick={() => handleBlobParse()}>
+                PARSE
+              </button>
+            </div>
+
+            {blobResult && (
+              <div className="blob-preview">
+                <BlobPreview result={blobResult} onCycleRole={cycleSegmentRoleInBlob} />
+                <div className="blob-actions">
+                  <button type="button" className="blob-btn-apply" onClick={applyBlob}>
+                    ◈ APPLY TO FORM
+                  </button>
+                  <button
+                    type="button"
+                    className="blob-btn-cancel"
+                    onClick={() => { setBlobResult(null); setBlobText(''); }}
+                  >
+                    ✕ DISCARD
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {blobApplied && (
+              <span className="blob-applied">✓ applied — review fields below</span>
+            )}
+          </div>
 
           {/* ---- Prefill strip (add mode only) ---- */}
           {!isEdit && (

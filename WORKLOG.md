@@ -2,6 +2,26 @@
 
 ---
 
+### 2026-06-24 — Step 10: Blob notepad smart-paste
+
+- **Done:**
+  - `src/utils/blobParser.js` — new pure file. `parseBlob(text)` → `{ lines, extracted }`. Line classifier (first-match priority): `url` (https + google.com/maps or maps.app.goo.gl), `hours` (starts with weekday name, bare "Closed"/"Open 24 hours", or Format-A time-range lines like "2 PM–11 PM"), `address` (has comma AND a digit or findCountry match), `name` (fallback). Extraction: `parseMapsUrl` on url line (sets lat/lng/nameFromUrl, flags shortUrl); `parseGoogleHours` on all hours lines joined with `\n`; `parseAddress` on first address line → segments + derived; `name` = first name-classified line's raw, fallback to nameFromUrl. Imports from existing utils only — no React, no Dexie.
+  - `src/components/BlobPreview.jsx` — new display-only sub-component. Two-column grid: left = classified lines (each as role-label + truncated raw text, colour-coded by role); right = extracted summary (name in amber, URL truncated to 40 chars, coords, hours day-count, addr chips reusing `.addr-chip` from Step 9). Addr chips call `onCycleRole(id)` to relabel before applying.
+  - `src/components/PlaceForm.jsx` — added imports for `parseBlob` and `BlobPreview`. Added 3 state vars: `blobText`, `blobResult`, `blobApplied`. Added handlers: `handleBlobParse`, `handleBlobPaste`, `cycleSegmentRoleInBlob` (updates `blobResult.extracted.addrSegments` + `addrDerived` in state), `applyBlob` (writes only non-null extracted values; routes addrSegments through existing `setAddrSegments` so the existing `useEffect` live-applies city/country/address). Added QUICK PASTE fieldset at the very top of the form (above existing PREFILL strip and IDENTITY), with textarea, PARSE button, BlobPreview panel, APPLY / DISCARD actions, and applied flash.
+  - `src/components/PlaceForm.css` — added `/* BLOB NOTEPAD */` section: `.blob-section` (rust border, 3% rust background tint); `.blob-textarea`; `.blob-preview-grid` (two-column); `.blob-lines-col` / `.blob-extracted-col`; `.blob-line-chip` with role colour variants; `.blob-ext-row` / label / value; `.blob-btn-apply` / `.blob-btn-cancel` / `.blob-applied`.
+- **Deviations:**
+  - BlobPreview extracted to its own file (`BlobPreview.jsx`) rather than inlined in PlaceForm.jsx — it reached ~80 lines which would have made PlaceForm hard to scan.
+  - `cycleSegmentRoleInBlob` updates the full `blobResult` state object (immutably) rather than a separate `blobAddrSegments` state, so `applyBlob` always reads the latest relabelled segments directly from `blobResult`.
+  - Country not auto-detected for the Craftownia acceptance test: "craft beer bar · Zabłocie 9, 30-701 Kraków" contains no "Poland"/"Polska" token; `findCountry` correctly returns null. User can fill country manually or use the PARSE ADDRESS strip in LOCATION. This is expected behaviour.
+  - QUICK PASTE visible in both add and edit mode (brief didn't restrict it; useful in edit mode too for updating hours from a new copy-paste).
+- **Schema/contract changes:** None. No db.js / repo.js / constants.js touched.
+- **Known issues / TODO:**
+  - Format-A bare hours value lines ("12 PM–12 AM" with no AM/PM on open side) are matched by `TIME_VALUE_RE` only when the open side has an explicit `am`/`pm` suffix. Lines like "2–11 PM" (no am/pm on open side) are not caught by the regex and fall through to `name`. However, `parseGoogleHours` in Format-B mode handles "2–11 PM" correctly when passed as part of "Tuesday: 2–11 PM" — so for the typical Google Maps blob (Format B), this is a non-issue.
+  - If a Google Maps URL appears mid-blob without being on its own line (unlikely but possible if copy goes wrong), the whole line would be classified as `name`. Not worth guarding against at this stage.
+- **Next:** Blob notepad part 2 considerations deferred — or venue traits (pending features list).
+
+---
+
 ### 2026-06-24 — Step 9: Address paste with tap-to-label segments
 
 - **Done:**

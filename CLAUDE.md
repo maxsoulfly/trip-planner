@@ -20,10 +20,8 @@ Vite + React (JS) · Dexie (IndexedDB) · Papaparse (CSV) · SheetJS (importer o
 state via React Context (no Redux).
 
 ## Architecture & conventions
-- `src/db/db.js` — Dexie schema. Currently version(1): tables `places`, `trips`,
-  `scheduleItems`. BudgetEntry deferred. **Next schema change bumps to version(2)**
-  and adds `websiteUrl` field to places (non-breaking, existing records get
-  undefined which renders as empty).
+- `src/db/db.js` — Dexie schema. Currently version(2): tables `places`, `trips`,
+  `scheduleItems`. BudgetEntry deferred.
 - `src/db/repo.js` — the **only** module that touches Dexie. All UI goes through
   repo functions; never call `db` directly from components.
 - `src/db/constants.js` — controlled vocabularies (`PLACE_TYPES`, `BLOCKS`,
@@ -34,10 +32,21 @@ state via React Context (no Redux).
   compact format (day: hours per line). Contract preserved: absent=unknown.
 - `src/utils/mapsParser.js` — pure `parseMapsUrl(url)` → `{ name, lat, lng }`.
   Returns `{ short: true }` for goo.gl short URLs.
+- `src/utils/countries.js` — `COUNTRIES` array (~195 ISO-3166 entries, each
+  `{ iso2, names[] }`). `findCountry(text)` → `{ iso2, matchedText }` or `null`.
+  Longest-name-first matching, word-boundary regex. Curated abbreviations only:
+  `USA`, `US`, `UK`, `UAE`. **No arbitrary 2-letter codes** (avoids PL-bug class).
+- `src/utils/addressParser.js` — pure `parseAddress(text)` → `{ segments, derived }`.
+  `deriveFields(segments)` → `{ city, country, address }`. Used by PlaceForm
+  address chips and (next) the blob notepad smart-paste. Both are pure, no Dexie.
 - `src/utils/xlsxImport.js` — pure `parseXlsxWorkbook(workbook)` → `{ places,
   warnings }`. Per-sheet hardcoded strategies + extractGrid heuristic.
 - `src/utils/exportHtml.js` — pure `generateDaySheet(trip, scheduleItems,
   placesMap)` → HTML string. No React, no Dexie.
+- `src/utils/exportTripXlsx.js` — pure `exportTripXlsx(trip, scheduleItems,
+  placesMap)` → triggers browser download as `[title]-schedule.xlsx`.
+- `src/utils/importTripXlsx.js` — pure `parseTripXlsx(workbook, trip, allPlaces)`
+  → `{ toSchedule, stubPlaces, warnings }`.
 - **`openingHours` semantics (DATA CONTRACT):** for each weekday key —
   **absent key = hours UNKNOWN** (renders `—`); explicit **`null` = CLOSED`**
   (renders `CLOSED`); `{ open, close }` = open. Never write `null` to mean
@@ -46,12 +55,39 @@ state via React Context (no Redux).
   filter. A Trip references places and schedules them into `date × block` slots
   via ScheduleItem. Time blocks: `morning / noon / late_afternoon / evening / night`.
 
-## Place schema (current + pending)
-Current fields: id, name, type, city, country, lat, lng, address,
-googleMapsUrl, untappdUrl, openingHours, tags, notes, status, rating,
+## Place schema (current)
+Fields: id, name, type, city, country, lat, lng, address, googleMapsUrl,
+untappdUrl, websiteUrl, openingHours, tags, notes, status, rating,
 createdAt, updatedAt.
-**Pending (version 2):** `websiteUrl` — nullable string. Add to db.js
-version(2) upgrade block. Add field to PlaceForm and PlaceCard.
+
+## Pending features (agreed, not yet built)
+- **Venue traits** — controlled vocabulary secondary tags for "also has":
+  `craft-beer · taps-on-site · bottles-to-go · food · wine · cocktails · coffee · outdoor`
+  Stored in `tags` array alongside free tags, surfaced as chips in PlaceForm.
+  Filters match on `type` OR trait. (Brief not yet written.)
+- **Blob notepad smart-paste** — one-block paste dispatcher: classifies each
+  line/segment as URL / hours / address / name and fans out to existing parsers
+  (`parseMapsUrl`, `parseGoogleHours`, `parseAddress`). Reuses `countries.js`,
+  `addressParser.js`, and `.addr-chip` CSS from Step 9. (Brief in progress.)
+- **Flight email parser** — paste a Wizzair (and common airline) booking email,
+  extract both flight legs into `outboundFlight` / `inboundFlight` + offer to
+  set trip start/end dates.
+- **Accommodation check-in/out fields** — two time fields shown only when
+  `type === 'accommodation'`. Additive, no schema bump needed.
+- **Bulk place paste** — paste N place names (e.g. from Telegram), each line
+  becomes a stub place (`wishlist`, `other`); dedup UI matches against library
+  and lets user choose merge-into-existing vs create-new per line.
+- **Block time-ranges** — assign a clock range to each block
+  (`morning 06–11`, `noon 11–15`, `late_afternoon 15–18`,
+  `evening 18–23`, `night 23–06`). Foundation for flight-by-time placement
+  and hours-aware auto-suggest.
+- **Flight-by-time grid placement** — place flights into the correct block by
+  departure/arrival time (not always morning). Grey out slots before arrival /
+  after departure. Requires block time-ranges above.
+- **Nearby auto-suggest** — given a filled slot, suggest nearby places (by
+  haversine on lat/lng) that are open in that block. Requires block time-ranges.
+  Silently skips places with no coords. Intentionally one-slot-at-a-time,
+  human-in-the-loop.
 
 ## City normalization (KNOWN ISSUE)
 The importer produced both "Krakow" and "Kraków" as separate cities.
@@ -66,8 +102,7 @@ A place is incomplete if ANY of:
   - type === 'other'
   - openingHours has 0 keys AND type is NOT in
     ['accommodation', 'transport', 'other']
-The previous definition included !googleMapsUrl which flagged almost
-everything. Maps URL is optional, not a completeness signal.
+Maps URL is optional, not a completeness signal.
 
 ## Build sequence (status)
 1. **DONE** — Scaffold + Dexie schema + dummy-data round-trip.
@@ -84,6 +119,10 @@ everything. Maps URL is optional, not a completeness signal.
    isIncomplete fix, modal backdrop drag fix.
 8. **DONE** — Trip XLSX export/import (replace-on-import), click-to-edit place
    in grid, drop Trip-level accommodation field.
+9. **DONE** — Address paste with tap-to-label segments. New utils: `countries.js`
+   (complete ISO-3166 list + `findCountry`), `addressParser.js` (`parseAddress`,
+   `deriveFields`). PlaceForm address prefill section replaced with chip UI;
+   live-apply via `useEffect` on `addrSegments`.
 
 ## Design language — "post-apocalyptic field terminal"
 A salvaged-tech / amber-CRT / survival-field-manual feel.
