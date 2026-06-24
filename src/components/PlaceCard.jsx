@@ -29,11 +29,15 @@ function getStatusBadge(openingHours, todayKey) {
 
   const [openH,  openM]  = entry.open.split(':').map(Number);
   const [closeH, closeM] = entry.close.split(':').map(Number);
-  const openMins  = openH  * 60 + openM;
-  // "00:00" midnight-close is stored as 0 minutes; treat as 1440 so the range check works.
-  const closeMins = (closeH * 60 + closeM) || (24 * 60);
+  const openMins  = openH * 60 + openM;
+  const closeMins = (closeH === 0 && closeM === 0) ? 24 * 60 : closeH * 60 + closeM;
+  const overnight = closeMins <= openMins; // e.g. 16:00–01:00
 
-  if (nowMins >= openMins && nowMins < closeMins) {
+  const isOpen = overnight
+    ? (nowMins >= openMins || nowMins < closeMins)
+    : (nowMins >= openMins && nowMins < closeMins);
+
+  if (isOpen) {
     return { label: 'OPEN', cls: 'hours-readout--open' };
   }
   if (nowMins < openMins) {

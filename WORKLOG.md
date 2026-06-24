@@ -2,6 +2,18 @@
 
 ---
 
+### 2026-06-24 — Step 14: Fix overnight hours in getStatusBadge
+
+- **Done:**
+  - `src/components/PlaceCard.jsx` — replaced the open/closed calculation in `getStatusBadge`. Old logic treated midnight-close as 1440 min but could not handle cases where `closeMins <= openMins` (e.g. 16:00–01:00). New logic: compute `closeMins` with the midnight-special as before; derive `overnight = closeMins <= openMins`; compute `isOpen` as an OR range for overnight spans (`nowMins >= openMins || nowMins < closeMins`) and an AND range otherwise. The four label branches (OPEN / OPENS SOON / OPENS HH:MM / CLOSED TODAY) and their colours are unchanged.
+  - `WORKLOG.md` — removed the overnight known-issue line from Step 11 entry.
+- **Deviations:** None.
+- **Schema/contract changes:** None.
+- **Known issues / TODO:** None.
+- **Next:** Flight email parser or other pending features.
+
+---
+
 ### 2026-06-24 — Step 13: Venue traits — controlled secondary tags
 
 - **Done:**
@@ -52,7 +64,7 @@
   - Fix 1 diagnosis in the brief (UTC vs local time) did not match the actual code — `getHours()` was already in use. Applied the real fix (midnight closeMins=0) instead.
   - Fix 2: blank lines between Format A pairs not explicitly preserved in the join (brief mentioned this). `parseGoogleHours` handles alternating format without needing blank separators; the existing `filter(Boolean)` already removes them. No change needed.
 - **Schema/contract changes:** None.
-- **Known issues / TODO:** Overnight wrapping (e.g., 22:00–02:00) still not handled by `getStatusBadge` — at 01:00, the place shows as not open. Low priority for now.
+- **Known issues / TODO:** None.
 - **Next:** Venue traits or flight email parser.
 
 ---
