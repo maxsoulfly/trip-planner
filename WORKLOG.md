@@ -10,6 +10,7 @@
 - **Deviations:** None.
 - **Schema/contract changes:** None.
 - **Known issues / TODO:** None.
+- **Addendum:** tightened `overnight` guard from `<=` to `<` — equal open/close times fall through to the AND branch and show closed rather than triggering overnight logic.
 - **Next:** Flight email parser or other pending features.
 
 ---

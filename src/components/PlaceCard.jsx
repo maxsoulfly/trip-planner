@@ -31,7 +31,7 @@ function getStatusBadge(openingHours, todayKey) {
   const [closeH, closeM] = entry.close.split(':').map(Number);
   const openMins  = openH * 60 + openM;
   const closeMins = (closeH === 0 && closeM === 0) ? 24 * 60 : closeH * 60 + closeM;
-  const overnight = closeMins <= openMins; // e.g. 16:00–01:00
+  const overnight = closeMins < openMins; // e.g. 16:00–01:00; equal times fall through to AND branch (closed)
 
   const isOpen = overnight
     ? (nowMins >= openMins || nowMins < closeMins)
