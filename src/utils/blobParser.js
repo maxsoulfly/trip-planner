@@ -49,7 +49,7 @@ export function parseBlob(text) {
 
   const lines = text.split('\n')
     .map(raw => raw.trim())
-    .filter(Boolean)
+    .filter(l => l.length > 0 && !/^[■-▣\s]+$/.test(l))
     .map(raw => ({ raw, role: classifyLine(raw) }));
 
   const nameLine   = lines.find(l => l.role === 'name');

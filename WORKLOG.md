@@ -11,6 +11,7 @@
 - **Deviations:** `.prefill-btn` duplicated in TripForm.css — identical style to PlaceForm.css version, necessary because TripForm doesn't import PlaceForm.css.
 - **Schema/contract changes:** None — `outboundFlight`/`inboundFlight` fields already existed on Trip.
 - **Known issues / TODO:** Generic fallback `FLIGHT_NUM_BARE` may produce false positives on some email bodies (e.g. alphanumeric codes in booking references). Acceptable for best-effort.
+- **Addendum:** `blobParser.js` — filter now also strips lines containing only Unicode box/square chars (U+25A0–U+25A3, e.g. `▢`) that Google Maps inserts between alternating hours pairs; fixes the stray `NAME ▢` chip in the EXTRACTED panel.
 - **Next:** Trait display on PlaceCard or other pending features.
 
 ---
