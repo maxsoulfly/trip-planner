@@ -87,10 +87,6 @@ park → park / cemetery / cmentarz / hřbitov / garden / jardín / zoo / botani
 accommodation → hotel / hostel / noclegi / apartment / apartament / pension / inn
 
 ## Pending features (agreed, not yet built)
-- **Venue traits** — controlled vocabulary secondary tags:
-  `craft-beer · taps-on-site · bottles-to-go · food · wine · cocktails · coffee · outdoor`
-  Stored in `tags` array alongside free tags, surfaced as chips in PlaceForm.
-  Filters match on `type` OR trait. (Next brief.)
 - **Flight email parser** — paste a Wizzair (+ common airline) booking email,
   extract both flight legs into `outboundFlight` / `inboundFlight` + offer to
   set trip start/end dates. (Standalone pure function, no dependencies.)
@@ -148,18 +144,20 @@ Maps URL is optional, not a completeness signal.
    modal backdrop drag fix.
 8. **DONE** — Trip XLSX export/import (replace-on-import), click-to-edit place
    in grid, drop Trip-level accommodation field.
-9. **DONE** — Address paste with tap-to-label segments. New utils: `countries.js`
+9. **DONE** — Overnight hours fix in `getStatusBadge` (`closeMins <= openMins` overnight detection; `nowMins >= openMins || nowMins < closeMins` for open check). One-liner in `PlaceCard.jsx`.
+10. **DONE** — Address paste with tap-to-label segments. New utils: `countries.js`
    (complete ISO-3166 list + `findCountry`), `addressParser.js` (`parseAddress`,
    `deriveFields`). PlaceForm address prefill replaced with chip UI; live-apply
    via `useEffect` on `addrSegments`.
-10. **DONE** — Blob notepad smart-paste. New `blobParser.js` + `BlobPreview.jsx`.
+11. **DONE** — Blob notepad smart-paste. New `blobParser.js` + `BlobPreview.jsx`.
     QUICK PASTE section at top of PlaceForm; routes URL/hours/address/name to
     existing parsers; APPLY writes all non-null extracted values to form state.
     Social links (Facebook/Instagram) shown in preview, not written to any field.
-11. **DONE** — Bug fixes: midnight-close badge (00:00 → 1440 min), alternating
+12. **DONE** — Bug fixes: midnight-close badge (00:00 → 1440 min), alternating
     hours blob format, multi-type URL routing (untappd/website/social), Maps URL
     paste hint in edit mode.
-12. **DONE** — Blob display fixes (URL truncation, blank-line chips), city parse
+13. **DONE** — Blob display fixes (URL truncation, blank-line chips), city parse
+14. **DONE** — Venue traits: `VENUE_TRAITS` export in constants.js (8 entries); trait chip row in PlaceForm above scheduling hints; trait filter `<select>` in App.jsx toolbar. Traits stored as plain strings in existing `tags` array. **Note:** `p.tags` may be a string in storage — if trait filter does not work, fix to `parseTags(p.tags || "").includes(filterTrait)` in App.jsx useMemo.
     fixes (lone-digit ignore, last-city-chip), card name → Maps link,
     brewery + park types added to constants.
 
