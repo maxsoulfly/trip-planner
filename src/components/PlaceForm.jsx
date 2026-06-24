@@ -3,6 +3,7 @@ import { addPlace, putPlace, getAllPlaces, mergePlaces as doMergePlaces, countSc
 import { PLACE_TYPES, STATUSES, WEEKDAYS, typeMeta } from '../db/constants.js';
 import { parseMapsUrl } from '../utils/mapsParser.js';
 import { parseGoogleHours } from '../utils/hoursParser.js';
+import { parseAddress, deriveFields } from '../utils/addressParser.js';
 import './PlaceForm.css';
 
 const SCHEDULING_TAGS = ['breakfast', 'specialty-coffee', 'brunch', 'lunch', 'dinner', 'late-night'];
@@ -27,32 +28,6 @@ function detectType(name) {
   return null;
 }
 
-// Parse address strings, including plus codes like "62JF+RM Warsaw, Poland".
-// Returns { address, city, country } or null on failure.
-function parseAddressString(str) {
-  const s = str.trim();
-  // Plus code pattern: CODE+CODE optionally followed by a space and city/country
-  const plusMatch = s.match(/^[A-Z0-9]{4,8}\+[A-Z0-9]{2,3}\s+(.*)/i);
-  if (plusMatch) {
-    const remainder = plusMatch[1].trim();
-    const parts = remainder.split(',').map((p) => p.trim()).filter(Boolean);
-    if (parts.length >= 2) {
-      return { address: s, city: parts[0], country: parts[parts.length - 1] };
-    }
-    return { address: s, city: parts[0] || '', country: '' };
-  }
-  const parts = str.split(',').map((p) => p.trim()).filter(Boolean);
-  if (parts.length < 2) return null;
-  const country = parts.at(-1);
-  const cityRaw = parts.at(-2);
-  // Strip postcode prefix: Polish XX-XXX, then generic 4–5 digit forms.
-  const city = cityRaw
-    .replace(/^\d{2}-\d{3}\s*/, '')
-    .replace(/^\d{4,5}\s*/, '')
-    .trim();
-  const address = parts.slice(0, -2).join(', ');
-  return { address, city, country };
-}
 
 function buildHoursState(openingHours) {
   const src = openingHours || {};
@@ -90,6 +65,7 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
   const [prefillMsg,   setPrefillMsg]   = useState(null); // { ok, text } | null
   const [addrPaste,    setAddrPaste]    = useState('');
   const [addrMsg,      setAddrMsg]      = useState(null); // { ok, text } | null
+  const [addrSegments, setAddrSegments] = useState([]);   // [{ id, raw, role }]
   const [hoursPaste,   setHoursPaste]   = useState('');
   const [hoursMsg,     setHoursMsg]     = useState(null); // { ok, text } | null
 
@@ -123,6 +99,15 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
+
+  // Live-apply city/country/address whenever segment roles change.
+  useEffect(() => {
+    if (!addrSegments.length) return;
+    const { city: c, country: co, address: a } = deriveFields(addrSegments);
+    setCity(c);
+    setCountry(co);
+    setAddress(a);
+  }, [addrSegments]);
 
   // Load all other places for the merge search (edit mode only).
   useEffect(() => {
@@ -168,14 +153,19 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
     handlePrefill(text);
   }
 
-  function handleAddrParse(str) {
-    const parsed = parseAddressString(str || addrPaste);
-    if (!parsed) { setAddrMsg({ ok: false, text: 'Could not parse — need at least two comma-separated parts.' }); return; }
-    if (parsed.address) setAddress(parsed.address);
-    if (parsed.city)    setCity(parsed.city);
-    if (parsed.country) setCountry(parsed.country);
-    const filled = [parsed.city && 'city', parsed.country && 'country', parsed.address && 'address'].filter(Boolean);
-    setAddrMsg({ ok: true, text: `Prefilled: ${filled.join(' · ')}` });
+  const ADDR_ROLE_CYCLE = { city: 'country', country: 'street', street: 'postcode', postcode: 'ignore', ignore: 'city' };
+
+  function cycleSegmentRole(id) {
+    setAddrSegments(segs => segs.map(s => s.id === id ? { ...s, role: ADDR_ROLE_CYCLE[s.role] } : s));
+  }
+
+  function handleAddrParse(text) {
+    const src = text ?? addrPaste;
+    if (!src.trim()) { setAddrMsg({ ok: false, text: 'Nothing to parse.' }); return; }
+    const { segments } = parseAddress(src);
+    if (!segments.length) { setAddrMsg({ ok: false, text: 'Could not split — check the address format.' }); return; }
+    setAddrSegments(segments);
+    setAddrMsg({ ok: true, text: `${segments.length} segment${segments.length !== 1 ? 's' : ''} — tap chip to relabel.` });
   }
 
   function handleAddrPaste(e) {
@@ -425,7 +415,7 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
             <legend className="form-legend">LOCATION</legend>
 
             <div className="prefill-strip">
-              <span className="prefill-label">PREFILL FROM ADDRESS</span>
+              <span className="prefill-label">PARSE ADDRESS</span>
               <div className="prefill-row">
                 <input
                   className="prefill-input"
@@ -433,8 +423,8 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
                   value={addrPaste}
                   onChange={(e) => setAddrPaste(e.target.value)}
                   onPaste={handleAddrPaste}
-                  placeholder="Paste a full address string…"
-                  aria-label="Address string for prefill"
+                  placeholder="paste address line from Google Maps"
+                  aria-label="Address string for parsing"
                 />
                 <button type="button" className="prefill-btn" onClick={() => handleAddrParse()}>PARSE</button>
               </div>
@@ -442,6 +432,22 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
                 <span className={`prefill-msg ${addrMsg.ok ? 'prefill-msg--ok' : 'prefill-msg--warn'}`}>
                   {addrMsg.ok ? '✓' : '⚠'} {addrMsg.text}
                 </span>
+              )}
+              {addrSegments.length > 0 && (
+                <div className="addr-chips">
+                  {addrSegments.map(seg => (
+                    <button
+                      key={seg.id}
+                      type="button"
+                      className={`addr-chip addr-chip--${seg.role}`}
+                      onClick={() => cycleSegmentRole(seg.id)}
+                      title="Tap to cycle role"
+                    >
+                      <span className="addr-chip-text">{seg.raw}</span>
+                      <span className="addr-chip-role">{seg.role}</span>
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
 

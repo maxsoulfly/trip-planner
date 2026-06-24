@@ -316,6 +316,65 @@
 .sched-chip--on { color: var(--amber); border-color: var(--amber); }
 .sched-chip--on:hover { color: var(--amber); border-color: var(--amber); opacity: .85; }
 
+/* ===== ADDRESS SEGMENT CHIPS ===== */
+
+.addr-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 3px;
+}
+
+.addr-chip {
+  font-family: 'IBM Plex Mono', monospace;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 10px 3px;
+  cursor: pointer;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  transition: border-color .12s, opacity .12s;
+}
+
+.addr-chip-text {
+  font-size: 11px;
+  color: var(--ink);
+  line-height: 1.3;
+  letter-spacing: .02em;
+}
+
+.addr-chip-role {
+  font-size: 8px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--dim);
+  line-height: 1;
+}
+
+/* city + country → amber (the two fields that matter) */
+.addr-chip--city,
+.addr-chip--country { border-color: var(--amber); }
+.addr-chip--city    .addr-chip-role,
+.addr-chip--country .addr-chip-role { color: var(--amber); }
+
+/* street + postcode → steel (goes to address, lower emphasis) */
+.addr-chip--street,
+.addr-chip--postcode { border-color: var(--steel); }
+.addr-chip--street   .addr-chip-role,
+.addr-chip--postcode .addr-chip-role { color: var(--steel); }
+
+/* ignore → faded */
+.addr-chip--ignore { opacity: .4; }
+
+/* hover — amber chips stay amber but dim slightly, others brighten border */
+.addr-chip:hover { border-color: var(--ink); }
+.addr-chip--city:hover,
+.addr-chip--country:hover { border-color: var(--amber); opacity: .75; }
+.addr-chip--ignore:hover { opacity: .65; }
+
 /* ===== MERGE / DEDUPLICATE SECTION ===== */
 
 .merge-section { border-color: var(--rust); }

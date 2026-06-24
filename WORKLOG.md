@@ -2,6 +2,25 @@
 
 ---
 
+### 2026-06-24 — Step 9: Address paste with tap-to-label segments
+
+- **Done:**
+  - `src/utils/countries.js` — new file. `COUNTRIES` array (~195 ISO-3166 entries, English + common local/English variants); `ABBREVIATIONS` curated short list (`USA`, `US`, `UK`, `UAE` only — deliberately excludes arbitrary 2-letter codes to avoid the `PL` bug class). `findCountry(text)` builds a flat candidate list sorted longest-name-first, then scans the text with `\b…\b` word-boundary regexes and returns `{ iso2, matchedText }` or `null`.
+  - `src/utils/addressParser.js` — new file. `STREET_WORDS` set (English / Polish / Hungarian / Spanish / German / Romanian / Bulgarian). `classifySegment(segment)` checks: (1) whole-segment postcode pattern, (2) any token is a standalone postcode, (3) any token is a street word or segment ends in a building number, (4) falls back to `city`. `trySplitGlue(segment)` splits Polish `XX-XXX city` and generic `NNNN+ city` glue patterns into two separate segments. `parseAddress(text)` → `{ segments, derived }`: finds/removes country, comma-splits remainder, glue-expands, classifies, appends country chip. `deriveFields(segments)` → `{ city, country, address }` — exported separately so components can call it on every role cycle.
+  - `src/components/PlaceForm.jsx` — removed `parseAddressString` function. Added `import { parseAddress, deriveFields }`. Added `addrSegments` state (`[]`). Added `useEffect` on `addrSegments` that calls `deriveFields` and writes `city`/`country`/`address` state (live-apply on role change). Replaced `handleAddrParse`/`handleAddrPaste` with new versions calling `parseAddress`. Added `ADDR_ROLE_CYCLE` constant and `cycleSegmentRole(id)` handler. Replaced LOCATION prefill strip JSX: label changed to `PARSE ADDRESS`, chips row rendered below the message when `addrSegments.length > 0`.
+  - `src/components/PlaceForm.css` — added `/* ADDRESS SEGMENT CHIPS */` section above MERGE section: `.addr-chips` flex-wrap row; `.addr-chip` base (mono pill, 999px radius); `.addr-chip-text` (11px ink); `.addr-chip-role` (8px uppercase label); role colour overrides — city/country → amber, street/postcode → steel, ignore → opacity .4.
+- **Deviations:**
+  - Chose `useEffect` for live-apply (instead of direct `setState` calls in the cycle handler) to avoid stale-closure issues inside the `setAddrSegments` functional updater. Effect fires synchronously after the render that updates `addrSegments`.
+  - `handleAddrParse` signature changed from `(str)` to `(text)` and uses `text ?? addrPaste` — the old version used `||` which would skip a `text` argument of `""`. The button still calls `handleAddrParse()` (no argument → uses `addrPaste`); paste handler passes the clipboard text directly.
+  - Plus-code handling from the old `parseAddressString` is not replicated. Plus codes (`62JF+RM Warsaw, Poland`) are an edge case; the new parser handles the trailing comma-separated parts anyway. Can revisit in the blob notepad step.
+- **Schema/contract changes:** None. No db.js / repo.js / constants.js touched.
+- **Known issues / TODO:**
+  - `findCountry` uses JS `\b` word-boundary which is ASCII-only. For country names containing non-ASCII characters (e.g. "España", "România"), `\b` still works correctly at ASCII-letter boundaries before the first char and after the last char; the internal non-ASCII chars are matched literally. Edge case: a country name that *starts* with a non-ASCII char (none in current list) would not get the leading boundary. Not a practical problem.
+  - `"u"` (Hungarian street abbreviation) is in `STREET_WORDS`. A segment that is the lone letter `u` would classify as street rather than city, which is unlikely but possible. Low risk.
+- **Next:** Step 9 part 2 — blob notepad smart-paste, reusing `countries.js`, `addressParser.js`, and the `addr-chip` CSS.
+
+---
+
 ### 2026-06-19 — Fix: xlsx import replaces schedule instead of merging
 
 - **Done:**
