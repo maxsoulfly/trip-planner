@@ -120,3 +120,112 @@
   margin: 0;
   padding: 32px 0;
 }
+
+/* ===== NEARBY SUGGEST PANEL ===== */
+
+.tg-suggest-panel {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 280px;
+  background: var(--panel);
+  border: 1px solid var(--steel);
+  border-radius: 6px;
+  z-index: 200;
+  box-shadow: 0 4px 20px rgba(0,0,0,.4);
+  display: flex;
+  flex-direction: column;
+}
+
+.tg-suggest-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.tg-suggest-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .12em;
+  color: var(--steel);
+}
+
+.tg-suggest-close {
+  background: transparent;
+  border: none;
+  color: var(--dim);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+}
+
+.tg-suggest-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.tg-suggest-item {
+  display: grid;
+  grid-template-columns: 20px 1fr auto;
+  gap: 6px;
+  align-items: center;
+  padding: 7px 12px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+.tg-suggest-item:hover { background: var(--panel2); }
+
+.tg-suggest-emoji { font-size: 13px; }
+
+.tg-suggest-name {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tg-suggest-dist {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: var(--steel);
+  white-space: nowrap;
+}
+
+.tg-suggest-warn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px;
+  color: var(--rust);
+  grid-column: 2;
+}
+
+.tg-suggest-empty {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--dim);
+  padding: 12px;
+}
+
+.tg-suggest-picker {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .08em;
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--line);
+  color: var(--dim);
+  padding: 8px 12px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+.tg-suggest-picker:hover { color: var(--amber); }

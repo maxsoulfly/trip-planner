@@ -28,11 +28,12 @@ export const PLACE_TYPES = [
 // Time-of-day blocks — Maxx's existing model from the sheet (kept on purpose).
 // `order` controls top-to-bottom position in the day grid.
 export const BLOCKS = [
-  { key: 'morning',        label: 'Morning',        emoji: '🌄', order: 0 },
-  { key: 'noon',           label: 'Noon',           emoji: '🕛', order: 1 },
-  { key: 'late_afternoon', label: 'Late afternoon', emoji: '⛅', order: 2 },
-  { key: 'evening',        label: 'Evening',        emoji: '🌆', order: 3 },
-  { key: 'night',          label: 'Night stay',     emoji: '🌃', order: 4 },
+  { key: 'early_morning',  label: 'Early Morning',  emoji: '🌙', order: 0, start: 0,    end: 6    },
+  { key: 'morning',        label: 'Morning',        emoji: '🌄', order: 1, start: 6,    end: 12   },
+  { key: 'noon',           label: 'Noon',           emoji: '🕛', order: 2, start: 12,   end: 16   },
+  { key: 'late_afternoon', label: 'Late Afternoon', emoji: '⛅', order: 3, start: 16,   end: 19   },
+  { key: 'evening',        label: 'Evening',        emoji: '🌆', order: 4, start: 19,   end: 0    },
+  { key: 'night',          label: 'Night Stay',     emoji: '🏠', order: 5, start: null, end: null },
 ];
 
 // Where a place sits in your pipeline.

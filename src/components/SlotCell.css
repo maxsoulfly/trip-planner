@@ -162,3 +162,31 @@
   margin-top: 2px;
 }
 .sc-add:hover { color: var(--amber); border-color: var(--amber); }
+
+/* ===== DIMMED STATE ===== */
+
+.sc-root--dimmed {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* ===== NEARBY SUGGEST BUTTON ===== */
+
+.sc-suggest-btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .1em;
+  background: transparent;
+  border: 1px dashed var(--steel);
+  border-radius: 3px;
+  color: var(--dim);
+  padding: 3px 8px;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 4px;
+  text-align: center;
+}
+.sc-suggest-btn:hover {
+  border-color: var(--amber);
+  color: var(--amber);
+}

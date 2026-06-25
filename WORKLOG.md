@@ -2,6 +2,50 @@
 
 ---
 
+### 2026-06-26 — Step 22: BLOCKS restructure — early_morning added, night becomes timeless
+
+- **Done:**
+  - `src/db/constants.js` — BLOCKS updated: added `early_morning` (🌙, order 0, 00–06); `morning` order → 1; `noon` → 2; `late_afternoon` label capitalised, order → 3; `evening` end changed 23→0 (midnight), order → 4; `night` label → 'Night Stay', emoji → 🏠, order → 5, `start`/`end` → `null` (no time window). `night` key unchanged — existing schedule items unaffected.
+  - `src/components/TripGrid.jsx` — `blockForTime` updated: skips blocks where `start === null`; handles AM/PM format in addition to 24h. `handleSuggestNearby` map: returns `null` immediately when `block.start === null` (night stay has no time window). `blockEnd` computation: guards `block.end === 0` → 1440 mins (fixes evening block whose `end` is 0 not 23).
+- **Deviations:** `blockEnd` fix for evening (end=0) added opportunistically — without it scoring would compute blockEnd=0 for evening and exclude all places.
+- **Schema/contract changes:** None. `block: 'night'` key in scheduleItems unchanged.
+- **Known issues / TODO:** Existing schedule items with `block: 'night'` render fine; new `early_morning` slots available immediately.
+- **Next:** UI polish or remaining pending features.
+
+---
+
+### 2026-06-25 — Step 21: Flight dep/arr dates on both legs; grid extends to arrival day
+
+- **Done:**
+  - `src/components/TripForm.jsx` — `EMPTY_FLIGHT` gains `depDate`/`arrDate`. `normalizeFlight` spreads `EMPTY_FLIGHT` first so old records always have those fields. `FlightFields` restructured: new `flight-date-row` at top with DEP DATE + DEP TIME → ARR DATE + ARR TIME; FROM/TO and AIRLINE/NUMBER rows below. Overnight warning shown when `arrTime < depTime` on same date. START DATE onChange pre-fills outbound `depDate` if empty; END DATE onChange pre-fills inbound `depDate` if empty. `applyFlightParse` sets `depDate`/`arrDate` on each leg from `flightParsed.startDate`/`endDate` when the parser doesn't supply them directly.
+  - `src/components/TripForm.css` — added `.flight-date-row`, `.flight-date-group`, `.flight-label`, `.flight-date-input` (130px, mono), `.flight-warn` (rust, mono 9px).
+  - `src/components/TripGrid.jsx` — `flightCardsForSlot` now uses `flight.depDate` (falls back to `trip.startDate`/`endDate` for old records). Grid end extended: `gridEndDate = max(trip.endDate, inboundFlight.arrDate)` so overnight arrival adds an extra column. Greying updated: `outArrDate = outboundFlight.arrDate || startDate`; `inDepDate = inboundFlight.depDate || endDate`; `isArrivalDay`/`isDepartureDay` check against those dates.
+- **Deviations:** Flight parser (`flightParser.js`) not modified — it doesn't emit `depDate`/`arrDate` on leg objects; `applyFlightParse` fills them from top-level `startDate`/`endDate` instead. Existing trips without `depDate`/`arrDate` fall back to `trip.startDate`/`trip.endDate` in all three places (flight card placement, grid end, greying).
+- **Schema/contract changes:** None. `depDate`/`arrDate` are plain fields on the flight object stored in the trip record — no db.js version bump needed.
+- **Known issues / TODO:** Flight parser could be updated to emit `depDate`/`arrDate` per leg for multi-day itineraries; deferred.
+- **Next:** Remaining pending features or UI polish.
+- **Addendum:** `TripGrid.jsx` — swapped flight card `direction` labels: outbound (arriving at destination) now `'in'`; inbound (leaving destination) now `'out'`. SlotCell badge already derives text from `direction` — no change needed there.
+
+---
+
+### 2026-06-25 — Step 20: Block time-ranges, flight placement by time, nearby auto-suggest
+
+- **Done:**
+  - `src/db/constants.js` — added `start`/`end` hour fields to all 5 BLOCKS entries; night wraps midnight (start:23, end:6). Additive — no existing field changed.
+  - `src/utils/haversine.js` — NEW. Pure `haversine(lat1,lng1,lat2,lng2)` → km. No imports.
+  - `src/components/TripGrid.jsx` — added imports: `addScheduleItem` from repo, `PLACE_TYPES` from constants, `haversine` from utils. Added module-level `blockForTime(hhmm)` and `timeToMins(hhmm)` helpers. `flightCardsForSlot` refactored: outbound/inbound blocks derived from `depTime` via `blockForTime` (was hardcoded `morning`). Added per-day greying: `isDepartureDay`/`isArrivalDay` flags, block order comparison, `dimmed` prop passed to SlotCell. Same-day trip: arrival greying suppressed (departure takes precedence). Added `suggestions` state and `handleSuggestNearby(date, block)`: finds anchor (first placed coord'd place on that day), scores candidates by haversine + hours overlap in the block, excludes explicitly-closed and no-coord places, top 8 sorted hours-score-desc/distance-asc. No anchor → falls back to PlacePicker. Added `handleAddSuggestion`. Added nearby suggest panel JSX (fixed bottom-right). Passed `onSuggestNearby` to SlotCell.
+  - `src/components/TripGrid.css` — added `/* ===== NEARBY SUGGEST PANEL ===== */` section (tg-suggest-*).
+  - `src/components/SlotCell.jsx` — added `dimmed` and `onSuggestNearby` props; `sc-root--dimmed` class on root; `◈ NEARBY` button rendered when slot empty + no flight cards + handler provided.
+  - `src/components/SlotCell.css` — added `.sc-root--dimmed` (opacity 0.35, pointer-events none) and `.sc-suggest-btn` styles.
+- **Deviations:** `PLACE_TYPES` was NOT already imported in TripGrid — added. `addScheduleItem` was NOT imported — added. `load()` used (not `loadSchedule()` as brief named it). Night block label kept as 'Night stay' (existing) — only start/end fields added. Arrival-day greying on same day as departure suppressed to avoid greying the whole day on single-day trips.
+- **Schema/contract changes:** None. No db.js / repo.js changes.
+- **Known issues / TODO:** Block time-ranges assumed wall-clock (no timezone). Hours overlap check uses simple range math; overnight-close venues (e.g. 20:00–02:00) score correctly for evening block but may mis-score for late_afternoon due to closeMins wrapping.
+- **Next:** Remaining pending features — or UI polish pass.
+- **Addendum:** `TripGrid.jsx` — greying variables were semantically inverted: old code treated `startDate` as departure day and `endDate` as arrival day (backwards). Fixed: `isArrivalDay = date === startDate` using `outboundFlight.arrTime`; `isDepartureDay = date === endDate` using `inboundFlight.depTime`. Removed console.log.
+- **Addendum:** `TripGrid.jsx` — greying logic inverted fix: departure day now dims blocks with `order > depBlock.order` (after flight = in the air); arrival day dims `order < arrBlock.order` (before landing = in transit). Flight's own block is never dimmed (strict `>`/`<`). Arrival block derived from `arrTime`, not `depTime`. Same-day trip guard removed — both conditions coexist correctly with the fixed operators.
+
+---
+
 ### 2026-06-25 — Step 19: State/region field + grouped city filter
 
 - **Done:**

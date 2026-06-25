@@ -25,7 +25,11 @@ state via React Context (no Redux).
 - `src/db/repo.js` — the **only** module that touches Dexie. All UI goes through
   repo functions; never call `db` directly from components.
 - `src/db/constants.js` — controlled vocabularies (`PLACE_TYPES`, `BLOCKS`,
-  `STATUSES`, `WEEKDAYS`). Use these everywhere; don't hardcode.
+  `STATUSES`, `WEEKDAYS`, `VENUE_TRAITS`). Use these everywhere; don't hardcode.
+  `BLOCKS` entries have `start`/`end` hour fields (24h) for time-range logic.
+  `night` block has `start: null, end: null` — timeless, never returned by
+  `blockForTime`. Block order: early_morning(0) morning(1) noon(2)
+  late_afternoon(3) evening(4) night(5).
 - `src/utils/hours.js` — `openingHours` helpers.
 - `src/utils/hoursParser.js` — `parseGoogleHours(text)` → `{ openingHours, meta }`.
   `openingHours` is a partial weekday map. `meta` may contain `{ checkIn, checkOut }`
@@ -53,6 +57,8 @@ state via React Context (no Redux).
   addrSegments, addrDerived, untappdUrl, websiteUrl, facebookUrl }`.
 - `src/utils/xlsxImport.js` — pure `parseXlsxWorkbook(workbook)` → `{ places,
   warnings }`. Per-sheet hardcoded strategies + extractGrid heuristic.
+- `src/utils/haversine.js` — pure `haversine(lat1,lng1,lat2,lng2)` → km.
+  No imports. Used by TripGrid nearby auto-suggest.
 - `src/utils/exportHtml.js` — pure `generateDaySheet(trip, scheduleItems,
   placesMap)` → HTML string. No React, no Dexie.
 - `src/utils/exportTripXlsx.js` — pure `exportTripXlsx(trip, scheduleItems,
@@ -91,14 +97,6 @@ park → park / cemetery / cmentarz / hřbitov / garden / jardín / zoo / botani
 accommodation → hotel / hostel / noclegi / apartment / apartament / pension / inn
 
 ## Pending features (agreed, not yet built)
-- **Block time-ranges** — clock range per block (morning 06–11, noon 11–15,
-  late_afternoon 15–18, evening 18–23, night 23–06). Foundation for
-  flight-by-time and hours-aware auto-suggest.
-- **Flight-by-time grid placement** — correct block by departure/arrival clock
-  time; grey out slots before arrival / after departure. Requires block time-ranges.
-- **Nearby auto-suggest** — given a filled slot, suggest nearby places by
-  haversine on lat/lng, open in that block. Requires block time-ranges.
-  Silently skips places with no coords. One-slot-at-a-time, human-in-the-loop.
 
 ## Known issues (parked)
 - Plus-code addresses (`62JF+RM Warsaw, Poland`) not handled by blob parser —
@@ -180,6 +178,24 @@ Maps URL is optional, not a completeness signal.
     in PlaceForm LOCATION row; `deriveFields` returns `{ city, state, country,
     address }`; `state` chip role (amber) in address cycler; city+state display
     on PlaceCard + PlaceList; city dropdown grouped by country via `<optgroup>`.
+20. **DONE** — Block time-ranges, flight placement by time, nearby auto-suggest.
+    New `haversine.js`. BLOCKS gain `start`/`end` hour fields. `blockForTime()`
+    places flights in correct block by depTime/arrTime (handles 12h AM/PM format).
+    Per-day greying: arrival day dims blocks before landing; departure day dims
+    blocks after departure. SlotCell gains `dimmed` prop + `◈ NEARBY` button.
+    Nearby suggest panel: haversine scoring + hours overlap, top 8, fixed
+    bottom-right overlay. Falls back to full picker when no anchor with coords.
+21. **DONE** — Flight dep/arr dates on both legs. `depDate`/`arrDate` added to
+    flight objects (no schema bump). TripForm: date inputs alongside time inputs,
+    overnight warning, smart pre-fill from trip dates. TripGrid: flight cards
+    placed by `flight.depDate`, grid extends to `inboundFlight.arrDate` if after
+    `endDate`. Greying uses flight dates not trip dates. IN/OUT labels swapped:
+    IN = arriving at destination, OUT = leaving destination.
+22. **DONE** — BLOCKS restructure: `early_morning` added (🌙 00–06, order 0);
+    all orders shifted; `evening` end extended to 00 (midnight); `night` key
+    unchanged but label → Night Stay, emoji → 🏠, `start`/`end` → null (timeless).
+    `blockForTime` skips null-time blocks. Nearby suggest skips night block.
+    `blockEnd=0` guard added (evening end=0 → 1440 mins).
 
 ## Design language — "post-apocalyptic field terminal"
 A salvaged-tech / amber-CRT / survival-field-manual feel.
@@ -209,21 +225,9 @@ A salvaged-tech / amber-CRT / survival-field-manual feel.
 - **Naming:** no product name baked in until Maxx picks one.
 
 ## Commit messages
-Format:
-```
-<type>(<scope>): <short summary line>          ← max 72 chars
-
-- <file or module>: <what changed>
-- <file or module>: <what changed>
-```
+Format: `<type>(<scope>): <what changed>`
 Types: feat · fix · refactor · chore · docs
 Scope: db · places · trips · export · importer · ui · admin
-
-Rules:
-- Blank line between summary and bullets
-- One bullet per file or logical change, plain English
-- Group related files: `PlaceCard.jsx / PlaceCard.css: overnight hours fix`
-- No paragraphs, no wall of text
 
 ## Don't
 No TypeScript. No Tailwind unless asked. No backend in v1. Don't bypass

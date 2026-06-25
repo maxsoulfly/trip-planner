@@ -155,6 +155,45 @@
   padding-bottom: 8px;
   flex-shrink: 0;
 }
+.flight-date-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.flight-date-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.flight-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.flight-date-input {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  background: var(--panel2);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 6px 8px;
+  width: 130px;
+  outline: none;
+  transition: border-color .15s;
+}
+.flight-date-input:focus { border-color: var(--amber); }
+.flight-warn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: var(--rust);
+  letter-spacing: .06em;
+  display: block;
+  margin-top: 3px;
+}
 .tf-iata       { width: 56px; text-transform: uppercase; letter-spacing: .1em; }
 .tf-flight-num { width: 100px; }
 .tf-grow       { flex: 1; }

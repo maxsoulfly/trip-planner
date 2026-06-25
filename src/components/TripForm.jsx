@@ -3,7 +3,10 @@ import { addTrip, putTrip } from '../db/repo.js';
 import { parseFlightEmail } from '../utils/flightParser.js';
 import './TripForm.css';
 
-const EMPTY_FLIGHT = { airline: '', number: '', from: '', to: '', depTime: '', arrTime: '' };
+const EMPTY_FLIGHT = {
+  airline: '', number: '', from: '', to: '',
+  depTime: '', arrTime: '', depDate: '', arrDate: '',
+};
 
 // Old seed data stored full ISO datetime strings ('2025-11-16T11:00') in depTime/arrTime.
 // time inputs need 'HH:MM'. Strip the date prefix if present.
@@ -15,15 +18,53 @@ function normalizeTime(val) {
 
 function normalizeFlight(f) {
   if (!f) return { ...EMPTY_FLIGHT };
-  return { ...f, depTime: normalizeTime(f.depTime), arrTime: normalizeTime(f.arrTime) };
+  return {
+    ...EMPTY_FLIGHT,
+    ...f,
+    depTime: normalizeTime(f.depTime),
+    arrTime: normalizeTime(f.arrTime),
+  };
 }
 
-// Inline sub-component for the six flight fields — only rendered when the
-// corresponding "has flight" toggle is checked.
+// Inline sub-component for flight fields — only rendered when toggle is checked.
 function FlightFields({ value, onChange }) {
   function set(field, val) { onChange({ ...value, [field]: val }); }
+  const overnightWarn = value.depTime && value.arrTime &&
+    value.arrDate === value.depDate && value.arrTime < value.depTime;
   return (
     <div className="flight-fields">
+      {/* Date + time row */}
+      <div className="flight-date-row">
+        <div className="flight-date-group">
+          <span className="flight-label">DEP DATE</span>
+          <input type="date" className="flight-date-input"
+            value={value.depDate || ''}
+            onChange={e => set('depDate', e.target.value)} />
+        </div>
+        <div className="flight-date-group">
+          <span className="flight-label">DEP TIME</span>
+          <input type="time" className="form-input form-input--time"
+            value={value.depTime || ''}
+            onChange={e => set('depTime', e.target.value)} />
+        </div>
+        <span className="flight-arrow">→</span>
+        <div className="flight-date-group">
+          <span className="flight-label">ARR DATE</span>
+          <input type="date" className="flight-date-input"
+            value={value.arrDate || ''}
+            onChange={e => set('arrDate', e.target.value)} />
+        </div>
+        <div className="flight-date-group">
+          <span className="flight-label">ARR TIME</span>
+          <input type="time" className="form-input form-input--time"
+            value={value.arrTime || ''}
+            onChange={e => set('arrTime', e.target.value)} />
+        </div>
+      </div>
+      {overnightWarn && (
+        <span className="flight-warn">⚠ arrival before departure — next day?</span>
+      )}
+      {/* Route row */}
       <div className="flight-row">
         <label className="form-row">
           <span className="form-label">FROM</span>
@@ -32,23 +73,13 @@ function FlightFields({ value, onChange }) {
             placeholder="TLV" />
         </label>
         <label className="form-row">
-          <span className="form-label">DEP</span>
-          <input className="form-input form-input--time" type="time"
-            value={value.depTime} onChange={(e) => set('depTime', e.target.value)} />
-        </label>
-        <span className="flight-arrow">→</span>
-        <label className="form-row">
           <span className="form-label">TO</span>
           <input className="form-input tf-iata" type="text" maxLength={4}
             value={value.to} onChange={(e) => set('to', e.target.value.toUpperCase())}
             placeholder="SOF" />
         </label>
-        <label className="form-row">
-          <span className="form-label">ARR</span>
-          <input className="form-input form-input--time" type="time"
-            value={value.arrTime} onChange={(e) => set('arrTime', e.target.value)} />
-        </label>
       </div>
+      {/* Airline row */}
       <div className="flight-row">
         <label className="form-row tf-grow">
           <span className="form-label">AIRLINE</span>
@@ -161,9 +192,23 @@ export default function TripForm({ initialData, onSave, onClose }) {
 
   function applyFlightParse() {
     if (!flightParsed) return;
-    if (flightParsed.outbound) { setOutbound(flightParsed.outbound); setHasOutbound(true); }
-    if (flightParsed.inbound)  { setInbound(flightParsed.inbound);   setHasInbound(true);  }
-    // Only prefill dates when form dates are currently empty.
+    if (flightParsed.outbound) {
+      setOutbound({
+        ...flightParsed.outbound,
+        depDate: flightParsed.outbound.depDate || flightParsed.startDate || '',
+        arrDate: flightParsed.outbound.arrDate || flightParsed.startDate || '',
+      });
+      setHasOutbound(true);
+    }
+    if (flightParsed.inbound) {
+      setInbound({
+        ...flightParsed.inbound,
+        depDate: flightParsed.inbound.depDate || flightParsed.endDate || '',
+        arrDate: flightParsed.inbound.arrDate || flightParsed.endDate || '',
+      });
+      setHasInbound(true);
+    }
+    // Only prefill trip dates when form dates are currently empty.
     if (flightParsed.startDate && !startDate) setStartDate(flightParsed.startDate);
     if (flightParsed.endDate   && !endDate)   setEndDate(flightParsed.endDate);
     setFlightParsed(null);
@@ -216,6 +261,7 @@ export default function TripForm({ initialData, onSave, onClose }) {
                     const val = e.target.value;
                     setStartDate(val);
                     if (endDate && val && endDate < val) setEndDate('');
+                    if (val) setOutbound(prev => ({ ...prev, depDate: prev.depDate || val }));
                     setTimeout(() => endDateRef.current?.focus(), 0);
                   }} />
               </label>
@@ -225,7 +271,11 @@ export default function TripForm({ initialData, onSave, onClose }) {
                   ref={endDateRef}
                   value={endDate}
                   min={startDate || undefined}
-                  onChange={(e) => setEndDate(e.target.value)} />
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setEndDate(val);
+                    if (val) setInbound(prev => ({ ...prev, depDate: prev.depDate || val }));
+                  }} />
               </label>
             </div>
 

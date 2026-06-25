@@ -1,11 +1,11 @@
 import { typeMeta } from '../db/constants.js';
 import './SlotCell.css';
 
-export default function SlotCell({ block, items, places, flightCards, onAdd, onRemove, onMoveUp, onMoveDown, onEditPlace }) {
+export default function SlotCell({ block, items, places, flightCards, dimmed, onAdd, onRemove, onMoveUp, onMoveDown, onEditPlace, onSuggestNearby }) {
   const sortedItems = items.slice().sort((a, b) => a.order - b.order);
 
   return (
-    <div className="sc-root">
+    <div className={`sc-root${dimmed ? ' sc-root--dimmed' : ''}`}>
       <div className="sc-block-label">
         <span className="sc-block-emoji">{block.emoji}</span>
         {block.label.toUpperCase()}
@@ -90,6 +90,11 @@ export default function SlotCell({ block, items, places, flightCards, onAdd, onR
       })}
 
       <button className="sc-add" onClick={onAdd}>+ ADD</button>
+      {items.length === 0 && !flightCards?.length && onSuggestNearby && (
+        <button className="sc-suggest-btn" onClick={onSuggestNearby} type="button">
+          ◈ NEARBY
+        </button>
+      )}
     </div>
   );
 }
