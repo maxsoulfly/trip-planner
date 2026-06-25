@@ -10,6 +10,8 @@ const ROLE_DISPLAY = {
   'name':          'name',
   'hours':         'hours',
   'address':       'address',
+  'checkin':       'check-in',
+  'checkout':      'check-out',
   'url-maps':      'maps',
   'url-untappd':   'untappd',
   'url-website':   'website',
@@ -27,7 +29,8 @@ function roleCss(role) {
 export default function BlobPreview({ result, onCycleRole }) {
   const { lines, extracted } = result;
   const { name, url, lat, lng, shortUrl, openingHours,
-          addrSegments, untappdUrl, websiteUrl, facebookUrl } = extracted;
+          addrSegments, untappdUrl, websiteUrl, facebookUrl,
+          checkIn, checkOut } = extracted;
 
   const hoursDayCount = openingHours ? Object.keys(openingHours).length : 0;
 
@@ -107,6 +110,20 @@ export default function BlobPreview({ result, onCycleRole }) {
           </div>
         )}
 
+        {checkIn && (
+          <div className="blob-ext-row">
+            <span className="blob-ext-label">CHECK-IN</span>
+            <span className="blob-ext-value" style={{ color: 'var(--steel)' }}>{checkIn}</span>
+          </div>
+        )}
+
+        {checkOut && (
+          <div className="blob-ext-row">
+            <span className="blob-ext-label">CHECK-OUT</span>
+            <span className="blob-ext-value" style={{ color: 'var(--steel)' }}>{checkOut}</span>
+          </div>
+        )}
+
         {addrSegments?.length > 0 && (
           <div className="blob-ext-row">
             <span className="blob-ext-label">ADDRESS</span>
@@ -128,7 +145,7 @@ export default function BlobPreview({ result, onCycleRole }) {
         )}
 
         {!name && !url && hoursDayCount === 0 && !addrSegments?.length
-         && !websiteUrl && !untappdUrl && (
+         && !websiteUrl && !untappdUrl && !checkIn && !checkOut && (
           <span className="blob-ext-value" style={{ color: 'var(--dim)', opacity: .6 }}>
             Nothing extracted
           </span>

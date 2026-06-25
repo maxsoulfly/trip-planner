@@ -55,6 +55,7 @@ export const VENUE_TRAITS = [
   { key: 'cocktails',     label: 'Cocktails',      emoji: '🍸' },
   { key: 'coffee',        label: 'Coffee',         emoji: '☕' },
   { key: 'outdoor',       label: 'Outdoor',        emoji: '🌿' },
+  { key: 'happy-hours',  label: 'Happy Hours',    emoji: '🍻' },
 ];
 
 // Weekday keys used by Place.openingHours. Monday-first to match Europe.

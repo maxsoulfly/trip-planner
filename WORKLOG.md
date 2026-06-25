@@ -12,6 +12,8 @@
 - **Schema/contract changes:** None. Stubs created via existing `addPlace`.
 - **Known issues / TODO:** Likely-match containment check can produce false positives for very short names (e.g. "Bar" matches "Harbour Bar"). The 4-char minimum mitigates this but doesn't eliminate it.
 - **Next:** State/region field + grouped city filter, or block time-ranges.
+- **Addendum:** `blobParser.js` — added `checkin`/`checkout` line roles (detected before address/name fallbacks via regex); extracts first `HH:MM` match into `extracted.checkIn`/`checkOut`. `BlobPreview.jsx` — added both roles to `ROLE_DISPLAY` (steel colour), added extracted rows in right column. `PlaceForm.jsx` — `applyBlob` now calls `setCheckIn`/`setCheckOut` when present.
+- **Addendum:** `constants.js` — added `happy-hours` trait to `VENUE_TRAITS` after `outdoor`. `blobParser.js` — added `ignore-label` role for known Google Maps section headers (suggest new hours, lunch, happy hours, kitchen, popular times, dine-in, takeaway, delivery, drive-through); these lines are filtered out of the returned `lines` array and never reach extraction or the BlobPreview chip list.
 
 ---
 

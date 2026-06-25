@@ -3,10 +3,12 @@
 // parseBlob(text) → { lines, extracted }
 //   lines:     [{ raw, role }]
 //     role = name | url-maps | url-untappd | url-website | url-facebook |
-//            url-instagram | hours | address
+//            url-instagram | hours | address | checkin | checkout
+//            (ignore-label lines are filtered out before being returned)
 //   extracted: { name, url, lat, lng, nameFromUrl, shortUrl,
 //                openingHours, addrSegments, addrDerived,
-//                untappdUrl, websiteUrl, facebookUrl }
+//                untappdUrl, websiteUrl, facebookUrl,
+//                checkIn, checkOut }
 
 import { parseMapsUrl }               from './mapsParser.js';
 import { parseGoogleHours }           from './hoursParser.js';
@@ -34,6 +36,9 @@ function classifyLine(raw) {
   const urlRole = classifyUrl(raw);
   if (urlRole) return urlRole;
   if (WEEKDAY_RE.test(raw) || CLOSED_RE.test(raw) || TIME_VALUE_RE.test(raw)) return 'hours';
+  if (/check[- ]?in\s*(?:time\s*)?[:\-]\s*\d{1,2}:\d{2}/i.test(raw))  return 'checkin';
+  if (/check[- ]?out\s*(?:time\s*)?[:\-]\s*\d{1,2}:\d{2}/i.test(raw)) return 'checkout';
+  if (/^(suggest new hours|lunch|happy hours?|kitchen|popular times?|dine.?in|takeaway|delivery|drive.?through)$/i.test(raw)) return 'ignore-label';
   if (/,/.test(raw) && (/\d/.test(raw) || findCountry(raw))) return 'address';
   return 'name';
 }
@@ -42,6 +47,7 @@ const EMPTY_EXTRACTED = {
   name: null, url: null, lat: null, lng: null, nameFromUrl: null, shortUrl: false,
   openingHours: null, addrSegments: null, addrDerived: null,
   untappdUrl: null, websiteUrl: null, facebookUrl: null,
+  checkIn: null, checkOut: null,
 };
 
 export function parseBlob(text) {
@@ -50,7 +56,8 @@ export function parseBlob(text) {
   const lines = text.split('\n')
     .map(raw => raw.trim())
     .filter(l => l.length > 0 && !/^[■-▣\s]+$/.test(l))
-    .map(raw => ({ raw, role: classifyLine(raw) }));
+    .map(raw => ({ raw, role: classifyLine(raw) }))
+    .filter(l => l.role !== 'ignore-label');
 
   const nameLine   = lines.find(l => l.role === 'name');
   const mapsLine   = lines.find(l => l.role === 'url-maps');
@@ -61,6 +68,12 @@ export function parseBlob(text) {
   const untappdLine  = lines.find(l => l.role === 'url-untappd');
   const websiteLine  = lines.find(l => l.role === 'url-website');
   const facebookLine = lines.find(l => l.role === 'url-facebook' || l.role === 'url-instagram');
+
+  // Check-in / check-out time extraction
+  const checkinLine  = lines.find(l => l.role === 'checkin');
+  const checkoutLine = lines.find(l => l.role === 'checkout');
+  const checkIn  = checkinLine  ? (checkinLine.raw.match(/(\d{1,2}:\d{2})/)?.[1]  ?? null) : null;
+  const checkOut = checkoutLine ? (checkoutLine.raw.match(/(\d{1,2}:\d{2})/)?.[1] ?? null) : null;
 
   // Maps URL → coords + nameFromUrl
   let url = null, lat = null, lng = null, nameFromUrl = null, shortUrl = false;
@@ -101,6 +114,7 @@ export function parseBlob(text) {
     untappdUrl:  untappdLine?.raw  ?? null,
     websiteUrl:  websiteLine?.raw  ?? null,
     facebookUrl: facebookLine?.raw ?? null,
+    checkIn, checkOut,
   };
   return { lines, extracted };
 }

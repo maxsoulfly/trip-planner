@@ -204,6 +204,8 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
     if (extracted.openingHours) setHours(h => ({ ...h, ...extracted.openingHours }));
     if (extracted.untappdUrl)   setUntappdUrl(extracted.untappdUrl);
     if (extracted.websiteUrl)   setWebsiteUrl(extracted.websiteUrl);
+    if (extracted.checkIn)      setCheckIn(extracted.checkIn);
+    if (extracted.checkOut)     setCheckOut(extracted.checkOut);
     // facebookUrl → no place field; social links are shown in preview only
     // addrSegments → existing useEffect live-applies city/country/address
     if (extracted.addrSegments?.length) setAddrSegments(extracted.addrSegments);
