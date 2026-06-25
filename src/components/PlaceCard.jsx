@@ -57,8 +57,12 @@ export default function PlaceCard({ place, onEdit, onDelete, incomplete }) {
   const today  = todayWeekdayKey();
   const badge  = getStatusBadge(place.openingHours, today);
 
+  const cityLabel = place.city
+    ? place.city + (place.state ? `, ${place.state}` : '')
+    : null;
+
   const coordParts = [
-    place.city,
+    cityLabel,
     place.country,
     place.lat != null && place.lng != null ? `${place.lat}, ${place.lng}` : null,
   ].filter(Boolean);

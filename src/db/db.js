@@ -72,4 +72,14 @@ db.version(3).stores({
   scheduleItems: 'id, tripId, [tripId+date], placeId',
 });
 
+// version(4) — adds state field to places index.
+// No migration needed — state defaults to undefined/'' on existing records.
+db.version(4).stores({
+  // PLACE shape (additions from v3):
+  //   state,  // optional state/region string, e.g. 'OR', 'BC'
+  places:        'id, name, type, city, state, country, status, createdAt',
+  trips:         'id, title, startDate',
+  scheduleItems: 'id, tripId, [tripId+date], placeId',
+});
+
 export default db;

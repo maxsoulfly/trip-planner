@@ -2,6 +2,24 @@
 
 ---
 
+### 2026-06-25 — Step 19: State/region field + grouped city filter
+
+- **Done:**
+  - `src/db/db.js` — version(4); adds `state` to places index.
+  - `src/db/repo.js` — `state: ''` added to `addPlace` defaults.
+  - `src/utils/addressParser.js` — `deriveFields` now returns `{ city, state, country, address }`; `state` = last `state` chip. Empty-result shape updated. Doc comments updated. Chip role `state` recognised in loop.
+  - `src/components/PlaceForm.jsx` — `state` state var seeded from `initialData`; included in `handleSubmit` data; `useEffect` on `addrSegments` now also calls `setState`; `ADDR_ROLE_CYCLE` extended: `country → state → street` (6 roles); STATE / REGION input added in LOCATION fieldset between CITY and COUNTRY using `form-row--sm`.
+  - `src/components/PlaceForm.css` — `.form-row--sm { max-width: 90px }` added; `.addr-chip--state` added to amber colour group and amber hover group.
+  - `src/components/PlaceCard.jsx` — `cityLabel` derived as `city + ', ' + state` when state set; used in `coordParts`.
+  - `src/components/PlaceList.jsx` — city cell shows `city, state` when state set.
+  - `src/App.jsx` — replaced `cities` useMemo with `cityGroups` (grouped by country, sorted); toolbar city select uses `<optgroup>` per country, options show `city, state` label; `filterCity` still filters on `p.city` string (city+state combined filtering deferred).
+- **Deviations:** `blobParser.js` not changed — it stores `addrDerived` as the full object returned by `parseAddress`/`deriveFields`, so the new `state` field is automatically present without code changes.
+- **Schema/contract changes:** `db.js` version(4); `state` indexed on places. `deriveFields` return shape is additive (new `state` field). `repo.js` addPlace updated.
+- **Known issues:** City-only filter means Portland OR and Portland ME both show under `city === 'Portland'` when selected. Acceptable for v1.
+- **Next:** Block time-ranges or nearby auto-suggest.
+
+---
+
 ### 2026-06-25 — Step 18: Toolbar consolidation
 
 - **Done:**

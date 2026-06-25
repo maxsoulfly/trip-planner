@@ -51,6 +51,7 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
   const [type,         setType]         = useState(initialData?.type         || 'other');
   const [status,       setStatus]       = useState(initialData?.status       || 'wishlist');
   const [city,         setCity]         = useState(initialData?.city         || '');
+  const [state,        setState]        = useState(initialData?.state        || '');
   const [country,      setCountry]      = useState(initialData?.country      || '');
   const [address,      setAddress]      = useState(initialData?.address      || '');
   const [lat,          setLat]          = useState(initialData?.lat          ?? '');
@@ -109,11 +110,12 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  // Live-apply city/country/address whenever segment roles change.
+  // Live-apply city/state/country/address whenever segment roles change.
   useEffect(() => {
     if (!addrSegments.length) return;
-    const { city: c, country: co, address: a } = deriveFields(addrSegments);
+    const { city: c, state: st, country: co, address: a } = deriveFields(addrSegments);
     setCity(c);
+    setState(st || '');
     setCountry(co);
     setAddress(a);
   }, [addrSegments]);
@@ -177,7 +179,7 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
     handleBlobParse(text);
   }
 
-  const ADDR_ROLE_CYCLE = { city: 'country', country: 'street', street: 'postcode', postcode: 'ignore', ignore: 'city' };
+  const ADDR_ROLE_CYCLE = { city: 'country', country: 'state', state: 'street', street: 'postcode', postcode: 'ignore', ignore: 'city' };
 
   function cycleSegmentRole(id) {
     setAddrSegments(segs => segs.map(s => s.id === id ? { ...s, role: ADDR_ROLE_CYCLE[s.role] } : s));
@@ -322,6 +324,7 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
       type,
       status,
       city:          city.trim(),
+      state:         state.trim(),
       country:       country.trim(),
       address:       address.trim(),
       lat:           lat !== '' ? parseFloat(lat) : null,
@@ -576,6 +579,12 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
                 <input className="form-input" type="text"
                   value={city} onChange={(e) => setCity(e.target.value)}
                   placeholder="Kraków" />
+              </label>
+              <label className="form-row form-row--sm">
+                <span className="form-label">STATE / REGION</span>
+                <input className="form-input" type="text"
+                  value={state} onChange={(e) => setState(e.target.value)}
+                  placeholder="OR, BC…" maxLength={10} />
               </label>
               <label className="form-row">
                 <span className="form-label">COUNTRY</span>

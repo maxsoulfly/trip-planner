@@ -85,9 +85,29 @@ export default function App() {
 
   // ── Place library helpers ─────────────────────────────────────────────────
 
-  const cities = useMemo(() => {
-    const set = new Set(places.map((p) => p.city).filter(Boolean));
-    return [...set].sort();
+  const cityGroups = useMemo(() => {
+    const seen = new Map();
+    places.forEach(p => {
+      const key = `${p.city || ''}|${p.state || ''}|${p.country || ''}`;
+      if (!seen.has(key)) seen.set(key, {
+        value: p.city || '',
+        label: (p.city || '') + (p.state ? `, ${p.state}` : ''),
+        country: p.country || '',
+      });
+    });
+    const byCountry = new Map();
+    for (const entry of seen.values()) {
+      if (!entry.value) continue; // skip blank city entries
+      const c = entry.country;
+      if (!byCountry.has(c)) byCountry.set(c, []);
+      byCountry.get(c).push(entry);
+    }
+    return [...byCountry.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([country, cities]) => ({
+        country,
+        cities: cities.sort((a, b) => a.label.localeCompare(b.label)),
+      }));
   }, [places]);
 
   const filtered = useMemo(() => {
@@ -204,7 +224,15 @@ export default function App() {
             <select className="toolbar__select" value={filterCity}
               onChange={(e) => setFilterCity(e.target.value)} aria-label="Filter by city">
               <option value="">ALL CITIES</option>
-              {cities.map((c) => <option key={c} value={c}>{c.toUpperCase()}</option>)}
+              {cityGroups.map(group => (
+                <optgroup key={group.country} label={group.country || 'Unknown'}>
+                  {group.cities.map(c => (
+                    <option key={c.value + '|' + c.label} value={c.value}>
+                      {c.label.toUpperCase()}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
             </select>
             <select className="toolbar__select" value={filterType}
               onChange={(e) => setFilterType(e.target.value)} aria-label="Filter by type">

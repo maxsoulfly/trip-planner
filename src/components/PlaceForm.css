@@ -115,6 +115,10 @@
   gap: 10px;
 }
 
+.form-row--sm {
+  max-width: 90px;
+}
+
 .form-row {
   display: flex;
   flex-direction: column;
@@ -450,9 +454,11 @@
 
 /* city + country → amber (the two fields that matter) */
 .addr-chip--city,
-.addr-chip--country { border-color: var(--amber); }
+.addr-chip--country,
+.addr-chip--state { border-color: var(--amber); }
 .addr-chip--city    .addr-chip-role,
-.addr-chip--country .addr-chip-role { color: var(--amber); }
+.addr-chip--country .addr-chip-role,
+.addr-chip--state   .addr-chip-role { color: var(--amber); }
 
 /* street + postcode → steel (goes to address, lower emphasis) */
 .addr-chip--street,
@@ -466,7 +472,8 @@
 /* hover — amber chips stay amber but dim slightly, others brighten border */
 .addr-chip:hover { border-color: var(--ink); }
 .addr-chip--city:hover,
-.addr-chip--country:hover { border-color: var(--amber); opacity: .75; }
+.addr-chip--country:hover,
+.addr-chip--state:hover { border-color: var(--amber); opacity: .75; }
 .addr-chip--ignore:hover { opacity: .65; }
 
 /* ===== BLOB NOTEPAD ===== */

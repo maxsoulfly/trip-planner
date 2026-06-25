@@ -1,10 +1,10 @@
 // Pure address parser — no React, no Dexie.
 //
 // parseAddress(text) → { segments, derived }
-//   segments: [{ id, raw, role }]  role = city|country|street|postcode|ignore
-//   derived:  { city, country, address }  — recomputed from current roles
+//   segments: [{ id, raw, role }]  role = city|state|country|street|postcode|ignore
+//   derived:  { city, state, country, address }  — recomputed from current roles
 //
-// deriveFields(segments) → { city, country, address }
+// deriveFields(segments) → { city, state, country, address }
 //   Call this whenever segment roles change to live-update form fields.
 
 import { findCountry } from './countries.js';
@@ -86,7 +86,7 @@ function trySplitGlue(segment) {
 let _nextId = 1;
 
 export function parseAddress(text) {
-  if (!text?.trim()) return { segments: [], derived: { city: '', country: '', address: '' } };
+  if (!text?.trim()) return { segments: [], derived: { city: '', state: '', country: '', address: '' } };
 
   const countryMatch = findCountry(text);
 
@@ -123,27 +123,28 @@ export function parseAddress(text) {
   return { segments, derived };
 }
 
-// Recompute { city, country, address } from current segment roles.
-// city    = all 'city' chips joined with ' '
-// country = last 'country' chip (last-wins so user can mark a second)
+// Recompute { city, state, country, address } from current segment roles.
+// city    = last 'city' chip (last-wins; district before city pattern)
+// state   = last 'state' chip
+// country = last 'country' chip
 // address = 'street' + 'postcode' chips joined with ', ' (original order)
 // 'ignore' chips contribute to nothing.
 export function deriveFields(segments) {
-  const cityChips = [];
+  const cityChips  = [];
+  const stateChips = [];
   let country = '';
   const addrParts = [];
 
   for (const seg of segments) {
-    if (seg.role === 'city')    { cityChips.push(seg.raw); }
+    if      (seg.role === 'city')    { cityChips.push(seg.raw); }
+    else if (seg.role === 'state')   { stateChips.push(seg.raw); }
     else if (seg.role === 'country') { country = seg.raw; }
     else if (seg.role === 'street' || seg.role === 'postcode') { addrParts.push(seg.raw); }
-    // 'ignore' → nothing
   }
 
-  // Take the last city chip: in Google Maps format the actual city name consistently
-  // appears closer to the country than the district/neighbourhood does.
   return {
-    city:    cityChips.length ? cityChips[cityChips.length - 1] : '',
+    city:    cityChips.length  ? cityChips[cityChips.length - 1]   : '',
+    state:   stateChips.length ? stateChips[stateChips.length - 1] : '',
     country,
     address: addrParts.join(', '),
   };

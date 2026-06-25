@@ -100,7 +100,9 @@ export default function PlaceList({ places, onEdit, onBulkDelete }) {
               <button className="pl-cell pl-cell--name pl-name-btn" onClick={() => onEdit(p)}>
                 {p.name}
               </button>
-              <span className="pl-cell pl-cell--city">{p.city || '—'}</span>
+              <span className="pl-cell pl-cell--city">
+                {p.city ? p.city + (p.state ? `, ${p.state}` : '') : '—'}
+              </span>
               <span className="pl-cell pl-cell--status pl-stamp">{stamp}</span>
               <span className="pl-cell pl-cell--flag">
                 {/* incomplete marker passed from App via the filtered places array */}
