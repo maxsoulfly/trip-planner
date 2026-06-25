@@ -27,9 +27,11 @@ state via React Context (no Redux).
 - `src/db/constants.js` — controlled vocabularies (`PLACE_TYPES`, `BLOCKS`,
   `STATUSES`, `WEEKDAYS`). Use these everywhere; don't hardcode.
 - `src/utils/hours.js` — `openingHours` helpers.
-- `src/utils/hoursParser.js` — `parseGoogleHours(text)` → partial openingHours.
-  Handles Google Maps copy-paste format (alternating day/hours lines) and
-  compact format (day: hours per line). Contract preserved: absent=unknown.
+- `src/utils/hoursParser.js` — `parseGoogleHours(text)` → `{ openingHours, meta }`.
+  `openingHours` is a partial weekday map. `meta` may contain `{ checkIn, checkOut }`
+  (HH:MM strings) when check-in/out lines are present. Handles Google Maps
+  copy-paste format (alternating day/hours lines) and compact format
+  (day: hours per line). Contract preserved: absent=unknown.
 - `src/utils/mapsParser.js` — pure `parseMapsUrl(url)` → `{ name, lat, lng }`.
   Returns `{ short: true }` for goo.gl short URLs.
 - `src/utils/countries.js` — `COUNTRIES` array (~195 ISO-3166 entries, each
@@ -173,6 +175,11 @@ Maps URL is optional, not a completeness signal.
     to `setCheckIn`/`setCheckOut` on APPLY); `happy-hours` trait added to
     `VENUE_TRAITS`; `ignore-label` role filters Google Maps section headers
     (Lunch, Happy hours, Kitchen, etc.) from blob classification.
+18. **DONE** — Toolbar consolidation. IMPORT CSV + IMPORT XLSX moved to
+    AdminModal (IMPORT DATA section). BULK PASTE moved into split button
+    chevron dropdown alongside ADD PLACE. INCOMPLETE filter moved to statusbar
+    as clickable rust badge (hidden when count = 0). Split button:
+    `[+ ADD PLACE][▾]` — primary always one-click, chevron reveals dropdown.
 
 ## Design language — "post-apocalyptic field terminal"
 A salvaged-tech / amber-CRT / survival-field-manual feel.
