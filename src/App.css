@@ -196,6 +196,94 @@
 }
 .btn-import--active:hover { color: var(--ink); border-color: var(--rust); }
 
+/* ===== SPLIT BUTTON (+ ADD PLACE | ▾) ===== */
+
+.split-btn-group {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.split-btn-primary {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  background: var(--amber);
+  color: var(--bg);
+  border: none;
+  border-radius: 4px 0 0 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.split-btn-chevron {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  background: var(--amber);
+  color: var(--bg);
+  border: none;
+  border-left: 1px solid color-mix(in srgb, var(--bg) 20%, var(--amber));
+  border-radius: 0 4px 4px 0;
+  padding: 6px 8px;
+  cursor: pointer;
+}
+
+.split-btn-primary:hover,
+.split-btn-chevron:hover { opacity: .88; }
+
+.split-btn-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  min-width: 140px;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0,0,0,.3);
+}
+
+.split-btn-option {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: .06em;
+  background: transparent;
+  border: none;
+  color: var(--ink);
+  padding: 8px 12px;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.split-btn-option:hover {
+  background: var(--panel2);
+  color: var(--amber);
+}
+
+/* ===== STATUSBAR INCOMPLETE BADGE ===== */
+
+.statusbar-incomplete {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .08em;
+  background: transparent;
+  border: 1px solid var(--rust);
+  border-radius: 3px;
+  color: var(--rust);
+  padding: 2px 6px;
+  cursor: pointer;
+  margin-left: 10px;
+  vertical-align: middle;
+}
+
+.statusbar-incomplete--on {
+  background: var(--rust);
+  color: var(--bg);
+}
+
 /* ===== VIEW TOGGLE (CARDS | LIST) ===== */
 
 .btn-view-group {

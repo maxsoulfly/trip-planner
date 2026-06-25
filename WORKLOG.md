@@ -2,6 +2,19 @@
 
 ---
 
+### 2026-06-25 — Step 18: Toolbar consolidation
+
+- **Done:**
+  - `src/App.jsx` — removed `showImport`/`showXlsx` states and their `<CsvImport>`/`<XlsxImport>` modal mounts; removed `CsvImport`/`XlsxImport` imports. Renamed `showBulkPaste` → `showBulkPasteModal`; added `showBulkDropdown` for chevron open/close. Added `splitBtnRef` (useRef) and a conditional useEffect that closes the dropdown on outside click. Added `incompleteCount` useMemo (`places.filter(isIncomplete).length`). Added `useRef` to the React import. Updated `switchView` to reset dropdown/modal states. Removed `⚠ INCOMPLETE` toolbar button; removed `+ BULK PASTE`, `IMPORT CSV`, `IMPORT XLSX` toolbar buttons. Added split button group (`split-btn-group` / `split-btn-primary` / `split-btn-chevron` / `split-btn-dropdown` / `split-btn-option`) replacing the old add+import block. Added `statusbar-incomplete` badge in statusbar left span, shown only when `incompleteCount > 0`, toggles `filterIncomplete` on click, `--on` modifier when active.
+  - `src/App.css` — added `/* ===== SPLIT BUTTON ===== */` section (split-btn-group/primary/chevron/dropdown/option) and `/* ===== STATUSBAR INCOMPLETE BADGE ===== */` section (statusbar-incomplete / --on). `.btn-add` and `.btn-import` styles left in place (btn-add may be dead code now but removal is harmless to defer).
+  - `src/components/AdminModal.jsx` — imported `CsvImport` and `XlsxImport`; added `showCsv`/`showXlsx` states; added IMPORT DATA section (before Backup) with IMPORT CSV and IMPORT XLSX buttons; mounted `<CsvImport>` and `<XlsxImport>` after the modal panel, outside the panel div (same layer as modal backdrop). `CsvImport` and `XlsxImport` were not modified internally.
+- **Deviations:** Import modals mounted outside the `admin-panel` div but inside the `modal-backdrop` div — this is correct because both use their own `modal-backdrop` and need to overlay the full screen. `admin-row--merge` reused on the XLSX row to drop the bottom border on the last row of the section (existing pattern).
+- **Schema/contract changes:** None.
+- **Known issues / TODO:** `.btn-add` CSS in App.css is now unused (replaced by `.split-btn-primary`) — can be removed in a future cleanup pass.
+- **Next:** State/region field + grouped city filter, or block time-ranges.
+
+---
+
 ### 2026-06-25 — Step 17: Bulk place paste
 
 - **Done:**

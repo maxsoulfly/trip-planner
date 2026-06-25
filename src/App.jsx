@@ -1,11 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { getAllPlaces, deletePlace, getAllTrips, deleteTripCascade } from './db/repo.js';
 import { PLACE_TYPES, STATUSES, VENUE_TRAITS } from './db/constants.js';
 import PlaceCard from './components/PlaceCard.jsx';
 import PlaceList from './components/PlaceList.jsx';
 import PlaceForm from './components/PlaceForm.jsx';
-import CsvImport   from './components/CsvImport.jsx';
-import XlsxImport  from './components/XlsxImport.jsx';
 import AdminModal  from './components/AdminModal.jsx';
 import BulkPaste  from './components/BulkPaste.jsx';
 import TripList    from './components/TripList.jsx';
@@ -33,9 +31,9 @@ function isIncomplete(p) {
 //   activeTrip: null | Trip   (null = show list; Trip = show grid)
 //
 // Modal state:
-//   modal:       null | { mode: 'add' } | { mode: 'edit', place }  — place form
-//   showImport:  bool                                                — csv import
-//   tripModal:   null | { mode: 'add' } | { mode: 'edit', trip }   — trip form
+//   modal:              null | { mode: 'add' } | { mode: 'edit', place }  — place form
+//   showBulkPasteModal: bool  — bulk paste modal (launched from split button)
+//   tripModal:          null | { mode: 'add' } | { mode: 'edit', trip }   — trip form
 
 export default function App() {
   const [places,       setPlaces]       = useState([]);
@@ -48,12 +46,13 @@ export default function App() {
   const [filterStatus, setFilterStatus] = useState('');
   const [filterTrait,  setFilterTrait]  = useState('');
   const [listView,     setListView]     = useState(false);
-  const [modal,        setModal]        = useState(null);
-  const [showImport,       setShowImport]       = useState(false);
-  const [showXlsx,         setShowXlsx]         = useState(false);
-  const [showAdmin,        setShowAdmin]        = useState(false);
-  const [showBulkPaste,    setShowBulkPaste]    = useState(false);
-  const [filterIncomplete, setFilterIncomplete] = useState(false);
+  const [modal,               setModal]               = useState(null);
+  const [showAdmin,           setShowAdmin]           = useState(false);
+  const [showBulkDropdown,    setShowBulkDropdown]    = useState(false);
+  const [showBulkPasteModal,  setShowBulkPasteModal]  = useState(false);
+  const [filterIncomplete,    setFilterIncomplete]    = useState(false);
+
+  const splitBtnRef = useRef(null);
   const [tripModal,        setTripModal]        = useState(null);
   const [theme,            setThemeState]       = useState(
     () => document.documentElement.getAttribute('data-theme') || 'dark'
@@ -79,9 +78,9 @@ export default function App() {
     setView(v);
     setActiveTrip(null);
     setModal(null);
-    setShowImport(false);
-    setShowXlsx(false);
     setShowAdmin(false);
+    setShowBulkDropdown(false);
+    setShowBulkPasteModal(false);
   }
 
   // ── Place library helpers ─────────────────────────────────────────────────
@@ -104,6 +103,20 @@ export default function App() {
       return true;
     });
   }, [places, search, filterCity, filterType, filterStatus, filterTrait, filterIncomplete]);
+
+  const incompleteCount = useMemo(() => places.filter(isIncomplete).length, [places]);
+
+  // Close bulk-paste dropdown when user clicks outside the split button group.
+  useEffect(() => {
+    if (!showBulkDropdown) return;
+    function handleOutside(e) {
+      if (splitBtnRef.current && !splitBtnRef.current.contains(e.target)) {
+        setShowBulkDropdown(false);
+      }
+    }
+    document.addEventListener('click', handleOutside);
+    return () => document.removeEventListener('click', handleOutside);
+  }, [showBulkDropdown]);
 
   // Inline confirm is now handled inside PlaceCard — handler just deletes.
   async function handleDeletePlace(place) {
@@ -141,6 +154,15 @@ export default function App() {
           <span className="statusbar__count">{places.length} PLACES</span>
           {' · '}
           <span className="statusbar__count">{trips.length} TRIPS</span>
+          {incompleteCount > 0 && (
+            <button
+              className={`statusbar-incomplete${filterIncomplete ? ' statusbar-incomplete--on' : ''}`}
+              onClick={() => setFilterIncomplete(f => !f)}
+              aria-pressed={filterIncomplete}
+            >
+              ⚠ {incompleteCount} INCOMPLETE
+            </button>
+          )}
         </span>
         <div className="statusbar-right">
           <button className="btn-theme" onClick={cycleTheme} aria-label="Toggle theme">
@@ -205,14 +227,6 @@ export default function App() {
                 <option key={t.key} value={t.key}>{t.emoji} {t.label.toUpperCase()}</option>
               ))}
             </select>
-            <button
-              className={`btn-import${filterIncomplete ? ' btn-import--active' : ''}`}
-              onClick={() => setFilterIncomplete(v => !v)}
-              aria-pressed={filterIncomplete}
-            >
-              ⚠ INCOMPLETE
-            </button>
-
             {/* View toggle */}
             <div className="btn-view-group">
               <button
@@ -227,18 +241,32 @@ export default function App() {
               >LIST</button>
             </div>
 
-            <button className="btn-add" onClick={() => setModal({ mode: 'add' })}>
-              + ADD PLACE
-            </button>
-            <button className="btn-import" onClick={() => setShowBulkPaste(true)}>
-              + BULK PASTE
-            </button>
-            <button className="btn-import" onClick={() => setShowImport(true)}>
-              IMPORT CSV
-            </button>
-            <button className="btn-import" onClick={() => setShowXlsx(true)}>
-              IMPORT XLSX
-            </button>
+            {/* Split button: + ADD PLACE | ▾ dropdown → bulk paste */}
+            <div className="split-btn-group" ref={splitBtnRef}>
+              <button
+                className="split-btn-primary"
+                onClick={() => setModal({ mode: 'add' })}
+              >
+                + ADD PLACE
+              </button>
+              <button
+                className="split-btn-chevron"
+                onClick={() => setShowBulkDropdown(s => !s)}
+                aria-label="More add options"
+              >
+                ▾
+              </button>
+              {showBulkDropdown && (
+                <div className="split-btn-dropdown">
+                  <button
+                    className="split-btn-option"
+                    onClick={() => { setShowBulkDropdown(false); setShowBulkPasteModal(true); }}
+                  >
+                    + BULK PASTE
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {listView ? (
@@ -299,20 +327,6 @@ export default function App() {
         />
       )}
 
-      {showImport && (
-        <CsvImport
-          onDone={() => { setShowImport(false); loadPlaces(); }}
-          onClose={() => setShowImport(false)}
-        />
-      )}
-
-      {showXlsx && (
-        <XlsxImport
-          onDone={() => { setShowXlsx(false); loadPlaces(); }}
-          onClose={() => setShowXlsx(false)}
-        />
-      )}
-
       {tripModal && (
         <TripForm
           initialData={tripModal.mode === 'edit' ? tripModal.trip : null}
@@ -328,12 +342,12 @@ export default function App() {
         />
       )}
 
-      {showBulkPaste && (
+      {showBulkPasteModal && (
         <BulkPaste
           existingPlaces={places}
           cityFilter={filterCity}
-          onImport={() => { setShowBulkPaste(false); loadPlaces(); }}
-          onClose={() => setShowBulkPaste(false)}
+          onImport={() => { setShowBulkPasteModal(false); loadPlaces(); }}
+          onClose={() => setShowBulkPasteModal(false)}
         />
       )}
     </div>

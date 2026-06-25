@@ -4,12 +4,16 @@ import {
   exportAll, importAll,
   getAllPlaces, mergeCities,
 } from '../db/repo.js';
+import CsvImport  from './CsvImport.jsx';
+import XlsxImport from './XlsxImport.jsx';
 import './AdminModal.css';
 
 export default function AdminModal({ onRefresh, onClose }) {
   const [pending, setPending] = useState(null); // null | 'clearPlaces' | 'clearTrips' | 'clearAll'
   const [busy,    setBusy]    = useState(false);
   const [message, setMessage] = useState(null); // { ok, text }
+  const [showCsv,  setShowCsv]  = useState(false);
+  const [showXlsx, setShowXlsx] = useState(false);
 
   const [cities,          setCities]          = useState([]);
   const [sourceCityMerge, setSourceCityMerge] = useState('');
@@ -152,6 +156,25 @@ export default function AdminModal({ onRefresh, onClose }) {
             </div>
           )}
 
+          {/* ── Import data ── */}
+          <div className="admin-section">
+            <div className="admin-section-label">Import Data</div>
+            <div className="admin-row">
+              <span className="admin-row-desc">Add places from a CSV file</span>
+              <button className="admin-btn" onClick={() => setShowCsv(true)} disabled={busy}>
+                IMPORT CSV
+              </button>
+            </div>
+            <div className="admin-row admin-row--merge">
+              <span className="admin-row-desc">Add places from an XLSX spreadsheet</span>
+              <button className="admin-btn" onClick={() => setShowXlsx(true)} disabled={busy}>
+                IMPORT XLSX
+              </button>
+            </div>
+          </div>
+
+          <div className="admin-divider" />
+
           {/* ── Backup ── */}
           <div className="admin-section">
             <div className="admin-section-label">Backup</div>
@@ -257,6 +280,20 @@ export default function AdminModal({ onRefresh, onClose }) {
 
         </div>
       </div>
+
+      {showCsv && (
+        <CsvImport
+          onDone={() => { setShowCsv(false); onRefresh(); }}
+          onClose={() => setShowCsv(false)}
+        />
+      )}
+
+      {showXlsx && (
+        <XlsxImport
+          onDone={() => { setShowXlsx(false); onRefresh(); }}
+          onClose={() => setShowXlsx(false)}
+        />
+      )}
     </div>
   );
 }
