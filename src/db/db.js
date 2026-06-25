@@ -22,19 +22,28 @@ db.version(1).stores({
 
 // version(2) — adds websiteUrl to places (non-breaking; existing records get undefined).
 db.version(2).stores({
+  places: 'id, name, type, city, country, status',
+  trips: 'id, title, startDate',
+  scheduleItems: 'id, tripId, [tripId+date], placeId',
+});
+
+// version(3) — adds checkIn, checkOut to places (non-indexed time fields).
+// No migration needed — new fields default to undefined on existing records.
+db.version(3).stores({
   // PLACE — stored once, globally. "A city's places" is just a filter on city.
   //   {
   //     id, name, type, city, country,
   //     lat, lng,                 // nullable, from Maps-link parse or manual
   //     address, googleMapsUrl, untappdUrl, websiteUrl,
   //     openingHours,             // { mon: {open,close}|null, ... sun }
+  //     checkIn, checkOut,        // 'HH:MM' strings; accommodation only; '' = not set
   //     tags: [],
   //     notes,
   //     status,                   // 'wishlist' | 'planned' | 'visited'
   //     rating,                   // nullable number
   //     createdAt, updatedAt
   //   }
-  places: 'id, name, type, city, country, status',
+  places: 'id, name, type, city, country, status, createdAt',
 
   // TRIP — a curated selection of places + a date range + flights.
   //   {
@@ -61,8 +70,6 @@ db.version(2).stores({
   //   }
   // The compound [tripId+date] index makes "give me this trip's day" fast.
   scheduleItems: 'id, tripId, [tripId+date], placeId',
-
-  // BUDGETENTRY deferred — will be added in a future version(3).
 });
 
 export default db;

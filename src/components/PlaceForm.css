@@ -282,6 +282,46 @@
   margin: 4px 0 0;
 }
 
+/* ===== ACCOMMODATION CHECK-IN/OUT ===== */
+
+.accom-times {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.accom-time-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.form-label-inline {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--dim);
+  min-width: 80px;
+}
+
+.accom-time-input {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  background: var(--bg);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 4px 8px;
+  width: 110px;
+}
+
+.accom-time-input:focus {
+  outline: none;
+  border-color: var(--steel);
+}
+
 /* ===== VENUE TRAIT CHIPS ===== */
 
 .trait-hints {

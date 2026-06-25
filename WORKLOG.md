@@ -2,6 +2,22 @@
 
 ---
 
+### 2026-06-25 — Step 16: Accommodation check-in/out fields
+
+- **Done:**
+  - `src/db/db.js` — bumped to `version(3)`. Moved the v2 inline stores to a bare `.stores()` call (no migration needed for v2). v3 stores add `createdAt` to the places index, document `checkIn`/`checkOut` in the shape comment. No `.upgrade()` needed — new fields default to `undefined` on existing records.
+  - `src/db/repo.js` — added `checkIn: ''` and `checkOut: ''` to the `addPlace` defaults object so new places always have the fields present.
+  - `src/components/PlaceForm.jsx` — added `checkIn`/`checkOut` state (seeded from `initialData`); included both in the `data` object passed to `addPlace`/`putPlace`; added conditional `<div className="accom-times">` block inside the OPENING HOURS fieldset, rendered only when `type === 'accommodation'`, after the existing accommodation hint paragraph. Uses `type="time"` inputs.
+  - `src/components/PlaceForm.css` — added `/* ===== ACCOMMODATION CHECK-IN/OUT ===== */` section: `.accom-times` (flex column, gap 6px, margin-top 10px), `.accom-time-row` (flex row, align center), `.form-label-inline` (mono 9px, dim, min-width 80px), `.accom-time-input` (mono 12px, bg/ink/line palette, 110px wide) + focus rule.
+  - `src/components/PlaceCard.jsx` — added a `card-accom-times` div between the coords line and the hours-box; renders only when `place.type === 'accommodation'` and at least one of `checkIn`/`checkOut` is truthy. Each time shown with `▸ CHECK-IN` / `▸ CHECK-OUT` prefix.
+  - `src/components/PlaceCard.css` — added `.card-accom-times` rule (mono 10px, steel color, flex row, gap 12px, margin-bottom 6px).
+- **Deviations:** None.
+- **Schema/contract changes:** `db.js` version(3) — `checkIn`/`checkOut` added as non-indexed fields on places. `repo.js` addPlace defaults updated. No changes to `openingHours` semantics, no other tables touched.
+- **Known issues / TODO:** None.
+- **Next:** Bulk place paste, or state/region field + grouped city filter.
+
+---
+
 ### 2026-06-24 — Step 15: Flight email parser
 
 - **Done:**

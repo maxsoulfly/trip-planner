@@ -88,6 +88,13 @@ export default function PlaceCard({ place, onEdit, onDelete, incomplete }) {
         <div className="card-coords">{coordParts.join(' · ')}</div>
       )}
 
+      {place.type === 'accommodation' && (place.checkIn || place.checkOut) && (
+        <div className="card-accom-times">
+          {place.checkIn  && <span>▸ CHECK-IN  {place.checkIn}</span>}
+          {place.checkOut && <span>▸ CHECK-OUT {place.checkOut}</span>}
+        </div>
+      )}
+
       <div className="hours-box">
         <div className="hours-today">
           <span className="hours-day-label">{today.toUpperCase()}</span>

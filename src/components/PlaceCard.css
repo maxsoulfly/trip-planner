@@ -99,6 +99,16 @@
   letter-spacing: .04em;
 }
 
+.card-accom-times {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--steel);
+  letter-spacing: .05em;
+  display: flex;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
 /* ===== HOURS BOX ===== */
 
 .hours-box {

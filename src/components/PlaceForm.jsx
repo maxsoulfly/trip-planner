@@ -72,6 +72,8 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
   const [addrSegments, setAddrSegments] = useState([]);   // [{ id, raw, role }]
   const [hoursPaste,   setHoursPaste]   = useState('');
   const [hoursMsg,     setHoursMsg]     = useState(null); // { ok, text } | null
+  const [checkIn,      setCheckIn]      = useState(initialData?.checkIn  || '');
+  const [checkOut,     setCheckOut]     = useState(initialData?.checkOut || '');
   const [blobText,     setBlobText]     = useState('');
   const [blobResult,   setBlobResult]   = useState(null); // parseBlob output | null
   const [blobApplied,  setBlobApplied]  = useState(false);
@@ -321,6 +323,8 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
       tags:          parseTags(tags),
       notes:         notes.trim(),
       openingHours:  hours,
+      checkIn,
+      checkOut,
     };
 
     try {
@@ -746,6 +750,28 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
             </div>
             {type === 'accommodation' && (
               <p className="form-hours-hint">e.g. reception hours or check-in window</p>
+            )}
+            {type === 'accommodation' && (
+              <div className="accom-times">
+                <div className="accom-time-row">
+                  <label className="form-label-inline">CHECK-IN</label>
+                  <input
+                    type="time"
+                    className="accom-time-input"
+                    value={checkIn}
+                    onChange={e => setCheckIn(e.target.value)}
+                  />
+                </div>
+                <div className="accom-time-row">
+                  <label className="form-label-inline">CHECK-OUT</label>
+                  <input
+                    type="time"
+                    className="accom-time-input"
+                    value={checkOut}
+                    onChange={e => setCheckOut(e.target.value)}
+                  />
+                </div>
+              </div>
             )}
           </fieldset>
 

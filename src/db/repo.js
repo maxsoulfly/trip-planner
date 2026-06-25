@@ -26,6 +26,8 @@ export async function addPlace(data) {
     untappdUrl: '',
     websiteUrl: '',
     openingHours: {},
+    checkIn: '',
+    checkOut: '',
     tags: [],
     notes: '',
     status: 'wishlist',
