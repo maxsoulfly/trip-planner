@@ -20,7 +20,7 @@ Vite + React (JS) · Dexie (IndexedDB) · Papaparse (CSV) · SheetJS (importer o
 state via React Context (no Redux).
 
 ## Architecture & conventions
-- `src/db/db.js` — Dexie schema. Currently **version(3)**: tables `places`,
+- `src/db/db.js` — Dexie schema. Currently **version(4)**: tables `places`,
   `trips`, `scheduleItems`. BudgetEntry deferred.
 - `src/db/repo.js` — the **only** module that touches Dexie. All UI goes through
   repo functions; never call `db` directly from components.
@@ -39,7 +39,7 @@ state via React Context (no Redux).
   Longest-name-first matching, word-boundary regex. Curated abbreviations only:
   `USA`, `US`, `UK`, `UAE`. **No arbitrary 2-letter codes** (avoids PL-bug class).
 - `src/utils/addressParser.js` — pure `parseAddress(text)` → `{ segments, derived }`.
-  `deriveFields(segments)` → `{ city, country, address }`. City = **last** city
+  `deriveFields(segments)` → `{ city, state, country, address }`. City = **last** city
   chip (not join-all) — handles district-before-city patterns. Lone-digit
   segments → `ignore` (fixes building-number-prefix bug). Used by PlaceForm
   address chips and blob notepad. Both exports are pure, no Dexie.
@@ -68,7 +68,7 @@ state via React Context (no Redux).
   via ScheduleItem. Time blocks: `morning / noon / late_afternoon / evening / night`.
 
 ## Place schema (current)
-Fields: id, name, type, city, country, lat, lng, address, googleMapsUrl,
+Fields: id, name, type, city, state, country, lat, lng, address, googleMapsUrl,
 untappdUrl, websiteUrl, checkIn, checkOut, openingHours, tags, notes, status, rating,
 createdAt, updatedAt.
 checkIn / checkOut: HH:MM strings, only shown/editable when type === accommodation.
@@ -91,9 +91,6 @@ park → park / cemetery / cmentarz / hřbitov / garden / jardín / zoo / botani
 accommodation → hotel / hostel / noclegi / apartment / apartament / pension / inn
 
 ## Pending features (agreed, not yet built)
-- **State/region field + grouped city filter** — optional `state` field on Place
-  (for `Portland, OR` vs `Portland, ME`). Dexie version(4) bump. Filter groups
-  by country then city. Address parser routes state abbreviation to `state`.
 - **Block time-ranges** — clock range per block (morning 06–11, noon 11–15,
   late_afternoon 15–18, evening 18–23, night 23–06). Foundation for
   flight-by-time and hours-aware auto-suggest.
@@ -107,8 +104,6 @@ accommodation → hotel / hostel / noclegi / apartment / apartament / pension / 
 - Plus-code addresses (`62JF+RM Warsaw, Poland`) not handled by blob parser —
   the trailing comma-separated parts parse fine; the plus-code prefix goes to
   street/ignore. Acceptable for now.
-- City filter will need grouping when library grows past ~20 cities. The
-  state/region field (pending) is the clean fix.
 
 ## City normalization (KNOWN ISSUE)
 Importer produced "Krakow" and "Kraków" as separate cities. Canonical:
@@ -180,6 +175,11 @@ Maps URL is optional, not a completeness signal.
     chevron dropdown alongside ADD PLACE. INCOMPLETE filter moved to statusbar
     as clickable rust badge (hidden when count = 0). Split button:
     `[+ ADD PLACE][▾]` — primary always one-click, chevron reveals dropdown.
+19. **DONE** — State/region field + grouped city filter. `db.js` version(4),
+    `state` indexed on places; `state` default in `repo.js`; STATE/REGION input
+    in PlaceForm LOCATION row; `deriveFields` returns `{ city, state, country,
+    address }`; `state` chip role (amber) in address cycler; city+state display
+    on PlaceCard + PlaceList; city dropdown grouped by country via `<optgroup>`.
 
 ## Design language — "post-apocalyptic field terminal"
 A salvaged-tech / amber-CRT / survival-field-manual feel.

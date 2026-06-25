@@ -106,13 +106,6 @@
   line-height: 1;
 }
 .library-slash { color: var(--amber); }
-.library-sub {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: var(--dim);
-}
 
 /* ===== TOOLBAR ===== */
 

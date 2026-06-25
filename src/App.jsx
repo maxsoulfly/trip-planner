@@ -209,7 +209,6 @@ export default function App() {
             <span className="library-mark">
               PLACE LIBRARY<span className="library-slash">//</span>
             </span>
-            <span className="library-sub">local cache · all cities</span>
           </div>
 
           <div className="toolbar">
