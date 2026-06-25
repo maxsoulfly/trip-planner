@@ -87,9 +87,6 @@ park → park / cemetery / cmentarz / hřbitov / garden / jardín / zoo / botani
 accommodation → hotel / hostel / noclegi / apartment / apartament / pension / inn
 
 ## Pending features (agreed, not yet built)
-- **Flight email parser** — paste a Wizzair (+ common airline) booking email,
-  extract both flight legs into `outboundFlight` / `inboundFlight` + offer to
-  set trip start/end dates. (Standalone pure function, no dependencies.)
 - **Accommodation check-in/out fields** — two time fields shown only when
   `type === 'accommodation'`. Additive, no schema bump.
 - **Bulk place paste** — paste N place names (e.g. from Telegram), each line
@@ -107,8 +104,6 @@ accommodation → hotel / hostel / noclegi / apartment / apartament / pension / 
   Silently skips places with no coords. One-slot-at-a-time, human-in-the-loop.
 
 ## Known issues (parked)
-- Overnight hours (e.g. 22:00–02:00) not handled by `getStatusBadge` in
-  PlaceCard — shows as not open at e.g. 01:00. Low priority.
 - Plus-code addresses (`62JF+RM Warsaw, Poland`) not handled by blob parser —
   the trailing comma-separated parts parse fine; the plus-code prefix goes to
   street/ignore. Acceptable for now.
@@ -157,9 +152,19 @@ Maps URL is optional, not a completeness signal.
     hours blob format, multi-type URL routing (untappd/website/social), Maps URL
     paste hint in edit mode.
 13. **DONE** — Blob display fixes (URL truncation, blank-line chips), city parse
-14. **DONE** — Venue traits: `VENUE_TRAITS` export in constants.js (8 entries); trait chip row in PlaceForm above scheduling hints; trait filter `<select>` in App.jsx toolbar. Traits stored as plain strings in existing `tags` array. **Note:** `p.tags` may be a string in storage — if trait filter does not work, fix to `parseTags(p.tags || "").includes(filterTrait)` in App.jsx useMemo.
     fixes (lone-digit ignore, last-city-chip), card name → Maps link,
     brewery + park types added to constants.
+14. **DONE** — Venue traits: `VENUE_TRAITS` export in constants.js (8 entries);
+    trait chip row in PlaceForm above scheduling hints; trait filter `<select>`
+    in App.jsx toolbar. Traits stored in existing `tags` array. If trait filter
+    silently fails, fix to `parseTags(p.tags || '').includes(filterTrait)` in
+    App.jsx useMemo (tags may be a string, not an array).
+15. **DONE** — Flight email parser. New `flightParser.js`: two-pass Wizzair +
+    generic fallback, DD/MM/YYYY Israeli locale, airline prefix map
+    (W6/FR/VY/U2/LY/6H/IZ). Collapsible PASTE FLIGHT EMAIL in TripForm;
+    auto-parses on paste; APPLY writes both legs + sets trip dates if empty.
+    Also: `blobParser.js` ▢-char filter (Google Maps box separators no longer
+    produce stray NAME chips).
 
 ## Design language — "post-apocalyptic field terminal"
 A salvaged-tech / amber-CRT / survival-field-manual feel.
