@@ -20,7 +20,7 @@ Vite + React (JS) · Dexie (IndexedDB) · Papaparse (CSV) · SheetJS (importer o
 state via React Context (no Redux).
 
 ## Architecture & conventions
-- `src/db/db.js` — Dexie schema. Currently **version(2)**: tables `places`,
+- `src/db/db.js` — Dexie schema. Currently **version(3)**: tables `places`,
   `trips`, `scheduleItems`. BudgetEntry deferred.
 - `src/db/repo.js` — the **only** module that touches Dexie. All UI goes through
   repo functions; never call `db` directly from components.
@@ -43,11 +43,12 @@ state via React Context (no Redux).
   address chips and blob notepad. Both exports are pure, no Dexie.
 - `src/utils/blobParser.js` — pure `parseBlob(text)` → `{ lines, extracted }`.
   Line classifier (first-match): `url-maps`, `url-untappd`, `url-website`,
-  `url-facebook`, `url-instagram`, `hours` (Format A + B), `address`, `name`.
-  Blank lines filtered before classification. Extraction runs existing parsers
-  (`parseMapsUrl`, `parseGoogleHours`, `parseAddress`) and collects
-  `{ name, url, lat, lng, nameFromUrl, openingHours, addrSegments, addrDerived,
-  untappdUrl, websiteUrl, facebookUrl }`.
+  `url-facebook`, `url-instagram`, `checkin`, `checkout`, `ignore-label`,
+  `hours` (Format A + B), `address`, `name`.
+  Blank lines and `ignore-label` lines (Lunch/Happy hours/Kitchen/etc.) filtered
+  before classification. Extraction runs existing parsers and collects
+  `{ name, url, lat, lng, nameFromUrl, openingHours, checkIn, checkOut,
+  addrSegments, addrDerived, untappdUrl, websiteUrl, facebookUrl }`.
 - `src/utils/xlsxImport.js` — pure `parseXlsxWorkbook(workbook)` → `{ places,
   warnings }`. Per-sheet hardcoded strategies + extractGrid heuristic.
 - `src/utils/exportHtml.js` — pure `generateDaySheet(trip, scheduleItems,
@@ -66,8 +67,9 @@ state via React Context (no Redux).
 
 ## Place schema (current)
 Fields: id, name, type, city, country, lat, lng, address, googleMapsUrl,
-untappdUrl, websiteUrl, openingHours, tags, notes, status, rating,
+untappdUrl, websiteUrl, checkIn, checkOut, openingHours, tags, notes, status, rating,
 createdAt, updatedAt.
+checkIn / checkOut: HH:MM strings, only shown/editable when type === accommodation.
 
 ## PLACE_TYPES (current — constants.js)
 taproom · bottle_shop · brewpub · brewery · bar · restaurant · cafe ·
@@ -87,12 +89,8 @@ park → park / cemetery / cmentarz / hřbitov / garden / jardín / zoo / botani
 accommodation → hotel / hostel / noclegi / apartment / apartament / pension / inn
 
 ## Pending features (agreed, not yet built)
-- **Accommodation check-in/out fields** — two time fields shown only when
-  `type === 'accommodation'`. Additive, no schema bump.
-- **Bulk place paste** — paste N place names (e.g. from Telegram), each line
-  becomes a stub place (`wishlist`, `other`); dedup UI matches against library.
 - **State/region field + grouped city filter** — optional `state` field on Place
-  (for `Portland, OR` vs `Portland, ME`). Dexie version(3) bump. Filter groups
+  (for `Portland, OR` vs `Portland, ME`). Dexie version(4) bump. Filter groups
   by country then city. Address parser routes state abbreviation to `state`.
 - **Block time-ranges** — clock range per block (morning 06–11, noon 11–15,
   late_afternoon 15–18, evening 18–23, night 23–06). Foundation for
@@ -165,6 +163,16 @@ Maps URL is optional, not a completeness signal.
     auto-parses on paste; APPLY writes both legs + sets trip dates if empty.
     Also: `blobParser.js` ▢-char filter (Google Maps box separators no longer
     produce stray NAME chips).
+16. **DONE** — Accommodation check-in/out fields. `db.js` version(3) bump;
+    `checkIn`/`checkOut` defaults in `repo.js`; conditional time inputs in
+    PlaceForm (type === accommodation only); card display in steel mono.
+17. **DONE** — Bulk place paste. New `BulkPaste.jsx` + `BulkPaste.css`.
+    Paste N names, normalised dedup match against library (exact/likely/new),
+    city-filter pre-narrowing, confirmation-only merge, stub create via `addPlace`.
+    Also: blob parser gains `checkin`/`checkout` roles (extracts HH:MM, applies
+    to `setCheckIn`/`setCheckOut` on APPLY); `happy-hours` trait added to
+    `VENUE_TRAITS`; `ignore-label` role filters Google Maps section headers
+    (Lunch, Happy hours, Kitchen, etc.) from blob classification.
 
 ## Design language — "post-apocalyptic field terminal"
 A salvaged-tech / amber-CRT / survival-field-manual feel.
