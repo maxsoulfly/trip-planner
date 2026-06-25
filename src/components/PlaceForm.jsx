@@ -233,11 +233,19 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
   }
 
   function handleHoursParse(text) {
-    const parsed = parseGoogleHours(text || hoursPaste);
-    const count  = Object.keys(parsed).length;
-    if (!count) { setHoursMsg({ ok: false, text: '0 days parsed — check the format.' }); return; }
-    setHours(h => ({ ...h, ...parsed }));
-    setHoursMsg({ ok: true, text: `Parsed ${count} day${count !== 1 ? 's' : ''}.` });
+    const { openingHours, meta } = parseGoogleHours(text || hoursPaste);
+    const count = Object.keys(openingHours).length;
+    if (!count && !meta.checkIn && !meta.checkOut) {
+      setHoursMsg({ ok: false, text: '0 days parsed — check the format.' });
+      return;
+    }
+    if (count) setHours(h => ({ ...h, ...openingHours }));
+    if (meta.checkIn)  setCheckIn(meta.checkIn);
+    if (meta.checkOut) setCheckOut(meta.checkOut);
+    const parts = [];
+    if (count) parts.push(`${count} day${count !== 1 ? 's' : ''}`);
+    if (meta.checkIn || meta.checkOut) parts.push('check-in/out times');
+    setHoursMsg({ ok: true, text: `Parsed ${parts.join(' · ')}.` });
     const det = detectType(name);
     if (det && det !== type) setSuggestedType(det);
   }

@@ -94,7 +94,7 @@ export function parseBlob(text) {
   // Hours: join all hours-classified lines (blanks already stripped by filter)
   let openingHours = null;
   if (hoursLines.length) {
-    const parsed = parseGoogleHours(hoursLines.map(l => l.raw).join('\n'));
+    const { openingHours: parsed } = parseGoogleHours(hoursLines.map(l => l.raw).join('\n'));
     if (Object.keys(parsed).length > 0) openingHours = parsed;
   }
 

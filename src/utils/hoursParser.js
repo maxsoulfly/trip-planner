@@ -99,21 +99,28 @@ function parseDaySegment(segment) {
 }
 
 export function parseGoogleHours(text) {
-  const result = {};
-  const lines  = text.split('\n').map(s => s.trim()).filter(Boolean);
-  if (!lines.length) return result;
+  const openingHours = {};
+  const meta = {};
+  const checkInMatch  = text.match(/check[- ]?in\s*(?:time\s*)?[:\-]\s*(\d{1,2}:\d{2})/i);
+  const checkOutMatch = text.match(/check[- ]?out\s*(?:time\s*)?[:\-]\s*(\d{1,2}:\d{2})/i);
+  if (checkInMatch)  meta.checkIn  = checkInMatch[1];
+  if (checkOutMatch) meta.checkOut = checkOutMatch[1];
+
+  const lines = text.split('\n').map(s => s.trim()).filter(Boolean);
+  if (!lines.length) return { openingHours, meta };
 
   // Format B: lines containing "DayName: hours" with a colon separator
-  const isFormatB = lines.some(l => /^[\w\s–—-]+:\s/.test(l));
+  const isFormatB = lines.some(l => /^[\w\s–—-]+:\s/.test(l) && !/^check/i.test(l));
 
   if (isFormatB) {
     for (const line of lines) {
+      if (/^check/i.test(line)) continue; // handled by meta pre-pass
       const m = line.match(/^([\w\s–—-]+):\s*(.+)$/);
       if (!m) continue;
       const keys = parseDaySegment(m[1].trim());
       const val  = parseHoursValue(m[2].trim());
       if (val === undefined || !keys.length) continue;
-      for (const k of keys) result[k] = val;
+      for (const k of keys) openingHours[k] = val;
     }
   } else {
     // Format A: alternating day-name / hours lines
@@ -124,7 +131,7 @@ export function parseGoogleHours(text) {
       const hoursLine = lines[i + 1] || '';
       const val       = parseHoursValue(hoursLine);
       if (val !== undefined) {
-        for (const k of keys) result[k] = val;
+        for (const k of keys) openingHours[k] = val;
         i += 2;
       } else {
         i++;
@@ -132,5 +139,5 @@ export function parseGoogleHours(text) {
     }
   }
 
-  return result;
+  return { openingHours, meta };
 }
