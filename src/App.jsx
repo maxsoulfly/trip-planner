@@ -7,6 +7,7 @@ import PlaceForm from './components/PlaceForm.jsx';
 import CsvImport   from './components/CsvImport.jsx';
 import XlsxImport  from './components/XlsxImport.jsx';
 import AdminModal  from './components/AdminModal.jsx';
+import BulkPaste  from './components/BulkPaste.jsx';
 import TripList    from './components/TripList.jsx';
 import TripForm  from './components/TripForm.jsx';
 import TripGrid  from './components/TripGrid.jsx';
@@ -51,6 +52,7 @@ export default function App() {
   const [showImport,       setShowImport]       = useState(false);
   const [showXlsx,         setShowXlsx]         = useState(false);
   const [showAdmin,        setShowAdmin]        = useState(false);
+  const [showBulkPaste,    setShowBulkPaste]    = useState(false);
   const [filterIncomplete, setFilterIncomplete] = useState(false);
   const [tripModal,        setTripModal]        = useState(null);
   const [theme,            setThemeState]       = useState(
@@ -228,6 +230,9 @@ export default function App() {
             <button className="btn-add" onClick={() => setModal({ mode: 'add' })}>
               + ADD PLACE
             </button>
+            <button className="btn-import" onClick={() => setShowBulkPaste(true)}>
+              + BULK PASTE
+            </button>
             <button className="btn-import" onClick={() => setShowImport(true)}>
               IMPORT CSV
             </button>
@@ -320,6 +325,15 @@ export default function App() {
         <AdminModal
           onRefresh={() => { loadPlaces(); loadTrips(); }}
           onClose={() => setShowAdmin(false)}
+        />
+      )}
+
+      {showBulkPaste && (
+        <BulkPaste
+          existingPlaces={places}
+          cityFilter={filterCity}
+          onImport={() => { setShowBulkPaste(false); loadPlaces(); }}
+          onClose={() => setShowBulkPaste(false)}
         />
       )}
     </div>

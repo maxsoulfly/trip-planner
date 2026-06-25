@@ -2,6 +2,19 @@
 
 ---
 
+### 2026-06-25 — Step 17: Bulk place paste
+
+- **Done:**
+  - `src/components/BulkPaste.jsx` — NEW. Props: `existingPlaces`, `cityFilter`, `onImport`, `onClose`. Three-state flow: paste textarea → PARSE builds rows → review list → IMPORT creates stubs. `normaliseName` strips punctuation, lowercases, collapses whitespace. Match logic: exact (normalised equality) → `exists/skip`; likely (one normalised name contains the other AND shorter ≥ 4 chars) → `likely/merge`; otherwise → `new/create`. `cityFilter` pre-narrows the candidate pool when set. Merge action in v1 is confirmation-only — no data written to the existing place. Import button disabled when zero rows have `action === 'create'`. Same `backdropRef` + `mouseDownTarget` drag-close guard as other modals.
+  - `src/components/BulkPaste.css` — NEW. `bp-*` namespace. `.bp-panel` max-width 520px, flex column, max-height 80vh. `.bp-rows` scrollable. Row variants: `bp-row--new` (dim border), `bp-row--likely` (steel border), `bp-row--exists` (dim border, 0.6 opacity). Action buttons toggle amber on active. Shares `modal-backdrop`/`modal-panel`/`modal-header`/`modal-close` from styles.css.
+  - `src/App.jsx` — imported `BulkPaste`; added `showBulkPaste` state; added `+ BULK PASTE` button in toolbar after `+ ADD PLACE`; mounted `<BulkPaste>` with `existingPlaces={places}`, `cityFilter={filterCity}`, `onImport` reloads places and closes modal.
+- **Deviations:** Added `disabled` state to PARSE button (no lines = nothing to do) and IMPORT button (zero create-actions = nothing to create) — not in the brief but obvious UX guard. `bp-row-actions` wrapper div added for flex gap on the action buttons — not explicit in brief CSS but needed for layout.
+- **Schema/contract changes:** None. Stubs created via existing `addPlace`.
+- **Known issues / TODO:** Likely-match containment check can produce false positives for very short names (e.g. "Bar" matches "Harbour Bar"). The 4-char minimum mitigates this but doesn't eliminate it.
+- **Next:** State/region field + grouped city filter, or block time-ranges.
+
+---
+
 ### 2026-06-25 — Step 16: Accommodation check-in/out fields
 
 - **Done:**
