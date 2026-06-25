@@ -209,9 +209,21 @@ A salvaged-tech / amber-CRT / survival-field-manual feel.
 - **Naming:** no product name baked in until Maxx picks one.
 
 ## Commit messages
-Format: `<type>(<scope>): <what changed>`
+Format:
+```
+<type>(<scope>): <short summary line>          ← max 72 chars
+
+- <file or module>: <what changed>
+- <file or module>: <what changed>
+```
 Types: feat · fix · refactor · chore · docs
 Scope: db · places · trips · export · importer · ui · admin
+
+Rules:
+- Blank line between summary and bullets
+- One bullet per file or logical change, plain English
+- Group related files: `PlaceCard.jsx / PlaceCard.css: overnight hours fix`
+- No paragraphs, no wall of text
 
 ## Don't
 No TypeScript. No Tailwind unless asked. No backend in v1. Don't bypass

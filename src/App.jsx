@@ -53,6 +53,9 @@ export default function App() {
   const [filterIncomplete,    setFilterIncomplete]    = useState(false);
 
   const splitBtnRef = useRef(null);
+  const cityDdRef   = useRef(null);
+  const [showCityDd,  setShowCityDd]  = useState(false);
+  const [citySearch,  setCitySearch]  = useState('');
   const [tripModal,        setTripModal]        = useState(null);
   const [theme,            setThemeState]       = useState(
     () => document.documentElement.getAttribute('data-theme') || 'dark'
@@ -125,6 +128,25 @@ export default function App() {
   }, [places, search, filterCity, filterType, filterStatus, filterTrait, filterIncomplete]);
 
   const incompleteCount = useMemo(() => places.filter(isIncomplete).length, [places]);
+
+  // Close city dropdown on outside click or Escape.
+  useEffect(() => {
+    if (!showCityDd) return;
+    function handleOutside(e) {
+      if (cityDdRef.current && !cityDdRef.current.contains(e.target)) {
+        setShowCityDd(false); setCitySearch('');
+      }
+    }
+    function handleEsc(e) {
+      if (e.key === 'Escape') { setShowCityDd(false); setCitySearch(''); }
+    }
+    document.addEventListener('click', handleOutside);
+    document.addEventListener('keydown', handleEsc);
+    return () => {
+      document.removeEventListener('click', handleOutside);
+      document.removeEventListener('keydown', handleEsc);
+    };
+  }, [showCityDd]);
 
   // Close bulk-paste dropdown when user clicks outside the split button group.
   useEffect(() => {
@@ -209,6 +231,13 @@ export default function App() {
             <span className="library-mark">
               PLACE LIBRARY<span className="library-slash">//</span>
             </span>
+            <span className="library-sub">{[
+              'LOCAL CACHE',
+              filterCity || 'ALL CITIES',
+              filterType   ? (PLACE_TYPES.find(t => t.key === filterType)?.label   || filterType).toUpperCase()  : null,
+              filterTrait  ? (VENUE_TRAITS.find(t => t.key === filterTrait)?.label || filterTrait).toUpperCase() : null,
+              filterStatus ? filterStatus.toUpperCase() : null,
+            ].filter(Boolean).join(' · ')}</span>
           </div>
 
           <div className="toolbar">
@@ -220,19 +249,67 @@ export default function App() {
               onChange={(e) => setSearch(e.target.value)}
               aria-label="Search places"
             />
-            <select className="toolbar__select" value={filterCity}
-              onChange={(e) => setFilterCity(e.target.value)} aria-label="Filter by city">
-              <option value="">ALL CITIES</option>
-              {cityGroups.map(group => (
-                <optgroup key={group.country} label={group.country || 'Unknown'}>
-                  {group.cities.map(c => (
-                    <option key={c.value + '|' + c.label} value={c.value}>
-                      {c.label.toUpperCase()}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
+            {/* Custom city dropdown — grouped by country, city+state label */}
+            {(() => {
+              const cityDdLabel = filterCity
+                ? cityGroups.flatMap(g => g.cities).find(c => c.value === filterCity)?.label || filterCity
+                : 'ALL CITIES';
+              return (
+                <div className="city-dd" ref={cityDdRef}>
+                  <button
+                    className={`city-dd-btn${filterCity ? ' city-dd-btn--active' : ''}`}
+                    onClick={() => setShowCityDd(s => !s)}
+                    aria-haspopup="listbox"
+                    aria-expanded={showCityDd}
+                    aria-label="Filter by city"
+                  >
+                    <span>{cityDdLabel}</span>
+                    <span className="city-dd-chevron">▾</span>
+                  </button>
+                  {showCityDd && (
+                    <div className="city-dd-panel" role="listbox">
+                      <input
+                        className="city-dd-search"
+                        type="text"
+                        placeholder="search cities..."
+                        value={citySearch}
+                        onChange={e => setCitySearch(e.target.value)}
+                        onClick={e => e.stopPropagation()}
+                        autoFocus
+                      />
+                      <button
+                        className={`city-dd-option${!filterCity ? ' city-dd-option--selected' : ''}`}
+                        role="option" aria-selected={!filterCity}
+                        onClick={() => { setFilterCity(''); setShowCityDd(false); setCitySearch(''); }}
+                      >
+                        All cities
+                      </button>
+                      {cityGroups.map(group => {
+                        const visibleCities = citySearch
+                          ? group.cities.filter(c => c.label.toLowerCase().includes(citySearch.toLowerCase()))
+                          : group.cities;
+                        if (!visibleCities.length) return null;
+                        return (
+                          <div key={group.country}>
+                            <div className="city-dd-group">{group.country || 'Unknown'}</div>
+                            {visibleCities.map(c => (
+                              <button
+                                key={c.value + '|' + c.label}
+                                className={`city-dd-option city-dd-option--indented${filterCity === c.value ? ' city-dd-option--selected' : ''}`}
+                                role="option" aria-selected={filterCity === c.value}
+                                onClick={() => { setFilterCity(c.value); setShowCityDd(false); setCitySearch(''); }}
+                              >
+                                {c.label}
+                              </button>
+                            ))}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
             <select className="toolbar__select" value={filterType}
               onChange={(e) => setFilterType(e.target.value)} aria-label="Filter by type">
               <option value="">ALL TYPES</option>

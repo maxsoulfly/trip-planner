@@ -106,6 +106,13 @@
   line-height: 1;
 }
 .library-slash { color: var(--amber); }
+.library-sub {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
 
 /* ===== TOOLBAR ===== */
 
@@ -147,6 +154,85 @@
 }
 .toolbar__search:focus,
 .toolbar__select:focus { border-color: var(--amber); }
+
+/* CITY DROPDOWN */
+.city-dd {
+  position: relative;
+  flex: 0 0 auto;
+}
+.city-dd-btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: .06em;
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 7px 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  outline: none;
+  transition: border-color .15s;
+}
+.city-dd-btn:focus,
+.city-dd-btn:hover { border-color: var(--amber); }
+.city-dd-btn--active { color: var(--amber); border-color: var(--amber); }
+.city-dd-chevron { color: var(--dim); font-size: 9px; }
+.city-dd-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 180px;
+  max-height: 280px;
+  overflow-y: auto;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  z-index: 120;
+  padding: 4px 0;
+  box-shadow: 0 6px 18px rgba(0,0,0,.4);
+}
+.city-dd-search {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  background: var(--bg);
+  color: var(--ink);
+  border: none;
+  border-bottom: 1px solid var(--line);
+  padding: 7px 10px;
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+}
+.city-dd-search::placeholder { color: var(--dim); }
+.city-dd-group {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--dim);
+  padding: 8px 12px 4px;
+}
+.city-dd-option {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--ink);
+  text-align: left;
+  padding: 6px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  letter-spacing: .02em;
+}
+.city-dd-option--indented { padding-left: 22px; }
+.city-dd-option:hover { background: var(--panel2); }
+.city-dd-option--selected { color: var(--amber); }
 
 /* Add button */
 .btn-add {

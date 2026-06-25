@@ -113,10 +113,11 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 10px;
+  align-items: start;
 }
 
 .form-row--sm {
-  max-width: 90px;
+  max-width: 120px;
 }
 
 .form-row {

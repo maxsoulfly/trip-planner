@@ -581,7 +581,7 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
                   placeholder="Kraków" />
               </label>
               <label className="form-row form-row--sm">
-                <span className="form-label">STATE / REGION</span>
+                <span className="form-label">STATE</span>
                 <input className="form-input" type="text"
                   value={state} onChange={(e) => setState(e.target.value)}
                   placeholder="OR, BC…" maxLength={10} />

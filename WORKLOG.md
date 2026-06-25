@@ -17,6 +17,8 @@
 - **Schema/contract changes:** `db.js` version(4); `state` indexed on places. `deriveFields` return shape is additive (new `state` field). `repo.js` addPlace updated.
 - **Known issues:** City-only filter means Portland OR and Portland ME both show under `city === 'Portland'` when selected. Acceptable for v1.
 - **Next:** Block time-ranges or nearby auto-suggest.
+- **Addendum:** `App.jsx` — added `citySearch` state; search input at top of city dropdown panel (autoFocus, stopPropagation, resets on close/select); groups with zero matches hidden. `App.css` — added `.city-dd-search` rule; panel `max-height` trimmed to 280px.
+- **Addendum:** `App.jsx` — city `<select>` replaced with custom inline dropdown (state: `showCityDd`, ref: `cityDdRef`); outside-click + Escape useEffect; grouped by country with `city-dd-group` headers; city options in natural case with `city-dd-option--indented`; button label reflects selection or "ALL CITIES". `App.css` — added `/* CITY DROPDOWN */` section (`city-dd-*` namespace). `PlaceForm.jsx` — label "STATE / REGION" shortened to "STATE". `PlaceForm.css` — `.form-row--sm` width increased 90px → 120px; `align-items: start` added to `.form-cols`. `App.jsx`/`App.css` — dynamic `library-sub` subtitle restored (LOCAL CACHE · city · type · trait · status segments, updated on filter change).
 
 ---
 
