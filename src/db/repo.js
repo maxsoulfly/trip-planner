@@ -128,6 +128,13 @@ export async function mergePlaces(primaryId, duplicateId) {
   return { merged, scheduleItemsUpdated };
 }
 
+// Set country on every place in a city — used by CitiesModal to fix mixed-country rows.
+export async function setCountryForCity(city, country) {
+  const places = await db.places.where('city').equals(city).toArray();
+  await Promise.all(places.map(p => db.places.put({ ...p, country, updatedAt: now() })));
+  return places.length;
+}
+
 // Count how many schedule items reference a given place (for merge preview).
 export const countScheduleItemsByPlace = (placeId) =>
   db.scheduleItems.where('placeId').equals(placeId).count();

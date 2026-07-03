@@ -772,3 +772,18 @@
 - **Schema/contract changes:** None.
 - **Known issues / TODO:** None.
 - **Next:** TBD.
+
+---
+
+### 2026-07-03 — Step 28: CitiesModal — list, rename, merge, fix countries
+
+- **Done:**
+  - `src/components/CitiesModal.jsx` — new modal; receives `places` prop, maintains local `places` state for instant re-renders after mutations; `buildCityList()` groups by lowercased city key, collects `countries: Set`, counts places; sorted empty-city first then alphabetical; search input filters in real time; clicking a row selects it (amber left border); action panel shows RENAME TO (free text → `mergeCities`), MERGE INTO (search + click target list), and ⚠ multi-country FIX section (free-text country → `setCountryForCity`); after each action: re-fetches places, clears selection, calls `onRefresh()`.
+  - `src/components/CitiesModal.css` — new file; namespace `cm-*`; scrollable table with sticky header; amber selected row; rust `(no city)` label; rust `cm-countries--warn` for multi-country cities; action panel separated by steel border.
+  - `src/db/repo.js` — added `setCountryForCity(city, country)`: fetches all places in city, updates `country` and `updatedAt` via `db.places.put`; returns count.
+  - `src/components/AdminModal.jsx` — removed all city merge/rename state (`cities`, `sourceCityMerge`, `targetCityMerge`, `mergePending`, `renameSource`, `renameTarget`, `renamingConfirm`, `renameMsg`), `handleMerge`, `handleRename`, `mergeReady`, `renameReady`, datalist, City Merge section, Rename City section; added `showCities` state, `loadPlaces()`, `◈ MANAGE CITIES` button section; CitiesModal rendered when `showCities`; `mergeCities` removed from import.
+  - `src/components/AdminModal.css` — removed all `admin-merge-*` rules (no longer referenced).
+- **Deviations:** None.
+- **Schema/contract changes:** `repo.js` gains `setCountryForCity` — no DB schema change, uses existing `db.places.put`.
+- **Known issues / TODO:** None.
+- **Next:** TBD.

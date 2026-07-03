@@ -2,41 +2,34 @@ import { useEffect, useRef, useState } from 'react';
 import {
   clearAllPlaces, clearAllTrips, clearAllData,
   exportAll, importAll,
-  getAllPlaces, mergeCities,
+  getAllPlaces,
 } from '../db/repo.js';
-import CsvImport  from './CsvImport.jsx';
-import XlsxImport from './XlsxImport.jsx';
+import CsvImport   from './CsvImport.jsx';
+import XlsxImport  from './XlsxImport.jsx';
+import CitiesModal from './CitiesModal.jsx';
 import './AdminModal.css';
 
 export default function AdminModal({ onRefresh, onClose }) {
   const [pending, setPending] = useState(null); // null | 'clearPlaces' | 'clearTrips' | 'clearAll'
   const [busy,    setBusy]    = useState(false);
   const [message, setMessage] = useState(null); // { ok, text }
-  const [showCsv,  setShowCsv]  = useState(false);
-  const [showXlsx, setShowXlsx] = useState(false);
+  const [showCsv,    setShowCsv]    = useState(false);
+  const [showXlsx,   setShowXlsx]   = useState(false);
+  const [showCities, setShowCities] = useState(false);
 
-  const [cities,          setCities]          = useState([]);
-  const [allPlaces,       setAllPlaces]       = useState([]);
-  const [sourceCityMerge, setSourceCityMerge] = useState('__placeholder__');
-  const [targetCityMerge, setTargetCityMerge] = useState('');
-  const [mergePending,    setMergePending]    = useState(false);
-
-  const [renameSource,     setRenameSource]     = useState('__placeholder__');
-  const [renameTarget,     setRenameTarget]     = useState('');
-  const [renamingConfirm,  setRenamingConfirm]  = useState(false);
-  const [renameMsg,        setRenameMsg]        = useState('');
+  const [allPlaces, setAllPlaces] = useState([]);
 
   const fileRef         = useRef(null);
   const backdropRef     = useRef(null);
   const mouseDownTarget = useRef(null);
 
   useEffect(() => {
-    getAllPlaces().then((places) => {
-      setAllPlaces(places);
-      const citySet = new Set(places.map((p) => p.city || ''));
-      setCities([...citySet].sort());
-    });
+    getAllPlaces().then(setAllPlaces);
   }, []);
+
+  function loadPlaces() {
+    getAllPlaces().then(setAllPlaces);
+  }
 
   function handleBackdropClick(e) {
     if (e.target === backdropRef.current &&
@@ -99,44 +92,6 @@ export default function AdminModal({ onRefresh, onClose }) {
     }
   }
 
-  async function handleMerge() {
-    const src = sourceCityMerge;
-    const tgt = targetCityMerge;
-    setMergePending(false);
-    await run(async () => {
-      await mergeCities(src, tgt);
-      const places = await getAllPlaces();
-      setAllPlaces(places);
-      const citySet = new Set(places.map((p) => p.city || ''));
-      setCities([...citySet].sort());
-      setSourceCityMerge('__placeholder__');
-      setTargetCityMerge('');
-    });
-  }
-
-  async function handleRename() {
-    const src = renameSource;
-    const tgt = renameTarget.trim();
-    setRenamingConfirm(false);
-    setBusy(true);
-    setRenameMsg('');
-    try {
-      await mergeCities(src, tgt);
-      const places = await getAllPlaces();
-      setAllPlaces(places);
-      const citySet = new Set(places.map((p) => p.city || ''));
-      setCities([...citySet].sort());
-      setRenameSource('__placeholder__');
-      setRenameTarget('');
-      setRenameMsg('✓ renamed');
-      onRefresh();
-    } catch (err) {
-      setRenameMsg('⚠ ' + (err.message || 'Rename failed.'));
-    } finally {
-      setBusy(false);
-    }
-  }
-
   // Render helper for destructive rows.
   function renderDestructive(action, label, fn) {
     if (pending !== action) {
@@ -162,9 +117,6 @@ export default function AdminModal({ onRefresh, onClose }) {
       </span>
     );
   }
-
-  const mergeReady  = sourceCityMerge !== '__placeholder__' && targetCityMerge && sourceCityMerge !== targetCityMerge;
-  const renameReady = renameSource !== '__placeholder__' && renameTarget.trim().length > 0 && renameTarget.trim() !== renameSource;
 
   return (
     <div
@@ -236,136 +188,15 @@ export default function AdminModal({ onRefresh, onClose }) {
 
           <div className="admin-divider" />
 
-          {/* Shared datalist for city inputs in this modal */}
-          <datalist id="admin-city-list">
-            <option value="(no city)" />
-            {cities.filter(c => c !== '').map(c => (
-              <option key={c} value={c} />
-            ))}
-          </datalist>
-
-          {/* ── City merge ── */}
+          {/* ── City management ── */}
           <div className="admin-section">
-            <div className="admin-section-label">City Merge</div>
-
-            <div className="admin-merge-fields">
-              <input
-                className="admin-merge-select"
-                type="text"
-                list="admin-city-list"
-                value={sourceCityMerge === '__placeholder__' ? '' : sourceCityMerge === '' ? '(no city)' : sourceCityMerge}
-                onChange={e => {
-                  const v = e.target.value;
-                  setMergePending(false);
-                  if (v === '(no city)') setSourceCityMerge('');
-                  else if (v === '') setSourceCityMerge('__placeholder__');
-                  else setSourceCityMerge(v);
-                }}
-                placeholder="source city…"
-                disabled={busy}
-                aria-label="Source city"
-              />
-              <span className="admin-merge-arrow">→</span>
-              <select
-                className="admin-merge-select"
-                value={targetCityMerge}
-                onChange={(e) => { setTargetCityMerge(e.target.value); setMergePending(false); }}
-                disabled={busy}
-                aria-label="Target city"
-              >
-                <option value="">target city…</option>
-                {cities.filter(c => c).map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-
-            {mergeReady && (
-              <p className="admin-merge-preview">
-                {sourceCityMerge || '(no city)'} → {targetCityMerge}
-                {' '}({allPlaces.filter(p => (p.city || '') === sourceCityMerge).length} places)
-              </p>
-            )}
-
+            <div className="admin-section-label">City Management</div>
             <div className="admin-row admin-row--merge">
-              <span className="admin-row-desc">Move all places from source → target city</span>
-              {mergePending ? (
-                <span className="admin-confirm-row">
-                  <span className="admin-confirm-label">REALLY?</span>
-                  <button className="admin-btn admin-btn--confirm" onClick={handleMerge} disabled={busy || !mergeReady}>
-                    CONFIRM
-                  </button>
-                  <button className="admin-btn" onClick={() => setMergePending(false)} disabled={busy}>
-                    CANCEL
-                  </button>
-                </span>
-              ) : (
-                <button
-                  className="admin-btn"
-                  onClick={() => { setMessage(null); setMergePending(true); }}
-                  disabled={busy || !mergeReady}
-                >
-                  MERGE
-                </button>
-              )}
+              <span className="admin-row-desc">List, rename, merge, and fix cities</span>
+              <button className="admin-btn" onClick={() => setShowCities(true)} disabled={busy}>
+                ◈ MANAGE CITIES
+              </button>
             </div>
-          </div>
-
-          <div className="admin-divider" />
-
-          {/* ── City rename ── */}
-          <div className="admin-section">
-            <div className="admin-section-label">Rename City</div>
-
-            <div className="admin-merge-fields">
-              <input
-                className="admin-merge-select"
-                type="text"
-                list="admin-city-list"
-                value={renameSource === '__placeholder__' ? '' : renameSource === '' ? '(no city)' : renameSource}
-                onChange={e => {
-                  const v = e.target.value;
-                  setRenamingConfirm(false);
-                  setRenameMsg('');
-                  if (v === '(no city)') setRenameSource('');
-                  else if (v === '') setRenameSource('__placeholder__');
-                  else setRenameSource(v);
-                }}
-                placeholder="source city"
-                disabled={busy}
-                aria-label="Source city"
-              />
-              <span className="admin-merge-arrow">→</span>
-              <input
-                className="admin-merge-input"
-                type="text"
-                value={renameTarget}
-                onChange={e => { setRenameTarget(e.target.value); setRenamingConfirm(false); setRenameMsg(''); }}
-                placeholder="new name"
-                disabled={busy}
-              />
-            </div>
-
-            {renameReady && (
-              <p className="admin-merge-preview">
-                {renameSource || '(no city)'} → {renameTarget.trim()}
-                {' '}({allPlaces.filter(p => (p.city || '') === renameSource).length} places)
-              </p>
-            )}
-
-            <p className="admin-merge-hint">Rename a city — type a new name freely</p>
-            {renameMsg && <p className="admin-merge-preview">{renameMsg}</p>}
-
-            {!renamingConfirm ? (
-              <button
-                className="admin-btn"
-                disabled={busy || !renameReady}
-                onClick={() => setRenamingConfirm(true)}
-              >RENAME</button>
-            ) : (
-              <div className="admin-confirm-row">
-                <button className="admin-btn admin-btn--danger" onClick={handleRename}>CONFIRM</button>
-                <button className="admin-btn" onClick={() => setRenamingConfirm(false)}>CANCEL</button>
-              </div>
-            )}
           </div>
 
           <div className="admin-divider" />
@@ -404,6 +235,14 @@ export default function AdminModal({ onRefresh, onClose }) {
         <XlsxImport
           onDone={() => { setShowXlsx(false); onRefresh(); }}
           onClose={() => setShowXlsx(false)}
+        />
+      )}
+
+      {showCities && (
+        <CitiesModal
+          places={allPlaces}
+          onClose={() => setShowCities(false)}
+          onRefresh={() => { onRefresh(); loadPlaces(); }}
         />
       )}
     </div>
