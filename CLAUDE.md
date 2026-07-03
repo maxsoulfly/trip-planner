@@ -200,6 +200,17 @@ Maps URL is optional, not a completeness signal.
     just empty); slot-first anchor (prefers coords from triggered slot, falls
     back to any day place); 800m primary radius, expands to 1.5km if <3 results;
     radius label shown in suggest panel header.
+24. **DONE** — Address parser + blob type-hint + restaurant keywords.
+    Bulgarian Cyrillic street words added (`пл`, `ул`, `бул` etc). Mall/commercial
+    centre segments demoted city→ignore via blocklist + regex. `type-hint` blob
+    role detects category lines (restaurant, bar, cuisine keywords) — shown in
+    BlobPreview as CATEGORY, not written to DB. Food keywords added to
+    `restaurant` detectType entry (sushi/ramen/poke/pizza/burger/falafel/gyros/grill).
+25. **DONE** — BulkPaste city input + AdminModal empty-city merge fix.
+    BulkPaste requires city input before PARSE; stubs created with that city.
+    AdminModal city merge shows `(no city)` as a selectable source so empty-city
+    places can be merged into a real city. Dexie `equals('')` correctly matches
+    empty-city records — no repo change needed.
 
 ## Design language — "post-apocalyptic field terminal"
 A salvaged-tech / amber-CRT / survival-field-manual feel.

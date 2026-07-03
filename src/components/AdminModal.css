@@ -108,6 +108,38 @@
 .admin-merge-select:focus { border-color: var(--amber); }
 .admin-merge-select:disabled { opacity: .4; cursor: default; }
 
+.admin-merge-preview {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--amber);
+  margin: 2px 0 6px;
+  letter-spacing: .04em;
+}
+
+.admin-merge-input {
+  flex: 1;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  background: var(--panel2);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 5px 8px;
+  outline: none;
+  min-width: 0;
+  transition: border-color .15s;
+}
+.admin-merge-input:focus    { border-color: var(--amber); }
+.admin-merge-input:disabled { opacity: .4; cursor: not-allowed; }
+
+.admin-merge-hint {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: var(--dim);
+  letter-spacing: .06em;
+  margin: 0 0 6px;
+}
+
 .admin-merge-arrow {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 13px;

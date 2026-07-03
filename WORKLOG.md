@@ -744,3 +744,31 @@
 - **Schema/contract changes:** None. `mergeCities` in `repo.js` uses `db.places.where('city').equals(sourceCity)` — Dexie correctly matches `city: ''` records with `equals('')`, so no repo change needed.
 - **Known issues / TODO:** None.
 - **Next:** TBD.
+
+---
+
+### 2026-07-03 — Step 26: AdminModal rename-city section + merge preview
+
+- **Done:**
+  - `src/components/AdminModal.jsx` — added RENAME CITY section below City Merge; state: `renameSource` (`'__placeholder__'`), `renameTarget` (`''`), `renamingConfirm` (`false`), `renameMsg` (`''`); `renameReady` computed; `handleRename` calls existing `mergeCities(renameSource, renameTarget.trim())`, reloads cities + allPlaces, resets state, sets `renameMsg = '✓ renamed'`; section has select → free-text input layout, amber preview line when ready, dim hint text, two-step RENAME → CONFIRM/CANCEL flow.
+  - `src/components/AdminModal.jsx` — added `allPlaces` state (populated alongside `cities` in `useEffect` and `handleMerge` reload); used by both the City Merge preview and Rename City preview to show affected place count.
+  - `src/components/AdminModal.jsx` — City Merge descriptive text changed from "Rename all places in source city to target" to "Move all places from source → target city"; amber preview line added above the MERGE row.
+  - `src/components/AdminModal.css` — added `.admin-merge-input` (text input styled to match `.admin-merge-select`, no dropdown arrow, amber focus border); added `.admin-merge-hint` (mono 9px dim).
+- **Deviations:** None. No new repo functions — `mergeCities` already performs a rename when the target doesn't exist as an existing city.
+- **Schema/contract changes:** None.
+- **Known issues / TODO:** None.
+- **Next:** TBD.
+
+---
+
+### 2026-07-03 — Step 27: Hide empty-city from main dropdown + searchable AdminModal city inputs
+
+- **Done:**
+  - `src/App.jsx` — `cityGroups` useMemo: added `if (!p.city) return;` at the top of `places.forEach`; empty-city places no longer appear in the city filter dropdown but remain in the DB and are reachable via Admin tools.
+  - `src/components/AdminModal.jsx` — added shared `<datalist id="admin-city-list">` above the City Merge section; datalist includes `(no city)` option for empty-city places and all named cities; `(no city)` is excluded from the target merge select (already filtered to `cities.filter(c => c)`).
+  - `src/components/AdminModal.jsx` — City Merge source `<select>` replaced with `<input type="text" list="admin-city-list">`; selecting "(no city)" from datalist sets state to `''`; clearing input resets to `'__placeholder__'` sentinel; `mergeReady` logic unchanged.
+  - `src/components/AdminModal.jsx` — Rename City source `<select>` replaced with the same datalist input pattern; same `(no city)` → `''` / clear → `'__placeholder__'` mapping; `renameReady` logic unchanged.
+- **Deviations:** None.
+- **Schema/contract changes:** None.
+- **Known issues / TODO:** None.
+- **Next:** TBD.

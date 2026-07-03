@@ -91,6 +91,7 @@ export default function App() {
   const cityGroups = useMemo(() => {
     const seen = new Map();
     places.forEach(p => {
+      if (!p.city) return; // skip places with no city set
       const key = `${p.city || ''}|${p.state || ''}|${p.country || ''}`;
       if (!seen.has(key)) seen.set(key, {
         value: p.city || '',
