@@ -93,6 +93,9 @@
 
 .tg-day-col {
   flex: 0 0 210px;
+  min-width: 0;
+  max-width: 210px;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 6px;

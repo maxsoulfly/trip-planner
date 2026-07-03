@@ -41,16 +41,16 @@ function renderFlight(direction, flight) {
 function renderPlace(place, weekdayKey) {
   const url   = mapsUrl(place);
   const emoji = TYPE_EMOJI[place.type] || '📍';
-  const btn   = url
-    ? `<a href="${esc(url)}" class="maps-btn" target="_blank" rel="noopener">Open in Maps ↗</a>`
-    : '';
+  const nameHtml = url
+    ? `<a href="${esc(url)}" class="place-name place-name-link" target="_blank" rel="noopener">${esc(place.name)}</a>`
+    : `<span class="place-name">${esc(place.name)}</span>`;
   return `
   <div class="place-card">
     <div class="place-header">
       <span class="place-icon">${emoji}</span>
-      <span class="place-name">${esc(place.name)}</span>
+      ${nameHtml}
       ${hoursSpan(place.openingHours, weekdayKey)}
-    </div>${btn}
+    </div>
   </div>`;
 }
 
@@ -331,21 +331,12 @@ body { background: #0E0E0F; }
 .hours--open    { color: var(--amber); }
 .hours--closed  { color: var(--rust); }
 .hours--unknown { color: var(--dim); }
-.maps-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--amber);
-  color: var(--bg);
+.place-name-link {
+  color: inherit;
   text-decoration: none;
-  font-family: ui-monospace, 'Courier New', monospace;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: .1em;
-  min-height: 48px;
-  border-top: 1px solid var(--line);
+  display: block;
 }
-.maps-btn:active { opacity: .8; }
+.place-name-link:hover { text-decoration: underline; }
 
 /* ─── Ad-hoc item ─── */
 .adhoc-item {
