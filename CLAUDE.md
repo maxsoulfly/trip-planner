@@ -24,6 +24,7 @@ state via React Context (no Redux).
   `trips`, `scheduleItems`. BudgetEntry deferred.
 - `src/db/repo.js` — the **only** module that touches Dexie. All UI goes through
   repo functions; never call `db` directly from components.
+  Key exports include: `mergeCities(source, target)`, `setCountryForCity(city, country)`.
 - `src/db/constants.js` — controlled vocabularies (`PLACE_TYPES`, `BLOCKS`,
   `STATUSES`, `WEEKDAYS`, `VENUE_TRAITS`). Use these everywhere; don't hardcode.
   `BLOCKS` entries have `start`/`end` hour fields (24h) for time-range logic.
@@ -54,7 +55,8 @@ state via React Context (no Redux).
   Blank lines and `ignore-label` lines (Lunch/Happy hours/Kitchen/etc.) filtered
   before classification. Extraction runs existing parsers and collects
   `{ name, url, lat, lng, nameFromUrl, openingHours, checkIn, checkOut,
-  addrSegments, addrDerived, untappdUrl, websiteUrl, facebookUrl }`.
+  addrSegments, addrDerived, untappdUrl, websiteUrl, facebookUrl,
+  typeHint, suggestedTraits }`.
 - `src/utils/xlsxImport.js` — pure `parseXlsxWorkbook(workbook)` → `{ places,
   warnings }`. Per-sheet hardcoded strategies + extractGrid heuristic.
 - `src/utils/haversine.js` — pure `haversine(lat1,lng1,lat2,lng2)` → km.
@@ -211,6 +213,23 @@ Maps URL is optional, not a completeness signal.
     AdminModal city merge shows `(no city)` as a selectable source so empty-city
     places can be merged into a real city. Dexie `equals('')` correctly matches
     empty-city records — no repo change needed.
+26. **DONE** — AdminModal rename-city section + merge preview. RENAME CITY
+    section added below CITY MERGE; `mergeCities` reused for rename. Merge
+    descriptive text clarified; amber preview line shows affected place count.
+27. **DONE** — Hide empty-city from main city dropdown; searchable AdminModal
+    city inputs via `<datalist>`. Empty-city places hidden from filter but
+    reachable via Admin. (Superseded by Step 28 CitiesModal.)
+28. **DONE** — CitiesModal: dedicated city management modal. Groups all cities
+    by name (not country), shows place count + countries per city, rust warning
+    for multi-country duplicates. Inline search, click-to-select, RENAME TO
+    (free text), MERGE INTO (search + click), FIX COUNTRY (set country on all
+    places in city). `setCountryForCity` added to `repo.js`. AdminModal city
+    merge/rename sections replaced with single `◈ MANAGE CITIES` button.
+29. **DONE** — Blob suggested traits chips. `TRAIT_HINTS` map in `blobParser.js`
+    maps category keywords to trait keys; `extracted.suggestedTraits` array.
+    BlobPreview shows dashed pill chips (TRAITS? row) — click to apply via
+    `toggleTrait`, not auto-applied. Connects blob category detection to the
+    VENUE TRAITS chip row in PlaceForm.
 
 ## Design language — "post-apocalyptic field terminal"
 A salvaged-tech / amber-CRT / survival-field-manual feel.

@@ -1,5 +1,6 @@
 // Preview panel for the QUICK PASTE blob — shows classified lines on the left
 // and extracted values on the right. Address chips are relabellable via onCycleRole.
+import { VENUE_TRAITS } from '../db/constants.js';
 
 function truncUrl(s, max = 40) {
   return s.length > max ? s.slice(0, max - 1) + '…' : s;
@@ -27,11 +28,15 @@ function roleCss(role) {
   return role;
 }
 
-export default function BlobPreview({ result, onCycleRole }) {
+export default function BlobPreview({ result, onCycleRole, onToggleTrait }) {
   const { lines, extracted } = result;
-  const { name, typeHint, url, lat, lng, shortUrl, openingHours,
+  const { name, typeHint, suggestedTraits, url, lat, lng, shortUrl, openingHours,
           addrSegments, untappdUrl, websiteUrl, facebookUrl,
           checkIn, checkOut } = extracted;
+
+  const suggestedTraitObjects = (suggestedTraits || [])
+    .map(key => VENUE_TRAITS.find(t => t.key === key))
+    .filter(Boolean);
 
   const hoursDayCount = openingHours ? Object.keys(openingHours).length : 0;
 
@@ -67,6 +72,24 @@ export default function BlobPreview({ result, onCycleRole }) {
           <div className="blob-ext-row">
             <span className="blob-ext-label">CATEGORY</span>
             <span className="blob-ext-value" style={{ color: 'var(--steel)' }}>{typeHint}</span>
+          </div>
+        )}
+
+        {suggestedTraitObjects.length > 0 && (
+          <div className="blob-ext-row">
+            <span className="blob-ext-label">TRAITS?</span>
+            <div className="blob-suggested-traits">
+              {suggestedTraitObjects.map(t => (
+                <button
+                  key={t.key}
+                  className="blob-trait-chip"
+                  onClick={() => onToggleTrait?.(t.key)}
+                  type="button"
+                >
+                  {t.emoji} {t.label}
+                </button>
+              ))}
+            </div>
           </div>
         )}
 

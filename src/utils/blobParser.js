@@ -24,7 +24,20 @@ const TIME_VALUE_RE = /^\d{1,2}(?::\d{2})?\s*(?:am|pm)?\s*[–—-]/i;
 const CLOSED_RE = /^(Closed|Open 24 hours)$/i;
 
 // Category/description lines — informational only, not written to any field.
-const TYPE_HINT_RE = /^(restaurant|bar|cafe|café|coffee|taproom|brewery|brewpub|bottle\s*shop|tavern|bistro|pizzeria|sushi|ramen|poke|burger|falafel|gyros|bakery|bulgarian|italian|french|japanese|mexican|indian|greek|chinese)\b/i;
+const TYPE_HINT_RE = /^(sushi|ramen|poke|pizza|burger|falafel|gyros|grill|taproom|brewery|brewpub|bottle\s*shop|tavern|bistro|pizzeria|restaurant|bar|cafe|café|coffee|wine|cocktail|bakery|bulgarian|italian|french|japanese|mexican|indian|greek|chinese)\b/i;
+
+// Maps type-hint keywords → suggested VENUE_TRAIT keys (see constants.js).
+const TRAIT_HINTS = {
+  sushi: ['food'], ramen: ['food'], poke: ['food'],
+  pizza: ['food'], burger: ['food'], falafel: ['food'],
+  gyros: ['food'], grill: ['food'], restaurant: ['food'],
+  bistro: ['food'], tavern: ['food'],
+  coffee: ['coffee'], café: ['coffee'], cafe: ['coffee'],
+  'specialty coffee': ['coffee'],
+  bar: ['craft-beer'], taproom: ['craft-beer'], brewery: ['craft-beer'], brewpub: ['craft-beer'],
+  'craft beer': ['craft-beer'], 'bottle shop': ['bottles-to-go', 'craft-beer'],
+  wine: ['wine'], cocktail: ['cocktails'],
+};
 
 function classifyUrl(line) {
   if (!/^https?:\/\//i.test(line)) return null;
@@ -48,7 +61,7 @@ function classifyLine(raw) {
 }
 
 const EMPTY_EXTRACTED = {
-  name: null, typeHint: null, url: null, lat: null, lng: null, nameFromUrl: null, shortUrl: false,
+  name: null, typeHint: null, suggestedTraits: [], url: null, lat: null, lng: null, nameFromUrl: null, shortUrl: false,
   openingHours: null, addrSegments: null, addrDerived: null,
   untappdUrl: null, websiteUrl: null, facebookUrl: null,
   checkIn: null, checkOut: null,
@@ -115,8 +128,27 @@ export function parseBlob(text) {
     }
   }
 
+  // Derive suggested VENUE_TRAIT keys from the type-hint line.
+  const typeHint = typeHintLine?.raw ?? null;
+  const traitKeys = new Set();
+  if (typeHint) {
+    const hintLower = typeHint.toLowerCase();
+    for (const [keyword, traits] of Object.entries(TRAIT_HINTS)) {
+      if (hintLower.includes(keyword)) traits.forEach(k => traitKeys.add(k));
+    }
+  }
+
+  // Fallback: match TRAIT_HINTS against the extracted name when typeHint produced nothing.
+  if (traitKeys.size === 0 && name) {
+    const nameLower = name.toLowerCase();
+    for (const [keyword, traits] of Object.entries(TRAIT_HINTS)) {
+      if (nameLower.includes(keyword)) traits.forEach(k => traitKeys.add(k));
+    }
+  }
+
   const extracted = {
-    name, typeHint: typeHintLine?.raw ?? null,
+    name, typeHint,
+    suggestedTraits: [...traitKeys],
     url, lat, lng, nameFromUrl, shortUrl,
     openingHours, addrSegments, addrDerived,
     untappdUrl:  untappdLine?.raw  ?? null,

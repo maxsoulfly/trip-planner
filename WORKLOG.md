@@ -787,3 +787,18 @@
 - **Schema/contract changes:** `repo.js` gains `setCountryForCity` — no DB schema change, uses existing `db.places.put`.
 - **Known issues / TODO:** None.
 - **Next:** TBD.
+
+---
+
+### 2026-07-03 — Step 29: Blob suggested traits chips
+
+- **Done:**
+  - `src/utils/blobParser.js` — added `TRAIT_HINTS` map (keyword → `VENUE_TRAIT` key array); after computing `typeHint`, iterates `TRAIT_HINTS` against `hintLower` and collects matching trait keys into a `Set`; `extracted.suggestedTraits` is the resulting array; `EMPTY_EXTRACTED` gains `suggestedTraits: []`.
+  - `src/components/BlobPreview.jsx` — imports `VENUE_TRAITS` from constants; accepts `onToggleTrait` prop; maps `extracted.suggestedTraits` keys against `VENUE_TRAITS` to get full trait objects; renders a TRAITS? row of dashed pill chips below CATEGORY when any traits match; clicking a chip calls `onToggleTrait(key)`.
+  - `src/components/PlaceForm.jsx` — passes `onToggleTrait={toggleTrait}` to `<BlobPreview>`; clicking a suggested chip immediately toggles the trait in the VENUE TRAITS section below (same as clicking there directly).
+  - `src/components/PlaceForm.css` — added `.blob-suggested-traits` (flex wrap row) and `.blob-trait-chip` (dashed steel pill; hover → solid amber).
+- **Deviations:** None. Traits are not auto-applied — clicking is required.
+- **Schema/contract changes:** `blobParser.js` extracted object gains `suggestedTraits: string[]` — transient, not written to DB.
+- **Known issues / TODO:** None.
+- **Next:** TBD.
+- **Addendum:** `src/utils/blobParser.js` — `TYPE_HINT_RE` extended with `sushi`, `ramen`, `poke`, `pizza`, `grill`, `wine`, `cocktail` as leading alternatives (food/drink hints now classify as `type-hint` even when the line starts with those words); name-based fallback added after building `extracted`: when `traitKeys` is empty and `extracted.name` is set, `TRAIT_HINTS` is matched against `nameLower` so names like "Sushi Wawa" produce a `food` suggestion without needing a separate type-hint line.

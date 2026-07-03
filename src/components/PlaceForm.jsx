@@ -416,7 +416,7 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
 
             {blobResult && (
               <div className="blob-preview">
-                <BlobPreview result={blobResult} onCycleRole={cycleSegmentRoleInBlob} />
+                <BlobPreview result={blobResult} onCycleRole={cycleSegmentRoleInBlob} onToggleTrait={toggleTrait} />
                 <div className="blob-actions">
                   <button type="button" className="blob-btn-apply" onClick={applyBlob}>
                     ◈ APPLY TO FORM

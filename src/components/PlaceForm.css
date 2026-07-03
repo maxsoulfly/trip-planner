@@ -568,6 +568,29 @@
 .blob-line-role--social     { color: var(--dim); opacity: .55; }
 .blob-line-role--type-hint  { color: var(--steel); }
 
+.blob-suggested-traits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.blob-trait-chip {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  background: transparent;
+  border: 1px dashed var(--steel);
+  border-radius: 999px;
+  color: var(--steel);
+  padding: 2px 7px;
+  cursor: pointer;
+}
+.blob-trait-chip:hover {
+  border-color: var(--amber);
+  color: var(--amber);
+  border-style: solid;
+}
+
 .blob-ext-row {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 10px;
