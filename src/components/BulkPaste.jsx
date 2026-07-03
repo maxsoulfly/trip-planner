@@ -17,12 +17,13 @@ export default function BulkPaste({ existingPlaces, cityFilter, onImport, onClos
   const [pasteText, setPasteText] = useState('');
   const [rows,      setRows]      = useState([]);
   const [busy,      setBusy]      = useState(false);
+  const [bulkCity,  setBulkCity]  = useState(cityFilter || '');
 
   const backdropRef     = useRef(null);
   const mouseDownTarget = useRef(null);
 
-  const candidates = cityFilter
-    ? existingPlaces.filter(p => p.city === cityFilter)
+  const candidates = bulkCity.trim()
+    ? existingPlaces.filter(p => p.city === bulkCity.trim())
     : existingPlaces;
 
   function handleParse() {
@@ -54,7 +55,7 @@ export default function BulkPaste({ existingPlaces, cityFilter, onImport, onClos
         name:   r.raw,
         type:   'other',
         status: 'wishlist',
-        city:   cityFilter || '',
+        city:   bulkCity.trim(),
       });
     }
 
@@ -84,12 +85,16 @@ export default function BulkPaste({ existingPlaces, cityFilter, onImport, onClos
 
         {rows.length === 0 && (
           <div className="bp-paste-area">
-            {cityFilter && (
-              <p className="bp-city-note">matching against: {cityFilter}</p>
-            )}
-            {!cityFilter && (
-              <p className="bp-city-note">matching against: all cities</p>
-            )}
+            <div className="bp-city-row">
+              <label className="bp-city-label">CITY</label>
+              <input
+                className="bp-city-input"
+                type="text"
+                value={bulkCity}
+                onChange={e => setBulkCity(e.target.value)}
+                placeholder="Sofia, Kraków, …"
+              />
+            </div>
             <textarea
               className="bp-textarea"
               rows={10}
@@ -98,10 +103,13 @@ export default function BulkPaste({ existingPlaces, cityFilter, onImport, onClos
               placeholder={"Craftownia\nStrefa Piwa\nOmerta\n..."}
               autoFocus
             />
+            {!bulkCity.trim() && lineCount > 0 && (
+              <p className="bp-city-note">Enter a city first</p>
+            )}
             <button
               className="bp-btn-parse"
               onClick={handleParse}
-              disabled={lineCount === 0}
+              disabled={lineCount === 0 || !bulkCity.trim()}
             >
               PARSE {lineCount} LINE{lineCount !== 1 ? 'S' : ''}
             </button>

@@ -16,7 +16,7 @@ const TYPE_KEYWORDS = [
   ['brewery',       ['brewery', 'browar', 'brauerei', 'pivovar']],
   ['brewpub',       ['brewpub', 'brew pub', 'beer & food', 'beer and food', 'brewing']],
   ['taproom',       ['taproom', 'tap room', 'beer bar', 'craft beer', 'beer']],
-  ['restaurant',    ['restaurant', 'bistro', 'brasserie', 'ristorante']],
+  ['restaurant',    ['restaurant', 'bistro', 'brasserie', 'ristorante', 'sushi', 'ramen', 'poke', 'pizza', 'pizzeria', 'burger', 'falafel', 'gyros', 'grill']],
   ['cafe',          ['café', 'cafe', 'coffee', 'kawiarnia', 'kaffee']],
   ['bar',           ['bar']],
   ['museum',        ['museum', 'muzeum', 'muzej', 'gallery', 'galeria', 'galeri']],

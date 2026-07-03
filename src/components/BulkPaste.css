@@ -14,12 +14,43 @@
   gap: 0;
 }
 
+.bp-city-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.bp-city-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--dim);
+  letter-spacing: .08em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.bp-city-input {
+  flex: 1;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  background: var(--bg);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  padding: 4px 8px;
+  outline: none;
+}
+
+.bp-city-input:focus {
+  border-color: var(--amber);
+}
+
 .bp-city-note {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 10px;
-  color: var(--steel);
+  color: var(--rust);
   letter-spacing: .06em;
-  margin: 0 0 8px;
+  margin: 4px 0 4px;
 }
 
 .bp-textarea {

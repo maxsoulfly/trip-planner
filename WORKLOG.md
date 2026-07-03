@@ -713,3 +713,34 @@
 - **Schema/contract changes:** None.
 - **Known issues / TODO:** None.
 - **Next:** TBD.
+- **Addendum:** `src/utils/blobParser.js` — `name` resolution now prefers `nameFromUrl` (from Maps URL slug) when the blob-classified name is missing, shorter than 3 chars, or starts with a digit; `applyBlob` in `PlaceForm.jsx` already guarded with `if (extracted.name)` — no change needed there.
+- **Addendum:** `src/utils/addressParser.js` — added `DISTRICT_FRAGMENTS` blocklist; post-classification pass demotes matching `city` chips to `ignore` so `deriveFields` last-city-chip picks the real city; added `/^\d+\s+\w+\s+str\.?$/i` street pattern for English-style segments appended after Cyrillic addresses.
+
+---
+
+### 2026-07-03 — Step 24: Address parser improvements + blob type-hint + restaurant keywords
+
+- **Done:**
+  - `src/utils/addressParser.js` — added Bulgarian Cyrillic street words to `STREET_WORDS` (`пл`, `ул`, `бул`, `площад`, `булевард`; plus Czech `nám` and Polish `rynek`); existing trailing-dot strip and `.toLowerCase()` already handle Cyrillic tokens correctly.
+  - `src/utils/addressParser.js` — added mall/commercial-centre entries to `DISTRICT_FRAGMENTS` (`mall of sofia`, `paradise center`, `serdika center`, `ndk`, etc.); added regex demotion check `\b(mall|shopping cent(re|er)|галерия)\b` alongside the blocklist pass so generic mall segments are demoted city → ignore without needing exact matches.
+  - `src/utils/blobParser.js` — added `type-hint` role and `TYPE_HINT_RE` pattern (restaurant, bar, cafe, cuisine keywords); classified after address but before name fallback; `extracted.typeHint` carries the first matching line; informational only — `applyBlob` does not write it to any form field.
+  - `src/components/BlobPreview.jsx` — `type-hint` shown as `category` label (steel colour) in left column; CATEGORY row added to right EXTRACTED panel; empty-state guard updated.
+  - `src/components/PlaceForm.css` — added `.blob-line-role--type-hint { color: var(--steel); }`.
+  - `src/components/PlaceForm.jsx` — added food keywords to `restaurant` entry in `TYPE_KEYWORDS`: `sushi`, `ramen`, `poke`, `pizza`, `pizzeria`, `burger`, `falafel`, `gyros`, `grill`.
+- **Deviations:** None.
+- **Schema/contract changes:** None. `typeHint` is a transient blob extraction field — not written to DB.
+- **Known issues / TODO:** None.
+- **Next:** TBD.
+
+---
+
+### 2026-07-03 — Step 25: BulkPaste city input + AdminModal empty-city source fix
+
+- **Done:**
+  - `src/components/BulkPaste.jsx` — added `bulkCity` state (initialised from `cityFilter || ''`); replaced the old city-note paragraphs with a `.bp-city-row` input row above the textarea; `handleParse` candidate filter and `handleImport` stub creation both use `bulkCity.trim()`; PARSE button disabled and "Enter a city first" hint shown when `bulkCity` is empty and there are lines to parse.
+  - `src/components/BulkPaste.css` — added `.bp-city-row` (flex row), `.bp-city-label` (mono dim label), `.bp-city-input` (mono input matching modal style, amber focus border); repurposed `.bp-city-note` to rust colour for the "Enter a city first" warning.
+  - `src/components/AdminModal.jsx` — city list in `useEffect` now uses `places.map(p => p.city || '')` (no `.filter(Boolean)`) so places with `city: ''` appear in the source dropdown; `handleMerge` reload uses the same pattern; `sourceCityMerge` initial value changed to `'__placeholder__'` sentinel so `''` can represent a valid "no city" selection; `mergeReady` checks `!== '__placeholder__'` instead of truthiness; source `<select>` placeholder option uses value `__placeholder__` with `disabled`; source options render `c || '(no city)'`; target `<select>` filters out `''` so user cannot retarget to empty city.
+- **Deviations:** None.
+- **Schema/contract changes:** None. `mergeCities` in `repo.js` uses `db.places.where('city').equals(sourceCity)` — Dexie correctly matches `city: ''` records with `equals('')`, so no repo change needed.
+- **Known issues / TODO:** None.
+- **Next:** TBD.

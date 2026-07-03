@@ -565,7 +565,8 @@
 .blob-line-role--url     { color: var(--steel); }
 .blob-line-role--hours   { color: var(--dim); }
 .blob-line-role--address { color: var(--steel); }
-.blob-line-role--social  { color: var(--dim); opacity: .55; }
+.blob-line-role--social     { color: var(--dim); opacity: .55; }
+.blob-line-role--type-hint  { color: var(--steel); }
 
 .blob-ext-row {
   font-family: 'IBM Plex Mono', monospace;

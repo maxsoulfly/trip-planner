@@ -16,7 +16,7 @@ export default function AdminModal({ onRefresh, onClose }) {
   const [showXlsx, setShowXlsx] = useState(false);
 
   const [cities,          setCities]          = useState([]);
-  const [sourceCityMerge, setSourceCityMerge] = useState('');
+  const [sourceCityMerge, setSourceCityMerge] = useState('__placeholder__');
   const [targetCityMerge, setTargetCityMerge] = useState('');
   const [mergePending,    setMergePending]    = useState(false);
 
@@ -26,7 +26,7 @@ export default function AdminModal({ onRefresh, onClose }) {
 
   useEffect(() => {
     getAllPlaces().then((places) => {
-      const citySet = new Set(places.map((p) => p.city).filter(Boolean));
+      const citySet = new Set(places.map((p) => p.city || ''));
       setCities([...citySet].sort());
     });
   }, []);
@@ -99,9 +99,9 @@ export default function AdminModal({ onRefresh, onClose }) {
     await run(async () => {
       await mergeCities(src, tgt);
       const places = await getAllPlaces();
-      const citySet = new Set(places.map((p) => p.city).filter(Boolean));
+      const citySet = new Set(places.map((p) => p.city || ''));
       setCities([...citySet].sort());
-      setSourceCityMerge('');
+      setSourceCityMerge('__placeholder__');
       setTargetCityMerge('');
     });
   }
@@ -132,7 +132,7 @@ export default function AdminModal({ onRefresh, onClose }) {
     );
   }
 
-  const mergeReady = sourceCityMerge && targetCityMerge && sourceCityMerge !== targetCityMerge;
+  const mergeReady = sourceCityMerge !== '__placeholder__' && targetCityMerge && sourceCityMerge !== targetCityMerge;
 
   return (
     <div
@@ -216,8 +216,10 @@ export default function AdminModal({ onRefresh, onClose }) {
                 disabled={busy}
                 aria-label="Source city"
               >
-                <option value="">source city…</option>
-                {cities.map((c) => <option key={c} value={c}>{c}</option>)}
+                <option value="__placeholder__" disabled>source city…</option>
+                {cities.map((c) => (
+                  <option key={c || '__empty__'} value={c}>{c || '(no city)'}</option>
+                ))}
               </select>
               <span className="admin-merge-arrow">→</span>
               <select
@@ -228,7 +230,7 @@ export default function AdminModal({ onRefresh, onClose }) {
                 aria-label="Target city"
               >
                 <option value="">target city…</option>
-                {cities.map((c) => <option key={c} value={c}>{c}</option>)}
+                {cities.filter(c => c).map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
 

@@ -8,6 +8,7 @@ function truncUrl(s, max = 40) {
 // Human-readable labels for the left-column role chips.
 const ROLE_DISPLAY = {
   'name':          'name',
+  'type-hint':     'category',
   'hours':         'hours',
   'address':       'address',
   'checkin':       'check-in',
@@ -28,7 +29,7 @@ function roleCss(role) {
 
 export default function BlobPreview({ result, onCycleRole }) {
   const { lines, extracted } = result;
-  const { name, url, lat, lng, shortUrl, openingHours,
+  const { name, typeHint, url, lat, lng, shortUrl, openingHours,
           addrSegments, untappdUrl, websiteUrl, facebookUrl,
           checkIn, checkOut } = extracted;
 
@@ -59,6 +60,13 @@ export default function BlobPreview({ result, onCycleRole }) {
           <div className="blob-ext-row">
             <span className="blob-ext-label">NAME</span>
             <span className="blob-ext-value blob-ext-value--amber">{name}</span>
+          </div>
+        )}
+
+        {typeHint && (
+          <div className="blob-ext-row">
+            <span className="blob-ext-label">CATEGORY</span>
+            <span className="blob-ext-value" style={{ color: 'var(--steel)' }}>{typeHint}</span>
           </div>
         )}
 
@@ -144,7 +152,7 @@ export default function BlobPreview({ result, onCycleRole }) {
           </div>
         )}
 
-        {!name && !url && hoursDayCount === 0 && !addrSegments?.length
+        {!name && !typeHint && !url && hoursDayCount === 0 && !addrSegments?.length
          && !websiteUrl && !untappdUrl && !checkIn && !checkOut && (
           <span className="blob-ext-value" style={{ color: 'var(--dim)', opacity: .6 }}>
             Nothing extracted

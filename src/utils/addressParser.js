@@ -25,7 +25,23 @@ const STREET_WORDS = new Set([
   'straße', 'strasse', 'str', 'platz', 'weg', 'gasse', 'allee',
   // Romanian / Bulgarian
   'strada', 'bulevardul', 'bd', 'calea', 'piața', 'bul',
+  // Bulgarian Cyrillic
+  'пл', 'ул', 'бул', 'площад', 'булевард',
+  // Czech / additional Polish
+  'nám', 'rynek',
 ]);
+
+const DISTRICT_FRAGMENTS = [
+  // Sofia districts
+  'sofia center', 'sofia centre', 'софия център', 'sofia centar',
+  'oborishte', 'lozenets', 'mladost', 'lyulin', 'nadezhda',
+  // Generic patterns
+  'city center', 'city centre', 'old town', 'stare miasto',
+  'kazimierz', 'śródmieście', 'centrum',
+  // Malls and commercial centres
+  'mall of sofia', 'mall of', 'paradise center', 'serdika center',
+  'national palace of culture', 'ndk',
+];
 
 function escapeRegex(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -63,6 +79,9 @@ function classifySegment(segment) {
     if (STREET_WORDS.has(norm)) return 'street';
   }
   if (/\s\d+(-\d+)?[a-zA-Z]?$/.test(trimmed)) return 'street';
+
+  // English "N word str[.]" — e.g. "1 Dimchev str" appended after a Cyrillic address
+  if (/^\d+\s+\w+\s+str\.?$/i.test(trimmed)) return 'street';
 
   return 'city';
 }
@@ -112,7 +131,21 @@ export function parseAddress(text) {
     else expanded.push(part);
   }
 
-  const segments = expanded.map(raw => ({ id: _nextId++, raw, role: classifySegment(raw) }));
+  let segments = expanded.map(raw => ({ id: _nextId++, raw, role: classifySegment(raw) }));
+
+  // Demote known district/neighbourhood labels from city → ignore so deriveFields
+  // picks the real city name from whatever city chip remains.
+  segments = segments.map(seg => {
+    if (seg.role !== 'city') return seg;
+    const lower = seg.raw.toLowerCase().trim();
+    if (DISTRICT_FRAGMENTS.some(d => lower === d || lower.startsWith(d + ' ') || lower.endsWith(' ' + d))) {
+      return { ...seg, role: 'ignore' };
+    }
+    if (/\b(mall|shopping\s+cent(re|er)|галерия)\b/i.test(seg.raw)) {
+      return { ...seg, role: 'ignore' };
+    }
+    return seg;
+  });
 
   // Append the country chip (relabel-able, but starts as 'country')
   if (countryMatch) {

@@ -2,10 +2,10 @@
 //
 // parseBlob(text) → { lines, extracted }
 //   lines:     [{ raw, role }]
-//     role = name | url-maps | url-untappd | url-website | url-facebook |
+//     role = name | type-hint | url-maps | url-untappd | url-website | url-facebook |
 //            url-instagram | hours | address | checkin | checkout
 //            (ignore-label lines are filtered out before being returned)
-//   extracted: { name, url, lat, lng, nameFromUrl, shortUrl,
+//   extracted: { name, typeHint, url, lat, lng, nameFromUrl, shortUrl,
 //                openingHours, addrSegments, addrDerived,
 //                untappdUrl, websiteUrl, facebookUrl,
 //                checkIn, checkOut }
@@ -22,6 +22,9 @@ const WEEKDAY_RE = /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|M
 const TIME_VALUE_RE = /^\d{1,2}(?::\d{2})?\s*(?:am|pm)?\s*[–—-]/i;
 
 const CLOSED_RE = /^(Closed|Open 24 hours)$/i;
+
+// Category/description lines — informational only, not written to any field.
+const TYPE_HINT_RE = /^(restaurant|bar|cafe|café|coffee|taproom|brewery|brewpub|bottle\s*shop|tavern|bistro|pizzeria|sushi|ramen|poke|burger|falafel|gyros|bakery|bulgarian|italian|french|japanese|mexican|indian|greek|chinese)\b/i;
 
 function classifyUrl(line) {
   if (!/^https?:\/\//i.test(line)) return null;
@@ -40,11 +43,12 @@ function classifyLine(raw) {
   if (/check[- ]?out\s*(?:time\s*)?[:\-]\s*\d{1,2}:\d{2}/i.test(raw)) return 'checkout';
   if (/^(suggest new hours|lunch|happy hours?|kitchen|popular times?|dine.?in|takeaway|delivery|drive.?through)$/i.test(raw)) return 'ignore-label';
   if (/,/.test(raw) && (/\d/.test(raw) || findCountry(raw))) return 'address';
+  if (TYPE_HINT_RE.test(raw)) return 'type-hint';
   return 'name';
 }
 
 const EMPTY_EXTRACTED = {
-  name: null, url: null, lat: null, lng: null, nameFromUrl: null, shortUrl: false,
+  name: null, typeHint: null, url: null, lat: null, lng: null, nameFromUrl: null, shortUrl: false,
   openingHours: null, addrSegments: null, addrDerived: null,
   untappdUrl: null, websiteUrl: null, facebookUrl: null,
   checkIn: null, checkOut: null,
@@ -59,10 +63,11 @@ export function parseBlob(text) {
     .map(raw => ({ raw, role: classifyLine(raw) }))
     .filter(l => l.role !== 'ignore-label');
 
-  const nameLine   = lines.find(l => l.role === 'name');
-  const mapsLine   = lines.find(l => l.role === 'url-maps');
-  const addrLine   = lines.find(l => l.role === 'address');
-  const hoursLines = lines.filter(l => l.role === 'hours');
+  const nameLine     = lines.find(l => l.role === 'name');
+  const typeHintLine = lines.find(l => l.role === 'type-hint');
+  const mapsLine     = lines.find(l => l.role === 'url-maps');
+  const addrLine     = lines.find(l => l.role === 'address');
+  const hoursLines   = lines.filter(l => l.role === 'hours');
 
   // URL sub-types
   const untappdLine  = lines.find(l => l.role === 'url-untappd');
@@ -89,7 +94,9 @@ export function parseBlob(text) {
     }
   }
 
-  const name = nameLine?.raw ?? nameFromUrl ?? null;
+  const blobName = nameLine?.raw || null;
+  const blobNameUnreliable = !blobName || blobName.length < 3 || /^\d/.test(blobName);
+  const name = blobNameUnreliable ? (nameFromUrl || blobName) : blobName;
 
   // Hours: join all hours-classified lines (blanks already stripped by filter)
   let openingHours = null;
@@ -109,7 +116,8 @@ export function parseBlob(text) {
   }
 
   const extracted = {
-    name, url, lat, lng, nameFromUrl, shortUrl,
+    name, typeHint: typeHintLine?.raw ?? null,
+    url, lat, lng, nameFromUrl, shortUrl,
     openingHours, addrSegments, addrDerived,
     untappdUrl:  untappdLine?.raw  ?? null,
     websiteUrl:  websiteLine?.raw  ?? null,
