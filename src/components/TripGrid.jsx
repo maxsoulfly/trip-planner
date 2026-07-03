@@ -109,10 +109,17 @@ export default function TripGrid({ trip, onBack }) {
   // ── Nearby suggest ────────────────────────────────────────────────────────
 
   function handleSuggestNearby(date, block) {
+    const slotItems = scheduleItems.filter(
+      si => si.date === date && si.block === block.key && si.placeId && places[si.placeId]?.lat
+    );
     const dayItems = scheduleItems.filter(
       si => si.date === date && si.placeId && places[si.placeId]?.lat
     );
-    const anchor = dayItems.length ? places[dayItems[0].placeId] : null;
+    const anchor = slotItems.length
+      ? places[slotItems[0].placeId]   // prefer anchor from same slot
+      : dayItems.length
+        ? places[dayItems[0].placeId]  // fall back to any place on the day
+        : null;
 
     if (!anchor) {
       setPicker({ date, block: block.key });
@@ -127,7 +134,10 @@ export default function TripGrid({ trip, onBack }) {
       scheduleItems.filter(si => si.date === date).map(si => si.placeId).filter(Boolean)
     );
 
-    const candidates = Object.values(places)
+    const PRIMARY_RADIUS = 0.8;   // 800m — 10 min walk
+    const FALLBACK_RADIUS = 1.5;  // expand if fewer than 3 results
+
+    const scored = Object.values(places)
       .filter(p =>
         p.lat && p.lng &&
         !usedIds.has(p.id) &&
@@ -153,11 +163,19 @@ export default function TripGrid({ trip, onBack }) {
 
         return { place: p, dist, hoursScore };
       })
-      .filter(Boolean)
+      .filter(Boolean);
+
+    let candidates = scored.filter(c => c.dist <= PRIMARY_RADIUS);
+    if (candidates.length < 3) {
+      candidates = scored.filter(c => c.dist <= FALLBACK_RADIUS);
+    }
+    candidates = candidates
       .sort((a, b) => b.hoursScore - a.hoursScore || a.dist - b.dist)
       .slice(0, 8);
 
-    setSuggestions({ date, block: block.key, candidates, anchor });
+    const radiusUsed = candidates.some(c => c.dist > PRIMARY_RADIUS) ? '1.5km' : '800m';
+
+    setSuggestions({ date, block: block.key, candidates, anchor, radiusUsed });
   }
 
   async function handleAddSuggestion(date, blockKey, placeId) {
@@ -278,7 +296,7 @@ export default function TripGrid({ trip, onBack }) {
         <div className="tg-suggest-panel">
           <div className="tg-suggest-header">
             <span className="tg-suggest-title">
-              NEARBY · {suggestions.block.toUpperCase().replace('_',' ')} · from {suggestions.anchor.name}
+              NEARBY · {suggestions.block.toUpperCase().replace('_',' ')} · {suggestions.radiusUsed}
             </span>
             <button className="tg-suggest-close" onClick={() => setSuggestions(null)}>✕</button>
           </div>

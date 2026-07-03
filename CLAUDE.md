@@ -196,6 +196,10 @@ Maps URL is optional, not a completeness signal.
     unchanged but label → Night Stay, emoji → 🏠, `start`/`end` → null (timeless).
     `blockForTime` skips null-time blocks. Nearby suggest skips night block.
     `blockEnd=0` guard added (evening end=0 → 1440 mins).
+23. **DONE** — Nearby suggest improvements: NEARBY button on all slots (not
+    just empty); slot-first anchor (prefers coords from triggered slot, falls
+    back to any day place); 800m primary radius, expands to 1.5km if <3 results;
+    radius label shown in suggest panel header.
 
 ## Design language — "post-apocalyptic field terminal"
 A salvaged-tech / amber-CRT / survival-field-manual feel.
@@ -245,4 +249,4 @@ from memory or a template. Each entry:
 - **Schema/contract changes:** any change to db.js, repo.js, constants.js.
 - **Known issues / TODO:** bugs, shortcuts, deferred items.
 - **Next:** what comes next.
-Do not rewrite earlier entries — only append.
+Do not rewrite earlier entries — only append. **Always append at the BOTTOM** of WORKLOG.md, never at the top.

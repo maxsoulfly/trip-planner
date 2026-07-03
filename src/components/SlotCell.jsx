@@ -90,7 +90,7 @@ export default function SlotCell({ block, items, places, flightCards, dimmed, on
       })}
 
       <button className="sc-add" onClick={onAdd}>+ ADD</button>
-      {items.length === 0 && !flightCards?.length && onSuggestNearby && (
+      {!flightCards?.length && onSuggestNearby && (
         <button className="sc-suggest-btn" onClick={onSuggestNearby} type="button">
           ◈ NEARBY
         </button>
