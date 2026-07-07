@@ -1,0 +1,169 @@
+/* ===== TYPES & TRAITS MODAL (ttm-*) ===== */
+/* Shares modal-backdrop / modal-panel / modal-header / modal-close from styles.css */
+
+.ttm-panel { max-width: 560px; max-height: 85vh; display: flex; flex-direction: column; }
+
+.ttm-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.ttm-tab {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--dim);
+  padding: 8px 16px;
+  cursor: pointer;
+}
+.ttm-tab--active {
+  color: var(--amber);
+  border-bottom-color: var(--amber);
+}
+
+.ttm-error {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--rust);
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+
+.ttm-list { flex: 1; overflow-y: auto; min-height: 0; }
+
+.ttm-add-row {
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--line);
+}
+.ttm-add-btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .08em;
+  background: transparent;
+  border: 1px dashed var(--steel);
+  border-radius: 4px;
+  color: var(--steel);
+  padding: 4px 12px;
+  cursor: pointer;
+}
+.ttm-add-btn:hover:not(:disabled) { border-color: var(--amber); color: var(--amber); }
+.ttm-add-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+.ttm-add-panel {
+  padding: 10px 0 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ttm-row {
+  display: grid;
+  grid-template-columns: 28px 1fr auto auto auto;
+  align-items: center;
+  padding: 7px 14px;
+  border-bottom: 1px solid var(--line);
+  gap: 8px;
+}
+.ttm-emoji { font-size: 16px; }
+.ttm-label { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink); }
+.ttm-key   { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--dim); }
+.ttm-count { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--dim); min-width: 32px; text-align: right; }
+.ttm-edit-btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--dim);
+  padding: 2px 7px;
+  cursor: pointer;
+}
+.ttm-edit-btn:hover:not(:disabled) { border-color: var(--amber); color: var(--amber); }
+.ttm-edit-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+.ttm-edit-panel {
+  padding: 10px 14px 10px 42px;
+  background: var(--panel2);
+  border-bottom: 1px solid var(--steel);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ttm-edit-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.ttm-edit-row label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .1em;
+  color: var(--dim);
+  min-width: 88px;
+  padding-top: 5px;
+}
+.ttm-emoji-input {
+  font-size: 18px;
+  background: var(--bg);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 2px 6px;
+  width: 48px;
+  text-align: center;
+}
+.ttm-label-input, .ttm-keywords-input {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  background: var(--bg);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 4px 8px;
+  flex: 1;
+  min-width: 140px;
+}
+.ttm-label-input:focus, .ttm-keywords-input:focus,
+.ttm-emoji-input:focus { outline: none; border-color: var(--amber); }
+
+.ttm-key-display {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--steel);
+}
+.ttm-key-note {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: var(--dim);
+  margin-left: 6px;
+}
+.ttm-keywords-hint {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: var(--dim);
+  width: 100%;
+  margin-top: 2px;
+}
+.ttm-edit-actions { display: flex; gap: 8px; margin-top: 4px; }
+.ttm-btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .08em;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--ink);
+  padding: 4px 12px;
+  cursor: pointer;
+}
+.ttm-btn:disabled { opacity: .4; cursor: not-allowed; }
+.ttm-btn--save { border-color: var(--amber); color: var(--amber); }
+.ttm-btn--save:hover:not(:disabled) { background: var(--amber); color: var(--bg); }
+.ttm-btn--danger { border-color: var(--rust); color: var(--rust); margin-left: auto; }
+.ttm-btn--danger:hover:not(:disabled) { background: var(--rust); color: var(--bg); }

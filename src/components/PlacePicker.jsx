@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { addScheduleItem } from '../db/repo.js';
-import { PLACE_TYPES, blockMeta } from '../db/constants.js';
+import { blockMeta } from '../db/constants.js';
+import { useSettings } from '../context/SettingsContext.jsx';
 import './PlacePicker.css';
 
 export default function PlacePicker({ date, block, trip, places, onConfirm, onClose }) {
+  const { placeTypes } = useSettings();
   const [mode,       setMode]       = useState('library'); // 'library' | 'adhoc'
   const [search,     setSearch]     = useState('');
   const [filterType, setFilterType] = useState('');
@@ -120,7 +122,7 @@ export default function PlacePicker({ date, block, trip, places, onConfirm, onCl
                 aria-label="Filter by type"
               >
                 <option value="">ALL TYPES</option>
-                {PLACE_TYPES.map((t) => (
+                {placeTypes.map((t) => (
                   <option key={t.key} value={t.key}>{t.emoji} {t.label.toUpperCase()}</option>
                 ))}
               </select>
@@ -152,7 +154,7 @@ export default function PlacePicker({ date, block, trip, places, onConfirm, onCl
                     role="option"
                   >
                     <span className="pp-place-icon">
-                      {PLACE_TYPES.find((t) => t.key === p.type)?.emoji || '📍'}
+                      {placeTypes.find((t) => t.key === p.type)?.emoji || '📍'}
                     </span>
                     <span className="pp-place-name">{p.name}</span>
                     {p.city && <span className="pp-place-city">{p.city.toUpperCase()}</span>}

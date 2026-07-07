@@ -10,6 +10,91 @@ import db from './db.js';
 const uuid = () => crypto.randomUUID();
 const now = () => new Date().toISOString();
 
+// ----- Place types / venue traits (editable vocabulary, db.js v5) ----------
+// Seed data — copied from the old constants.js PLACE_TYPES/VENUE_TRAITS arrays,
+// consolidated with keyword lists that used to live separately in
+// PlaceForm.jsx (TYPE_KEYWORDS) and blobParser.js (TRAIT_HINTS). Only used to
+// populate the DB on first run — after that, the DB is the source of truth.
+
+const PLACE_TYPES_SEED = [
+  { key: 'taproom',       label: 'Taproom',       emoji: '🍺', order: 0,
+    keywords: ['taproom','tap room','beer bar','craft beer','beer'] },
+  { key: 'bottle_shop',   label: 'Bottle Shop',   emoji: '🛍', order: 1,
+    keywords: ['beer shop','bottle shop','beer store','beerstore'] },
+  { key: 'brewpub',       label: 'Brewpub',       emoji: '🍻', order: 2,
+    keywords: ['brewpub','brew pub','beer & food','beer and food','brewing'] },
+  { key: 'brewery',       label: 'Brewery',       emoji: '🏭', order: 3,
+    keywords: ['brewery','browar','brauerei','pivovar'] },
+  { key: 'bar',           label: 'Bar',           emoji: '🏆', order: 4,
+    keywords: ['bar'] },
+  { key: 'restaurant',    label: 'Restaurant',    emoji: '🍽', order: 5,
+    keywords: ['restaurant','bistro','brasserie','ristorante','sushi','ramen',
+               'poke','pizza','pizzeria','burger','falafel','gyros','grill'] },
+  { key: 'cafe',          label: 'Café',          emoji: '☕', order: 6,
+    keywords: ['café','cafe','coffee','kawiarnia','kaffee','specialty coffee'] },
+  { key: 'museum',        label: 'Museum',        emoji: '🏛', order: 7,
+    keywords: ['museum','muzeum','muzej','gallery','galeria','galeri'] },
+  { key: 'park',          label: 'Park / Cemetery', emoji: '🌳', order: 8,
+    keywords: ['park','cemetery','cmentarz','hřbitov','garden','jardín','zoo','botanical'] },
+  { key: 'activity',      label: 'Activity',      emoji: '🎯', order: 9,  keywords: [] },
+  { key: 'shop',          label: 'Shop',          emoji: '🏪', order: 10, keywords: [] },
+  { key: 'supermarket',   label: 'Supermarket',   emoji: '🛒', order: 11, keywords: [] },
+  { key: 'accommodation', label: 'Accommodation', emoji: '🏠', order: 12,
+    keywords: ['hotel','hostel','noclegi','apartment','apartament','pension','inn'] },
+  { key: 'transport',     label: 'Transport',     emoji: '🚌', order: 13, keywords: [] },
+  { key: 'other',         label: 'Other',         emoji: '📍', order: 14, keywords: [] },
+];
+
+const VENUE_TRAITS_SEED = [
+  { key: 'craft-beer',    label: 'Craft Beer',   emoji: '🍺', order: 0,
+    hintKeywords: ['craft beer','taproom','brewery','brewpub','bottle shop'] },
+  { key: 'taps-on-site',  label: 'Taps On-Site', emoji: '🚰', order: 1,
+    hintKeywords: ['taproom','taps','draft'] },
+  { key: 'bottles-to-go', label: 'Bottles To-Go',emoji: '🛍', order: 2,
+    hintKeywords: ['bottle shop','bottle store','to go','take away'] },
+  { key: 'food',          label: 'Food',         emoji: '🍽', order: 3,
+    hintKeywords: ['restaurant','bistro','sushi','ramen','poke','pizza','burger',
+                   'falafel','gyros','grill','tavern','food','kitchen'] },
+  { key: 'wine',          label: 'Wine',         emoji: '🍷', order: 4,
+    hintKeywords: ['wine','winery','vino'] },
+  { key: 'cocktails',     label: 'Cocktails',    emoji: '🍸', order: 5,
+    hintKeywords: ['cocktail','cocktails','mixology'] },
+  { key: 'coffee',        label: 'Coffee',       emoji: '☕', order: 6,
+    hintKeywords: ['coffee','café','cafe','specialty coffee','espresso'] },
+  { key: 'outdoor',       label: 'Outdoor',      emoji: '🌿', order: 7,
+    hintKeywords: ['outdoor','garden','terrace','rooftop'] },
+  { key: 'happy-hours',   label: 'Happy Hours',  emoji: '🍻', order: 8,
+    hintKeywords: ['happy hour','happy hours'] },
+];
+
+// Seeds both tables on first run only — safe to call on every app mount.
+export async function seedTypesAndTraits() {
+  const [typeCount, traitCount] = await Promise.all([
+    db.placeTypes.count(),
+    db.venueTraits.count(),
+  ]);
+  if (typeCount === 0) await db.placeTypes.bulkPut(PLACE_TYPES_SEED);
+  if (traitCount === 0) await db.venueTraits.bulkPut(VENUE_TRAITS_SEED);
+}
+
+export const getAllPlaceTypes  = () => db.placeTypes.orderBy('order').toArray();
+export const getAllVenueTraits = () => db.venueTraits.orderBy('order').toArray();
+
+export async function putPlaceType(type)  { return db.placeTypes.put(type); }
+export async function putVenueTrait(trait){ return db.venueTraits.put(trait); }
+
+export async function deletePlaceType(key) {
+  const count = await db.places.where('type').equals(key).count();
+  if (count > 0) throw new Error(`Cannot delete: ${count} places use type "${key}"`);
+  return db.placeTypes.delete(key);
+}
+export async function deleteVenueTrait(key) {
+  // Traits live inside the free-form tags array on each place, not an indexed
+  // field — no cheap count query. Deletion is allowed unconditionally; any
+  // place still carrying the tag string just keeps an orphaned tag.
+  return db.venueTraits.delete(key);
+}
+
 // ----- Places --------------------------------------------------------------
 
 export async function addPlace(data) {

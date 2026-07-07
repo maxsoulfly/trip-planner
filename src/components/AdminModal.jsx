@@ -7,6 +7,7 @@ import {
 import CsvImport   from './CsvImport.jsx';
 import XlsxImport  from './XlsxImport.jsx';
 import CitiesModal from './CitiesModal.jsx';
+import TypesTraitsModal from './TypesTraitsModal.jsx';
 import './AdminModal.css';
 
 export default function AdminModal({ onRefresh, onClose }) {
@@ -16,6 +17,7 @@ export default function AdminModal({ onRefresh, onClose }) {
   const [showCsv,    setShowCsv]    = useState(false);
   const [showXlsx,   setShowXlsx]   = useState(false);
   const [showCities, setShowCities] = useState(false);
+  const [showTypesTraits, setShowTypesTraits] = useState(false);
 
   const [allPlaces, setAllPlaces] = useState([]);
 
@@ -188,13 +190,19 @@ export default function AdminModal({ onRefresh, onClose }) {
 
           <div className="admin-divider" />
 
-          {/* ── City management ── */}
+          {/* ── Vocabulary ── */}
           <div className="admin-section">
-            <div className="admin-section-label">City Management</div>
+            <div className="admin-section-label">Vocabulary</div>
             <div className="admin-row admin-row--merge">
               <span className="admin-row-desc">List, rename, merge, and fix cities</span>
               <button className="admin-btn" onClick={() => setShowCities(true)} disabled={busy}>
                 ◈ MANAGE CITIES
+              </button>
+            </div>
+            <div className="admin-row admin-row--merge">
+              <span className="admin-row-desc">Edit place type and trait labels, emoji, keywords</span>
+              <button className="admin-btn" onClick={() => setShowTypesTraits(true)} disabled={busy}>
+                ◈ TYPES & TRAITS
               </button>
             </div>
           </div>
@@ -243,6 +251,14 @@ export default function AdminModal({ onRefresh, onClose }) {
           places={allPlaces}
           onClose={() => setShowCities(false)}
           onRefresh={() => { onRefresh(); loadPlaces(); }}
+        />
+      )}
+
+      {showTypesTraits && (
+        <TypesTraitsModal
+          places={allPlaces}
+          onClose={() => setShowTypesTraits(false)}
+          onRefresh={onRefresh}
         />
       )}
     </div>

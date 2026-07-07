@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { addPlace, putPlace, getAllPlaces, mergePlaces as doMergePlaces, countScheduleItemsByPlace } from '../db/repo.js';
-import { PLACE_TYPES, STATUSES, WEEKDAYS, VENUE_TRAITS, typeMeta } from '../db/constants.js';
+import { STATUSES, WEEKDAYS } from '../db/constants.js';
+import { useSettings, typeMetaFrom } from '../context/SettingsContext.jsx';
 import { parseMapsUrl } from '../utils/mapsParser.js';
 import { parseGoogleHours } from '../utils/hoursParser.js';
 import { parseAddress, deriveFields } from '../utils/addressParser.js';
@@ -9,29 +10,6 @@ import BlobPreview from './BlobPreview.jsx';
 import './PlaceForm.css';
 
 const SCHEDULING_TAGS = ['breakfast', 'specialty-coffee', 'brunch', 'lunch', 'dinner', 'late-night'];
-
-// Ordered — first match wins. More-specific phrases come before shorter ones.
-const TYPE_KEYWORDS = [
-  ['bottle_shop',   ['beer shop', 'bottle shop', 'beer store', 'beerstore']],
-  ['brewery',       ['brewery', 'browar', 'brauerei', 'pivovar']],
-  ['brewpub',       ['brewpub', 'brew pub', 'beer & food', 'beer and food', 'brewing']],
-  ['taproom',       ['taproom', 'tap room', 'beer bar', 'craft beer', 'beer']],
-  ['restaurant',    ['restaurant', 'bistro', 'brasserie', 'ristorante', 'sushi', 'ramen', 'poke', 'pizza', 'pizzeria', 'burger', 'falafel', 'gyros', 'grill']],
-  ['cafe',          ['café', 'cafe', 'coffee', 'kawiarnia', 'kaffee']],
-  ['bar',           ['bar']],
-  ['museum',        ['museum', 'muzeum', 'muzej', 'gallery', 'galeria', 'galeri']],
-  ['park',          ['park', 'cemetery', 'cmentarz', 'hřbitov', 'garden', 'jardín', 'zoo', 'botanical']],
-  ['accommodation', ['hotel', 'hostel', 'noclegi', 'apartment', 'apartament', 'pension', 'inn']],
-];
-
-function detectType(name) {
-  const lower = name.toLowerCase();
-  for (const [typeKey, keywords] of TYPE_KEYWORDS) {
-    if (keywords.some((kw) => lower.includes(kw))) return typeKey;
-  }
-  return null;
-}
-
 
 function buildHoursState(openingHours) {
   const src = openingHours || {};
@@ -45,7 +23,38 @@ function parseTags(str) {
 }
 
 export default function PlaceForm({ initialData, onSave, onClose }) {
+  const { placeTypes, venueTraits } = useSettings();
   const isEdit = Boolean(initialData);
+
+  // Built once per venueTraits load — { keyword: [traitKey, ...] } passed to
+  // the pure parseBlob(). Keyword grouping preserves the old TRAIT_HINTS
+  // behaviour where one keyword (e.g. "bottle shop") can suggest several traits.
+  const traitHints = useMemo(() => {
+    const hints = {};
+    for (const t of venueTraits) {
+      for (const kw of t.hintKeywords || []) {
+        if (!hints[kw]) hints[kw] = [];
+        hints[kw].push(t.key);
+      }
+    }
+    return hints;
+  }, [venueTraits]);
+
+  // Picks the LONGEST matching keyword across all types, not the first type
+  // in list order — e.g. "beer shop" (bottle_shop) must win over the shorter
+  // "beer" (taproom) regardless of which type happens to sort first.
+  function detectType(name) {
+    const lower = name.toLowerCase();
+    let best = null;
+    for (const t of placeTypes) {
+      for (const kw of t.keywords || []) {
+        if (lower.includes(kw) && (!best || kw.length > best.kwLen)) {
+          best = { key: t.key, kwLen: kw.length };
+        }
+      }
+    }
+    return best?.key ?? null;
+  }
 
   const [name,         setName]         = useState(initialData?.name         || '');
   const [type,         setType]         = useState(initialData?.type         || 'other');
@@ -167,7 +176,7 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
   function handleBlobParse(text) {
     const src = text ?? blobText;
     if (!src.trim()) return;
-    setBlobResult(parseBlob(src));
+    setBlobResult(parseBlob(src, traitHints));
     setBlobApplied(false);
   }
 
@@ -493,12 +502,12 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
               <label className="form-row">
                 <span className="form-label">TYPE</span>
                 <select className="form-select" value={type} onChange={(e) => { setType(e.target.value); setSuggestedType(null); }}>
-                  {PLACE_TYPES.map((t) => (
+                  {placeTypes.map((t) => (
                     <option key={t.key} value={t.key}>{t.emoji} {t.label}</option>
                   ))}
                 </select>
                 {suggestedType && suggestedType !== type && (() => {
-                  const meta = PLACE_TYPES.find((t) => t.key === suggestedType);
+                  const meta = placeTypes.find((t) => t.key === suggestedType);
                   return meta ? (
                     <div className="type-suggest">
                       <span>Detected: {meta.emoji} {meta.label.toUpperCase()}</span>
@@ -651,7 +660,7 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
             <div className="trait-hints">
               <span className="trait-hints-label">VENUE TRAITS</span>
               <div className="trait-chips">
-                {VENUE_TRAITS.map((t) => {
+                {venueTraits.map((t) => {
                   const active = parseTags(tags).includes(t.key);
                   return (
                     <button
@@ -837,7 +846,7 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
                         className="merge-row"
                         onClick={() => { setMergeCandidate(p); setMergeMsg(null); }}
                       >
-                        <span className="merge-row-icon">{typeMeta(p.type).emoji}</span>
+                        <span className="merge-row-icon">{typeMetaFrom(placeTypes, p.type).emoji}</span>
                         <span className="merge-row-name">{p.name}</span>
                         <span className="merge-row-city">{p.city || '—'}</span>
                       </button>
@@ -852,7 +861,7 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
                   <div className="merge-cols">
                     <div className="merge-col">
                       <div className="merge-col-label">PRIMARY · THIS PLACE</div>
-                      <div className="merge-field">{typeMeta(initialData.type).emoji} {initialData.name}</div>
+                      <div className="merge-field">{typeMetaFrom(placeTypes, initialData.type).emoji} {initialData.name}</div>
                       <div className="merge-field merge-field--dim">{initialData.city || '—'}</div>
                       <div className="merge-field merge-field--dim">{initialData.status}</div>
                       <div className="merge-field merge-field--dim">
@@ -865,7 +874,7 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
                     <div className="merge-arrow">→</div>
                     <div className="merge-col">
                       <div className="merge-col-label">DUPLICATE</div>
-                      <div className="merge-field">{typeMeta(mergeCandidate.type).emoji} {mergeCandidate.name}</div>
+                      <div className="merge-field">{typeMetaFrom(placeTypes, mergeCandidate.type).emoji} {mergeCandidate.name}</div>
                       <div className="merge-field merge-field--dim">{mergeCandidate.city || '—'}</div>
                       <div className="merge-field merge-field--dim">{mergeCandidate.status}</div>
                       <div className="merge-field merge-field--dim">

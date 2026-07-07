@@ -82,4 +82,21 @@ db.version(4).stores({
   scheduleItems: 'id, tripId, [tripId+date], placeId',
 });
 
+// version(5) — moves PLACE_TYPES / VENUE_TRAITS from compile-time constants
+// into IndexedDB so labels/emoji/keywords can be edited in the UI. Keys are
+// permanent (never editable) — Place.type and tags keep referencing the same
+// key strings, so no place record migration is ever needed.
+db.version(5).stores({
+  places:        'id, name, type, city, state, country, status, createdAt',
+  trips:         'id, title, startDate',
+  scheduleItems: 'id, tripId, [tripId+date], placeId',
+  // PLACETYPE — { key, label, emoji, order, keywords: [] }. key is PK, immutable.
+  // order indexed — getAllPlaceTypes() sorts by it via orderBy('order').
+  placeTypes:    'key, order',
+  // VENUETRAIT — { key, label, emoji, order, hintKeywords: [] }. key is PK, immutable.
+  venueTraits:   'key, order',
+}).upgrade(() => {
+  // Tables are empty on upgrade — seeded by seedTypesAndTraits() on app mount.
+});
+
 export default db;

@@ -1,6 +1,6 @@
 // Preview panel for the QUICK PASTE blob — shows classified lines on the left
 // and extracted values on the right. Address chips are relabellable via onCycleRole.
-import { VENUE_TRAITS } from '../db/constants.js';
+import { useSettings } from '../context/SettingsContext.jsx';
 
 function truncUrl(s, max = 40) {
   return s.length > max ? s.slice(0, max - 1) + '…' : s;
@@ -29,13 +29,14 @@ function roleCss(role) {
 }
 
 export default function BlobPreview({ result, onCycleRole, onToggleTrait }) {
+  const { venueTraits } = useSettings();
   const { lines, extracted } = result;
   const { name, typeHint, suggestedTraits, url, lat, lng, shortUrl, openingHours,
           addrSegments, untappdUrl, websiteUrl, facebookUrl,
           checkIn, checkOut } = extracted;
 
   const suggestedTraitObjects = (suggestedTraits || [])
-    .map(key => VENUE_TRAITS.find(t => t.key === key))
+    .map(key => venueTraits.find(t => t.key === key))
     .filter(Boolean);
 
   const hoursDayCount = openingHours ? Object.keys(openingHours).length : 0;

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { STATUSES, typeMeta } from '../db/constants.js';
+import { STATUSES } from '../db/constants.js';
+import { useSettings, typeMetaFrom } from '../context/SettingsContext.jsx';
 import './PlaceList.css';
 
 const STAMP_LABEL = {
@@ -9,6 +10,7 @@ const STAMP_LABEL = {
 };
 
 export default function PlaceList({ places, onEdit, onBulkDelete }) {
+  const { placeTypes } = useSettings();
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [confirming,  setConfirming]  = useState(false);
 
@@ -77,7 +79,7 @@ export default function PlaceList({ places, onEdit, onBulkDelete }) {
         )}
 
         {places.map((p) => {
-          const type  = typeMeta(p.type);
+          const type  = typeMetaFrom(placeTypes, p.type);
           const stamp = STAMP_LABEL[p.status] || '';
           const isSelected = selectedIds.has(p.id);
           return (

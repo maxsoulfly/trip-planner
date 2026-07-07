@@ -26,19 +26,6 @@ const CLOSED_RE = /^(Closed|Open 24 hours)$/i;
 // Category/description lines — informational only, not written to any field.
 const TYPE_HINT_RE = /^(sushi|ramen|poke|pizza|burger|falafel|gyros|grill|taproom|brewery|brewpub|bottle\s*shop|tavern|bistro|pizzeria|restaurant|bar|cafe|café|coffee|wine|cocktail|bakery|bulgarian|italian|french|japanese|mexican|indian|greek|chinese)\b/i;
 
-// Maps type-hint keywords → suggested VENUE_TRAIT keys (see constants.js).
-const TRAIT_HINTS = {
-  sushi: ['food'], ramen: ['food'], poke: ['food'],
-  pizza: ['food'], burger: ['food'], falafel: ['food'],
-  gyros: ['food'], grill: ['food'], restaurant: ['food'],
-  bistro: ['food'], tavern: ['food'],
-  coffee: ['coffee'], café: ['coffee'], cafe: ['coffee'],
-  'specialty coffee': ['coffee'],
-  bar: ['craft-beer'], taproom: ['craft-beer'], brewery: ['craft-beer'], brewpub: ['craft-beer'],
-  'craft beer': ['craft-beer'], 'bottle shop': ['bottles-to-go', 'craft-beer'],
-  wine: ['wine'], cocktail: ['cocktails'],
-};
-
 function classifyUrl(line) {
   if (!/^https?:\/\//i.test(line)) return null;
   if (/google\.com\/maps|maps\.app\.goo\.gl/i.test(line))  return 'url-maps';
@@ -67,7 +54,10 @@ const EMPTY_EXTRACTED = {
   checkIn: null, checkOut: null,
 };
 
-export function parseBlob(text) {
+// traitHints: { keyword: [traitKey, ...] } — built by the caller from the
+// live venueTraits vocabulary (see SettingsContext), since this module stays
+// a pure function with no React/DB access of its own.
+export function parseBlob(text, traitHints = {}) {
   if (!text?.trim()) return { lines: [], extracted: { ...EMPTY_EXTRACTED } };
 
   const lines = text.split('\n')
@@ -133,15 +123,15 @@ export function parseBlob(text) {
   const traitKeys = new Set();
   if (typeHint) {
     const hintLower = typeHint.toLowerCase();
-    for (const [keyword, traits] of Object.entries(TRAIT_HINTS)) {
+    for (const [keyword, traits] of Object.entries(traitHints)) {
       if (hintLower.includes(keyword)) traits.forEach(k => traitKeys.add(k));
     }
   }
 
-  // Fallback: match TRAIT_HINTS against the extracted name when typeHint produced nothing.
+  // Fallback: match traitHints against the extracted name when typeHint produced nothing.
   if (traitKeys.size === 0 && name) {
     const nameLower = name.toLowerCase();
-    for (const [keyword, traits] of Object.entries(TRAIT_HINTS)) {
+    for (const [keyword, traits] of Object.entries(traitHints)) {
       if (nameLower.includes(keyword)) traits.forEach(k => traitKeys.add(k));
     }
   }

@@ -1,7 +1,8 @@
-import { typeMeta } from '../db/constants.js';
+import { useSettings, typeMetaFrom } from '../context/SettingsContext.jsx';
 import './SlotCell.css';
 
 export default function SlotCell({ block, items, places, flightCards, dimmed, onAdd, onRemove, onMoveUp, onMoveDown, onEditPlace, onSuggestNearby }) {
+  const { placeTypes } = useSettings();
   const sortedItems = items.slice().sort((a, b) => a.order - b.order);
 
   return (
@@ -37,7 +38,7 @@ export default function SlotCell({ block, items, places, flightCards, dimmed, on
           const place = places[item.placeId];
           return (
             <div key={item.id} className="sc-item sc-item--place">
-              <span className="sc-item-icon">{typeMeta(place?.type)?.emoji || '📍'}</span>
+              <span className="sc-item-icon">{typeMetaFrom(placeTypes, place?.type)?.emoji || '📍'}</span>
               {place && onEditPlace ? (
                 <button
                   className="sc-item-name sc-item-name--link"

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getScheduleForTrip, getAllPlaces, deleteScheduleItem, putScheduleItem, addScheduleItem } from '../db/repo.js';
-import { BLOCKS, PLACE_TYPES } from '../db/constants.js';
+import { BLOCKS } from '../db/constants.js';
+import { useSettings } from '../context/SettingsContext.jsx';
 import { daysInRange, formatDayHeader } from '../utils/dates.js';
 import { generateDaySheet } from '../utils/exportHtml.js';
 import { exportTripXlsx } from '../utils/exportTripXlsx.js';
@@ -41,6 +42,7 @@ function timeToMins(hhmm) {
 }
 
 export default function TripGrid({ trip, onBack }) {
+  const { placeTypes } = useSettings();
   const [scheduleItems,  setScheduleItems]  = useState([]);
   const [places,         setPlaces]         = useState({}); // id → place
   const [picker,         setPicker]         = useState(null);  // null | { date, block }
@@ -90,7 +92,7 @@ export default function TripGrid({ trip, onBack }) {
   }
 
   function handleExportHtml() {
-    const html = generateDaySheet(trip, scheduleItems, places);
+    const html = generateDaySheet(trip, scheduleItems, places, placeTypes);
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
@@ -311,7 +313,7 @@ export default function TripGrid({ trip, onBack }) {
                 onClick={() => handleAddSuggestion(suggestions.date, suggestions.block, place.id)}
               >
                 <span className="tg-suggest-emoji">
-                  {PLACE_TYPES.find(t => t.key === place.type)?.emoji || '📍'}
+                  {placeTypes.find(t => t.key === place.type)?.emoji || '📍'}
                 </span>
                 <span className="tg-suggest-name">{place.name}</span>
                 <span className="tg-suggest-dist">{dist.toFixed(1)} km</span>

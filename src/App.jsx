@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { getAllPlaces, deletePlace, getAllTrips, deleteTripCascade } from './db/repo.js';
-import { PLACE_TYPES, STATUSES, VENUE_TRAITS } from './db/constants.js';
+import { STATUSES } from './db/constants.js';
+import { useSettings } from './context/SettingsContext.jsx';
 import PlaceCard from './components/PlaceCard.jsx';
 import PlaceList from './components/PlaceList.jsx';
 import PlaceForm from './components/PlaceForm.jsx';
@@ -36,6 +37,7 @@ function isIncomplete(p) {
 //   tripModal:          null | { mode: 'add' } | { mode: 'edit', trip }   — trip form
 
 export default function App() {
+  const { placeTypes, venueTraits } = useSettings();
   const [places,       setPlaces]       = useState([]);
   const [trips,        setTrips]        = useState([]);
   const [view,         setView]         = useState('places');
@@ -246,8 +248,8 @@ export default function App() {
             <span className="library-sub">{[
               'LOCAL CACHE',
               filterCityDisplay || 'ALL CITIES',
-              filterType   ? (PLACE_TYPES.find(t => t.key === filterType)?.label   || filterType).toUpperCase()  : null,
-              filterTrait  ? (VENUE_TRAITS.find(t => t.key === filterTrait)?.label || filterTrait).toUpperCase() : null,
+              filterType   ? (placeTypes.find(t => t.key === filterType)?.label   || filterType).toUpperCase()  : null,
+              filterTrait  ? (venueTraits.find(t => t.key === filterTrait)?.label || filterTrait).toUpperCase() : null,
               filterStatus ? filterStatus.toUpperCase() : null,
             ].filter(Boolean).join(' · ')}</span>
           </div>
@@ -325,7 +327,7 @@ export default function App() {
             <select className="toolbar__select" value={filterType}
               onChange={(e) => setFilterType(e.target.value)} aria-label="Filter by type">
               <option value="">ALL TYPES</option>
-              {PLACE_TYPES.map((t) => (
+              {placeTypes.map((t) => (
                 <option key={t.key} value={t.key}>{t.emoji} {t.label.toUpperCase()}</option>
               ))}
             </select>
@@ -339,7 +341,7 @@ export default function App() {
             <select className="toolbar__select" value={filterTrait}
               onChange={(e) => setFilterTrait(e.target.value)} aria-label="Filter by trait">
               <option value="">ALL TRAITS</option>
-              {VENUE_TRAITS.map((t) => (
+              {venueTraits.map((t) => (
                 <option key={t.key} value={t.key}>{t.emoji} {t.label.toUpperCase()}</option>
               ))}
             </select>

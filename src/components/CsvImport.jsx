@@ -1,7 +1,8 @@
 import { useMemo, useRef, useState } from 'react';
 import Papa from 'papaparse';
 import { addPlace } from '../db/repo.js';
-import { PLACE_TYPES, STATUSES } from '../db/constants.js';
+import { STATUSES } from '../db/constants.js';
+import { useSettings } from '../context/SettingsContext.jsx';
 import './CsvImport.css';
 
 // Place fields available for column mapping (openingHours excluded by design —
@@ -35,8 +36,7 @@ const FIELD_HINTS = {
   tags:          ['tags', 'tag', 'labels'],
 };
 
-const PLACE_TYPE_KEYS = new Set(PLACE_TYPES.map((t) => t.key));
-const STATUS_KEYS     = new Set(STATUSES.map((s) => s.key));
+const STATUS_KEYS = new Set(STATUSES.map((s) => s.key));
 
 // Normalize a CSV header for matching: lowercase, collapse whitespace/hyphens to underscore.
 function norm(s) {
@@ -62,17 +62,20 @@ function autoDetectMapping(headers) {
 
 // Convert one CSV row to a Place-shaped object using the current mapping.
 // openingHours is intentionally left as {} (unknown) per the data contract.
-function rowToPlace(row, mapping) {
+// placeTypes comes from SettingsContext (live vocabulary) — passed in rather
+// than imported, since this stays a plain function outside the component tree.
+function rowToPlace(row, mapping, placeTypes) {
   function val(field) {
     const col = mapping[field];
     return col ? String(row[col] ?? '').trim() : '';
   }
 
+  const placeTypeKeys = new Set(placeTypes.map((t) => t.key));
   const typeRaw   = val('type');
   const typeNorm  = typeRaw.toLowerCase().replace(/[\s\-]+/g, '_');
-  const typeKey   = PLACE_TYPE_KEYS.has(typeNorm)
+  const typeKey   = placeTypeKeys.has(typeNorm)
     ? typeNorm
-    : (PLACE_TYPES.find((t) => t.label.toLowerCase() === typeRaw.toLowerCase())?.key || 'other');
+    : (placeTypes.find((t) => t.label.toLowerCase() === typeRaw.toLowerCase())?.key || 'other');
 
   const statusRaw = val('status');
   const statusKey = STATUS_KEYS.has(statusRaw.toLowerCase())
@@ -99,6 +102,7 @@ function rowToPlace(row, mapping) {
 }
 
 export default function CsvImport({ onDone, onClose }) {
+  const { placeTypes } = useSettings();
   const [step,      setStep]      = useState('upload'); // 'upload' | 'map' | 'preview'
   const [rawRows,   setRawRows]   = useState([]);
   const [headers,   setHeaders]   = useState([]);
@@ -136,8 +140,8 @@ export default function CsvImport({ onDone, onClose }) {
 
   // Derive all mapped rows — only recomputed when rawRows or mapping changes.
   const mappedRows = useMemo(
-    () => rawRows.map((row) => rowToPlace(row, mapping)),
-    [rawRows, mapping]
+    () => rawRows.map((row) => rowToPlace(row, mapping, placeTypes)),
+    [rawRows, mapping, placeTypes]
   );
   const validRows = useMemo(() => mappedRows.filter((r) => r.name), [mappedRows]);
   const skipped   = mappedRows.length - validRows.length;

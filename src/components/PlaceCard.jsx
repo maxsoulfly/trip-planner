@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { WEEKDAYS, typeMeta } from '../db/constants.js';
+import { WEEKDAYS } from '../db/constants.js';
+import { useSettings, typeMetaFrom } from '../context/SettingsContext.jsx';
 import { hoursForDay } from '../utils/hours.js';
 import './PlaceCard.css';
 
@@ -50,9 +51,10 @@ function getStatusBadge(openingHours, todayKey) {
 }
 
 export default function PlaceCard({ place, onEdit, onDelete, incomplete }) {
+  const { placeTypes } = useSettings();
   const [confirming, setConfirming] = useState(false);
 
-  const type   = typeMeta(place.type);
+  const type   = typeMetaFrom(placeTypes, place.type);
   const stamp  = STAMP[place.status] || STAMP.wishlist;
   const today  = todayWeekdayKey();
   const badge  = getStatusBadge(place.openingHours, today);

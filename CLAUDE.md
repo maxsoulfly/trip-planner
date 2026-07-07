@@ -20,11 +20,18 @@ Vite + React (JS) · Dexie (IndexedDB) · Papaparse (CSV) · SheetJS (importer o
 state via React Context (no Redux).
 
 ## Architecture & conventions
-- `src/db/db.js` — Dexie schema. Currently **version(4)**: tables `places`,
+- `src/db/db.js` — Dexie schema. Currently **version(5)**: tables `places`,
   `trips`, `scheduleItems`. BudgetEntry deferred.
 - `src/db/repo.js` — the **only** module that touches Dexie. All UI goes through
   repo functions; never call `db` directly from components.
-  Key exports include: `mergeCities(source, target)`, `setCountryForCity(city, country)`.
+  Key exports: `mergeCities`, `setCountryForCity`, `seedTypesAndTraits`,
+  `getAllPlaceTypes`, `getAllVenueTraits`, `putPlaceType`, `putVenueTrait`,
+  `deletePlaceType`, `deleteVenueTrait`.
+- `src/context/SettingsContext.jsx` — React context providing `{ placeTypes,
+  venueTraits, loaded, reload }` and `typeMetaFrom(placeTypes, key)` helper.
+  Wraps entire app via `<SettingsProvider>` in `main.jsx`. All components use
+  `useSettings()` instead of importing `PLACE_TYPES`/`VENUE_TRAITS` from
+  constants. `BLOCKS`, `STATUSES`, `WEEKDAYS` stay as static constants imports.
 - `src/db/constants.js` — controlled vocabularies (`PLACE_TYPES`, `BLOCKS`,
   `STATUSES`, `WEEKDAYS`, `VENUE_TRAITS`). Use these everywhere; don't hardcode.
   `BLOCKS` entries have `start`/`end` hour fields (24h) for time-range logic.
@@ -48,7 +55,9 @@ state via React Context (no Redux).
   chip (not join-all) — handles district-before-city patterns. Lone-digit
   segments → `ignore` (fixes building-number-prefix bug). Used by PlaceForm
   address chips and blob notepad. Both exports are pure, no Dexie.
-- `src/utils/blobParser.js` — pure `parseBlob(text)` → `{ lines, extracted }`.
+- `src/utils/blobParser.js` — pure `parseBlob(text, traitHints = {})` → `{ lines, extracted }`.
+  `traitHints` built from `venueTraits` in PlaceForm and passed as parameter
+  (keeps blobParser pure — no React/Dexie imports).
   Line classifier (first-match): `url-maps`, `url-untappd`, `url-website`,
   `url-facebook`, `url-instagram`, `checkin`, `checkout`, `ignore-label`,
   `hours` (Format A + B), `address`, `name`.
@@ -86,12 +95,14 @@ untappdUrl, websiteUrl, checkIn, checkOut, openingHours, tags, notes, status, ra
 createdAt, updatedAt.
 checkIn / checkOut: HH:MM strings, only shown/editable when type === accommodation.
 
-## PLACE_TYPES (current — constants.js)
+## PLACE_TYPES (now in IndexedDB — placeTypes table)
 taproom · bottle_shop · brewpub · brewery · bar · restaurant · cafe ·
 museum · park · activity · shop · supermarket · accommodation · transport · other
-Plus status: wishlist · planned · visited · permanently_closed
+Editable via Admin → ◈ TYPES & TRAITS. Keys are permanent (Option C).
+Label, emoji, and detection keywords are editable in UI.
+Plus status (still in constants.js): wishlist · planned · visited · permanently_closed
 
-## detectType keywords (PlaceForm.jsx — ordered, first match wins)
+## detectType keywords (now dynamic from placeTypes DB — longest match wins)
 bottle_shop → beer shop / bottle shop / beer store
 brewery → brewery / browar / brauerei / pivovar
 brewpub → brewpub / brew pub / beer & food / beer and food / brewing
@@ -241,6 +252,20 @@ Maps URL is optional, not a completeness signal.
     shows only Romanian Arad places, not both. BulkPaste decodes the encoded
     value before using as city name for stubs. App subtitle decodes for display.
     Empty-country places hidden from dropdown (fix via Cities modal FIX COUNTRY).
+31. **DONE** — Editable place types and traits (Step 32 in WORKLOG). Moved
+    `PLACE_TYPES` and `VENUE_TRAITS` from `constants.js` to IndexedDB
+    (`placeTypes`/`venueTraits` tables, `db.js` version(5), `order` field
+    indexed). `seedTypesAndTraits()` in `repo.js` seeds on first run only.
+    New `SettingsContext.jsx` provides `{ placeTypes, venueTraits, loaded,
+    reload }` — renders null until loaded. `main.jsx` awaits seed before
+    mount, wraps app in `<SettingsProvider>`. Nine consumers updated (App,
+    PlaceForm, PlaceCard, PlaceList, PlacePicker, TripGrid, BlobPreview,
+    SlotCell, CsvImport). `detectType` now picks longest matching keyword
+    (not first type in display order) for specificity. `blobParser.js`
+    receives `traitHints` as parameter (stays pure). `exportHtml.js` receives
+    `placeTypes` as parameter. TypesTraitsModal: two tabs, inline edit panel,
+    ADD/EDIT/DELETE (delete gated on place count for types). AdminModal gains
+    `◈ TYPES & TRAITS` button in VOCABULARY section.
 
 ## Design language — "post-apocalyptic field terminal"
 A salvaged-tech / amber-CRT / survival-field-manual feel.

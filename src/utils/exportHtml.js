@@ -1,8 +1,6 @@
-import { BLOCKS, PLACE_TYPES } from '../db/constants.js';
+import { BLOCKS } from '../db/constants.js';
 import { daysInRange, formatDayHeader } from './dates.js';
 import { weekdayKeyFromDate, hoursForDay } from './hours.js';
-
-const TYPE_EMOJI = Object.fromEntries(PLACE_TYPES.map((t) => [t.key, t.emoji]));
 
 function esc(str) {
   return String(str ?? '')
@@ -38,9 +36,9 @@ function renderFlight(direction, flight) {
   </div>`;
 }
 
-function renderPlace(place, weekdayKey) {
+function renderPlace(place, weekdayKey, typeEmoji) {
   const url   = mapsUrl(place);
-  const emoji = TYPE_EMOJI[place.type] || '📍';
+  const emoji = typeEmoji[place.type] || '📍';
   const nameHtml = url
     ? `<a href="${esc(url)}" class="place-name place-name-link" target="_blank" rel="noopener">${esc(place.name)}</a>`
     : `<span class="place-name">${esc(place.name)}</span>`;
@@ -64,7 +62,7 @@ function renderAdHoc(item) {
   </div>`;
 }
 
-function renderBlock(block, blockItems, placesMap, weekdayKey, flightCards) {
+function renderBlock(block, blockItems, placesMap, weekdayKey, flightCards, typeEmoji) {
   const placeItems = blockItems.filter((i) => i.kind === 'place');
   const adhocItems = blockItems.filter((i) => i.kind !== 'place');
   if (!flightCards.length && !placeItems.length && !adhocItems.length) return '';
@@ -75,7 +73,7 @@ function renderBlock(block, blockItems, placesMap, weekdayKey, flightCards) {
     ...flightCards.map(({ direction, flight }) => renderFlight(direction, flight)),
     ...sorted(placeItems).map(({ placeId }) => {
       const p = placesMap[placeId];
-      return p ? renderPlace(p, weekdayKey) : '';
+      return p ? renderPlace(p, weekdayKey, typeEmoji) : '';
     }),
     ...sorted(adhocItems).map(renderAdHoc),
   ].join('');
@@ -87,7 +85,7 @@ function renderBlock(block, blockItems, placesMap, weekdayKey, flightCards) {
   </div>`;
 }
 
-function renderDay(date, allItems, placesMap, trip) {
+function renderDay(date, allItems, placesMap, trip, typeEmoji) {
   const weekdayKey = weekdayKeyFromDate(date);
   const dayItems   = allItems.filter((i) => i.date === date);
 
@@ -107,6 +105,7 @@ function renderDay(date, allItems, placesMap, trip) {
       placesMap,
       weekdayKey,
       flightCards,
+      typeEmoji,
     );
   }).join('');
 
@@ -362,7 +361,9 @@ body { background: #0E0E0F; }
 // trip:          Trip record from the DB
 // scheduleItems: all ScheduleItems for this trip (from getScheduleForTrip)
 // placesMap:     id → Place map (from getAllPlaces, keyed in TripGrid)
-export function generateDaySheet(trip, scheduleItems, placesMap) {
+// placeTypes:    live PLACE_TYPES vocabulary from SettingsContext (for emoji lookup)
+export function generateDaySheet(trip, scheduleItems, placesMap, placeTypes = []) {
+  const typeEmoji = Object.fromEntries(placeTypes.map((t) => [t.key, t.emoji]));
   const days      = (trip.startDate && trip.endDate)
     ? daysInRange(trip.startDate, trip.endDate)
     : [];
@@ -392,7 +393,7 @@ export function generateDaySheet(trip, scheduleItems, placesMap) {
     ? `${trip.startDate} → ${trip.endDate} · ${nights} ${nights === 1 ? 'day' : 'days'}${citiesStr}`
     : citiesStr.replace(/^ · /, '');
 
-  const daysHtml = days.map((date) => renderDay(date, scheduleItems, placesMap, trip)).join('\n');
+  const daysHtml = days.map((date) => renderDay(date, scheduleItems, placesMap, trip, typeEmoji)).join('\n');
 
   return `<!DOCTYPE html>
 <html lang="en">
