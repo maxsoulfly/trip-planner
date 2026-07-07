@@ -2,21 +2,39 @@ import { useRef, useState, useMemo } from 'react';
 import { getAllPlaces, mergeCities, setCountryForCity } from '../db/repo.js';
 import './CitiesModal.css';
 
+function entryKey(display, country) {
+  return `${display.toLowerCase()}|${country}`;
+}
+
+// Groups by city + country combined, so "Arad, Romania" and "Arad, Israel"
+// are separate rows instead of colliding under one city name.
 function buildCityList(places) {
-  const byCity = new Map();
+  const byKey = new Map();
   places.forEach(p => {
-    const key = (p.city || '').toLowerCase().trim();
     const display = p.city || '';
-    if (!byCity.has(key)) byCity.set(key, { display, count: 0, countries: new Set() });
-    const entry = byCity.get(key);
-    entry.count++;
-    if (p.country) entry.countries.add(p.country);
+    const country = p.country || '';
+    const key = entryKey(display, country);
+    if (!byKey.has(key)) byKey.set(key, { display, country, count: 0 });
+    byKey.get(key).count++;
   });
-  return [...byCity.values()].sort((a, b) => {
-    if (!a.display && b.display)  return -1;
-    if (a.display  && !b.display) return 1;
-    return a.display.localeCompare(b.display);
-  });
+
+  // Flag city names that appear under more than one country — informational only.
+  const nameCounts = new Map();
+  for (const entry of byKey.values()) {
+    if (!entry.display) continue;
+    const n = entry.display.toLowerCase();
+    nameCounts.set(n, (nameCounts.get(n) || 0) + 1);
+  }
+
+  return [...byKey.values()]
+    .map(entry => ({ ...entry, hasDuplicate: nameCounts.get(entry.display.toLowerCase()) > 1 }))
+    .sort((a, b) => {
+      const aEmpty = !a.country, bEmpty = !b.country;
+      if (aEmpty && !bEmpty) return -1;
+      if (!aEmpty && bEmpty) return 1;
+      if (a.country !== b.country) return a.country.localeCompare(b.country);
+      return a.display.localeCompare(b.display);
+    });
 }
 
 export default function CitiesModal({ places: initialPlaces, onClose, onRefresh }) {
@@ -83,7 +101,7 @@ export default function CitiesModal({ places: initialPlaces, onClose, onRefresh 
   }
 
   function selectCity(city) {
-    if (selectedCity?.display === city.display) {
+    if (selectedCity && entryKey(selectedCity.display, selectedCity.country) === entryKey(city.display, city.country)) {
       setSelectedCity(null);
     } else {
       setSelectedCity(city);
@@ -128,15 +146,12 @@ export default function CitiesModal({ places: initialPlaces, onClose, onRefresh 
           </div>
 
           {filteredList.map(city => {
-            const isSelected    = selectedCity?.display === city.display;
-            const isMulti       = city.countries.size > 1;
-            const countriesText = city.countries.size === 0
-              ? '—'
-              : [...city.countries].join(', ');
+            const isSelected = selectedCity &&
+              entryKey(selectedCity.display, selectedCity.country) === entryKey(city.display, city.country);
 
             return (
               <div
-                key={city.display || '__empty__'}
+                key={entryKey(city.display, city.country)}
                 className={[
                   'cm-row',
                   !city.display  ? 'cm-row--empty'    : '',
@@ -146,11 +161,12 @@ export default function CitiesModal({ places: initialPlaces, onClose, onRefresh 
                 role="row"
                 aria-selected={isSelected}
               >
-                <span className="cm-city">{city.display || '(no city)'}</span>
-                <span className="cm-count">{city.count}</span>
-                <span className={`cm-countries${isMulti ? ' cm-countries--warn' : ''}`}>
-                  {countriesText}{isMulti ? ' ⚠' : ''}
+                <span className="cm-city">
+                  {city.display || '(no city)'}
+                  {city.hasDuplicate && <span className="cm-tag">· shared name</span>}
                 </span>
+                <span className="cm-count">{city.count}</span>
+                <span className="cm-countries">{city.country || '—'}</span>
               </div>
             );
           })}
@@ -163,7 +179,7 @@ export default function CitiesModal({ places: initialPlaces, onClose, onRefresh 
         {selectedCity !== null && (
           <div className="cm-actions">
             <div className="cm-actions-label">
-              {selectedCity.display || '(no city)'} · {selectedCity.count} place{selectedCity.count !== 1 ? 's' : ''}
+              {selectedCity.display || '(no city)'}{selectedCity.country ? `, ${selectedCity.country}` : ''} · {selectedCity.count} place{selectedCity.count !== 1 ? 's' : ''}
             </div>
 
             <div className="cm-action-row">
@@ -197,26 +213,31 @@ export default function CitiesModal({ places: initialPlaces, onClose, onRefresh 
             {mergeSearch.length > 0 && (
               <div className="cm-merge-list">
                 {cityList
-                  .filter(c => c.display !== selectedCity.display &&
-                    c.display.toLowerCase().includes(mergeSearch.toLowerCase()))
+                  .filter(c => entryKey(c.display, c.country) !== entryKey(selectedCity.display, selectedCity.country) &&
+                    (c.display.toLowerCase().includes(mergeSearch.toLowerCase()) ||
+                     c.country.toLowerCase().includes(mergeSearch.toLowerCase())))
                   .slice(0, 6)
                   .map(c => (
                     <button
-                      key={c.display || '__empty__'}
+                      key={entryKey(c.display, c.country)}
                       className="cm-merge-option"
                       onClick={() => handleMerge(c.display)}
                       disabled={busy}
                     >
-                      {c.display || '(no city)'} ({c.count})
+                      {c.display || '(no city)'}{c.country ? `, ${c.country}` : ''} ({c.count})
                     </button>
                   ))
                 }
+                <div className="cm-note">
+                  Merge moves all places named '{selectedCity.display || '(no city)'}'
+                  {selectedCity.country ? ` in ${selectedCity.country}` : ''} to the target city.
+                </div>
               </div>
             )}
 
-            {selectedCity.countries.size > 1 && (
+            {!selectedCity.country && (
               <div className="cm-warning">
-                <span>⚠ appears under {selectedCity.countries.size} country groups — set country for all:</span>
+                <span>set a country for these places:</span>
                 <input
                   className="cm-input cm-input--narrow"
                   type="text"

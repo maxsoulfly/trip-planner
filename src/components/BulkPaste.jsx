@@ -14,10 +14,13 @@ function normaliseName(s) {
 // If they want to update the existing record, they use the normal edit flow.
 
 export default function BulkPaste({ existingPlaces, cityFilter, onImport, onClose }) {
+  // cityFilter may be an encoded 'city||country' key — decode to the plain city name.
+  const decodedCityFilter = cityFilter?.includes('||') ? cityFilter.split('||')[0] : cityFilter;
+
   const [pasteText, setPasteText] = useState('');
   const [rows,      setRows]      = useState([]);
   const [busy,      setBusy]      = useState(false);
-  const [bulkCity,  setBulkCity]  = useState(cityFilter || '');
+  const [bulkCity,  setBulkCity]  = useState(decodedCityFilter || '');
 
   const backdropRef     = useRef(null);
   const mouseDownTarget = useRef(null);

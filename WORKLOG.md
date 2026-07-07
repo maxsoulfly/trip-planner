@@ -802,3 +802,33 @@
 - **Known issues / TODO:** None.
 - **Next:** TBD.
 - **Addendum:** `src/utils/blobParser.js` — `TYPE_HINT_RE` extended with `sushi`, `ramen`, `poke`, `pizza`, `grill`, `wine`, `cocktail` as leading alternatives (food/drink hints now classify as `type-hint` even when the line starts with those words); name-based fallback added after building `extracted`: when `traitKeys` is empty and `extracted.name` is set, `TRAIT_HINTS` is matched against `nameLower` so names like "Sushi Wawa" produce a `food` suggestion without needing a separate type-hint line.
+- **Addendum:** `src/App.jsx` `cityGroups` now also skips places with a city but no country (dropdown no longer shows an UNKNOWN country group); `src/components/CitiesModal.jsx` `buildCityList()` tracks `hasEmptyCountry` per city and new `hasCountryWarning()` helper fires the ⚠ when a city has a mix of set/unset country, not just multiple real countries — so a city with some blank-country places still shows once with a warning instead of splitting the dropdown.
+
+---
+
+### 2026-07-07 — Step 30: CitiesModal groups by city + country
+
+- **Done:**
+  - `src/components/CitiesModal.jsx` — `buildCityList()` rewritten to key rows by `city + country` combined (new `entryKey()` helper) instead of city name alone, so e.g. "Arad, Romania" and "Arad, Israel" are separate rows; each entry gains a `hasDuplicate` flag when the same city name appears under more than one country (informational only, computed from a name-frequency pass over the grouped entries); sort is empty-country rows first, then alphabetical by country, then by city name.
+  - Table COUNTRIES column now shows the single `entry.country` (or `—`) instead of a joined multi-country list; the old `⚠`/`hasCountryWarning` multi-country warning is gone (no longer possible per-row since country is part of the grouping key) and replaced with a steel `· shared name` tag next to the city name when `hasDuplicate` is true.
+  - Row selection, the merge-target filter list, and the rename/merge/fix-country action panel now all key off `entryKey(display, country)` instead of `display` alone, so selecting/merging distinguishes same-named cities in different countries; the FIX COUNTRY section is now gated on `!selectedCity.country` (only offered for empty-country rows, since country is otherwise fixed per row by construction).
+  - MERGE INTO gained an explanatory note ("Merge moves all places named '{city}' in {country} to the target city.") — flagging for the user that `repo.js`'s `mergeCities(source, target)` still matches by city name only, so this is a known limitation for genuinely same-named cities in different countries; not fixed here since that would require a repo.js signature change.
+  - `src/components/CitiesModal.css` — removed unused `.cm-countries--warn`; added `.cm-tag` (steel, small, for the shared-name tag) and `.cm-note` (dim, small, for the merge caveat text); renamed the warning section comment from "Multi-country warning" to "Missing-country warning".
+- **Deviations:** None.
+- **Schema/contract changes:** None — `repo.js` untouched; `mergeCities`/`setCountryForCity` still match by city name only.
+- **Known issues / TODO:** Merging or renaming a city with `hasDuplicate: true` still affects all places with that name across every country, not just the selected country — the UI note surfaces this but doesn't prevent it. Fixing properly would need `mergeCities`/`setCountryForCity` to accept an optional country filter.
+- **Next:** TBD.
+
+---
+
+### 2026-07-07 — Step 31: City filter distinguishes same-named cities by country
+
+- **Done:**
+  - `src/App.jsx` — `cityGroups` entries' `value` field is now an encoded `${city}||${country}` key instead of the bare city name, so the dropdown option for "Arad, Romania" and "Arad, Israel" resolve to distinct values; `filterCity` state now holds that encoded value when set from the dropdown.
+  - Added `filterCityDisplay` (decodes `filterCity` back to the plain city name) and swapped it into the PLACE LIBRARY subtitle line so it reads "Arad" instead of "Arad||Romania".
+  - `filtered` useMemo's city condition rewritten: if `filterCity` contains `||`, splits into city + country and requires both `p.city` and `p.country` to match; otherwise falls back to the old plain city-name comparison (keeps any other bare-string callers working).
+  - `src/components/BulkPaste.jsx` — `cityFilter` prop (now potentially encoded) is decoded to `decodedCityFilter` before seeding `bulkCity` state, so the BULK PASTE modal's city input prefills with just the city name, not the encoded key.
+- **Deviations:** None. `handleSuggestNearby`/TripGrid nearby-suggest logic doesn't read `filterCity` at all, so it needed no change.
+- **Schema/contract changes:** None — `filterCity` is still a plain string in component state, just sometimes carrying an encoded `city||country` payload; nothing persisted to Dexie changed.
+- **Known issues / TODO:** None new. The Step 30 merge/rename same-name-across-countries limitation is unaffected by this change (filtering is now correct; merging still isn't).
+- **Next:** TBD.

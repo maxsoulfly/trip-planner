@@ -91,7 +91,13 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.cm-countries--warn { color: var(--rust); }
+
+.cm-tag {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: var(--steel);
+  margin-left: 6px;
+}
 
 .cm-empty {
   font-family: 'IBM Plex Mono', monospace;
@@ -193,7 +199,7 @@
 .cm-merge-option:hover:not(:disabled) { border-color: var(--amber); color: var(--amber); }
 .cm-merge-option:disabled             { opacity: .35; cursor: not-allowed; }
 
-/* ── Multi-country warning ── */
+/* ── Missing-country warning ── */
 
 .cm-warning {
   font-family: 'IBM Plex Mono', monospace;
@@ -204,4 +210,11 @@
   gap: 8px;
   flex-wrap: wrap;
   padding: 6px 0 2px;
+}
+
+.cm-note {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: var(--dim);
+  padding: 4px 0 0;
 }

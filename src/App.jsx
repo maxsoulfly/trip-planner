@@ -92,9 +92,10 @@ export default function App() {
     const seen = new Map();
     places.forEach(p => {
       if (!p.city) return; // skip places with no city set
+      if (!p.country) return; // has city but no country — hide from dropdown, fix via Cities modal
       const key = `${p.city || ''}|${p.state || ''}|${p.country || ''}`;
       if (!seen.has(key)) seen.set(key, {
-        value: p.city || '',
+        value: `${p.city}||${p.country}`, // encoded key — disambiguates same-named cities across countries
         label: (p.city || '') + (p.state ? `, ${p.state}` : ''),
         country: p.country || '',
       });
@@ -114,10 +115,20 @@ export default function App() {
       }));
   }, [places]);
 
+  // filterCity may be an encoded 'city||country' key (for same-named cities in
+  // different countries) — decode to the plain city name for display.
+  const filterCityDisplay = filterCity.includes('||') ? filterCity.split('||')[0] : filterCity;
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return places.filter((p) => {
-      if (filterCity       && p.city   !== filterCity)   return false;
+      if (filterCity && !(() => {
+        if (filterCity.includes('||')) {
+          const [fc, fCountry] = filterCity.split('||');
+          return p.city === fc && p.country === fCountry;
+        }
+        return p.city === filterCity;
+      })()) return false;
       if (filterType       && p.type   !== filterType)   return false;
       if (filterStatus     && p.status !== filterStatus) return false;
       if (filterTrait      && !(p.tags || []).includes(filterTrait)) return false;
@@ -234,7 +245,7 @@ export default function App() {
             </span>
             <span className="library-sub">{[
               'LOCAL CACHE',
-              filterCity || 'ALL CITIES',
+              filterCityDisplay || 'ALL CITIES',
               filterType   ? (PLACE_TYPES.find(t => t.key === filterType)?.label   || filterType).toUpperCase()  : null,
               filterTrait  ? (VENUE_TRAITS.find(t => t.key === filterTrait)?.label || filterTrait).toUpperCase() : null,
               filterStatus ? filterStatus.toUpperCase() : null,
