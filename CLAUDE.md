@@ -71,6 +71,11 @@ state via React Context (no Redux).
   **absent key = hours UNKNOWN** (renders `—`); explicit **`null` = CLOSED**
   (renders `CLOSED`); `{ open, close }` = open. Never write `null` to mean
   "we don't know." Auto-suggest must treat unknown ≠ closed.
+- **`filterCity` encoding in App.jsx:** when a city name exists under multiple
+  countries, the city dropdown option value is encoded as `city||country`
+  (e.g. `Arad||Romania`). The filter useMemo decodes and matches on both fields.
+  `filterCityDisplay` holds the decoded city name for subtitle/label display.
+  BulkPaste receives the encoded value and decodes before use.
 - **Model:** a Place is stored **once, globally**; "a city's places" is just a
   filter. A Trip references places and schedules them into `date × block` slots
   via ScheduleItem. Time blocks: `morning / noon / late_afternoon / evening / night`.
@@ -230,6 +235,12 @@ Maps URL is optional, not a completeness signal.
     BlobPreview shows dashed pill chips (TRAITS? row) — click to apply via
     `toggleTrait`, not auto-applied. Connects blob category detection to the
     VENUE TRAITS chip row in PlaceForm.
+30. **DONE** — CitiesModal groups by city + country combined. Arad/Israel and
+    Arad/Romania are now separate rows with `· shared name` tag. City dropdown
+    filter encodes `city||country` as option value so selecting Arad/Romania
+    shows only Romanian Arad places, not both. BulkPaste decodes the encoded
+    value before using as city name for stubs. App subtitle decodes for display.
+    Empty-country places hidden from dropdown (fix via Cities modal FIX COUNTRY).
 
 ## Design language — "post-apocalyptic field terminal"
 A salvaged-tech / amber-CRT / survival-field-manual feel.
