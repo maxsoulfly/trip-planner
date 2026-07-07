@@ -78,8 +78,10 @@ state via React Context (no Redux).
   → `{ toSchedule, stubPlaces, warnings }`.
 - **`openingHours` semantics (DATA CONTRACT):** for each weekday key —
   **absent key = hours UNKNOWN** (renders `—`); explicit **`null` = CLOSED**
-  (renders `CLOSED`); `{ open, close }` = open. Never write `null` to mean
-  "we don't know." Auto-suggest must treat unknown ≠ closed.
+  (renders `CLOSED`); `{ open, close }` = open with one window;
+  `{ open, close, open2, close2 }` = split hours (siesta pattern).
+  `open2`/`close2` are optional — absent means single window only.
+  Never write `null` to mean "we don't know." Auto-suggest must treat unknown ≠ closed.
 - **`filterCity` encoding in App.jsx:** when a city name exists under multiple
   countries, the city dropdown option value is encoded as `city||country`
   (e.g. `Arad||Romania`). The filter useMemo decodes and matches on both fields.
@@ -252,7 +254,15 @@ Maps URL is optional, not a completeness signal.
     shows only Romanian Arad places, not both. BulkPaste decodes the encoded
     value before using as city name for stubs. App subtitle decodes for display.
     Empty-country places hidden from dropdown (fix via Cities modal FIX COUNTRY).
-31. **DONE** — Editable place types and traits (Step 32 in WORKLOG). Moved
+32. **DONE** — Split hours (two windows per day, e.g. siesta/lunch-dinner).
+    `open2`/`close2` optional fields on existing `openingHours[day]` object —
+    no schema bump, fully additive. `hoursParser.js`: comma-separated ranges
+    in Format B (`12–3 pm, 4–9 pm`) and consecutive value lines in Format A
+    both parse into `open2`/`close2`. PlaceForm hours editor: `+ split` button
+    per open day, removes with ✕, sanitizes empty windows on save.
+    `getStatusBadge` checks both windows, picks soonest future open time for
+    OPENS SOON/OPENS HH:MM. `exportHtml.js` shows both windows with `·`.
+33. **DONE** — Editable place types and traits (Step 32 in WORKLOG). Moved
     `PLACE_TYPES` and `VENUE_TRAITS` from `constants.js` to IndexedDB
     (`placeTypes`/`venueTraits` tables, `db.js` version(5), `order` field
     indexed). `seedTypesAndTraits()` in `repo.js` seeds on first run only.

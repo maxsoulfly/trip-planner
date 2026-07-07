@@ -54,12 +54,11 @@ function parseTime(s) {
   return null;
 }
 
-// Parse a hours value string → null (Closed) | {open,close} | undefined (unparseable).
-function parseHoursValue(s) {
-  s = s.trim();
-  if (/^closed$/i.test(s)) return null;
-  if (/^open 24 hours$/i.test(s)) return { open: '00:00', close: '24:00' };
-
+// Parse a single "open–close" range (no Closed/24h/comma handling) →
+// {open,close} | undefined. Factored out of parseHoursValue so the
+// split-hours pre-check below can reuse it without duplicating the
+// dash-splitting / PM-inference logic.
+function parseSingleRange(s) {
   // Split on en-dash, em-dash, or space-hyphen-space
   const m = s.match(/^(.+?)\s*[–—]\s*(.+)$/) || s.match(/^(.+?)\s+-\s+(.+)$/);
   if (!m) return undefined;
@@ -83,6 +82,29 @@ function parseHoursValue(s) {
   }
 
   return { open, close };
+}
+
+// Parse a hours value string → null (Closed) | {open,close[,open2,close2]} | undefined (unparseable).
+function parseHoursValue(s) {
+  s = s.trim();
+  if (/^closed$/i.test(s)) return null;
+  if (/^open 24 hours$/i.test(s)) return { open: '00:00', close: '24:00' };
+
+  // Split-hours pre-check: two ranges separated by a comma, e.g.
+  // "12–3 pm, 4–9 pm" or "12:00–15:00, 16:00–21:00". Falls through to the
+  // single-range parser below if this doesn't yield two valid ranges.
+  if (s.includes(',')) {
+    const parts = s.split(',').map((p) => p.trim());
+    if (parts.length === 2 && parts[0] && parts[1]) {
+      const first  = parseSingleRange(parts[0]);
+      const second = parseSingleRange(parts[1]);
+      if (first && second) {
+        return { open: first.open, close: first.close, open2: second.open, close2: second.close };
+      }
+    }
+  }
+
+  return parseSingleRange(s);
 }
 
 // Parse a day-name segment (possibly a range like "Monday–Friday") → array of keys.
@@ -131,8 +153,24 @@ export function parseGoogleHours(text) {
       const hoursLine = lines[i + 1] || '';
       const val       = parseHoursValue(hoursLine);
       if (val !== undefined) {
-        for (const k of keys) openingHours[k] = val;
-        i += 2;
+        let entry    = val;
+        let consumed = 2;
+        // Split hours across two consecutive value lines for the same day
+        // (e.g. "Tuesday\n12–3 pm\n4–9 pm") — only when the first line is a
+        // plain open/close range (not Closed, not already comma-split) and
+        // the next line isn't itself a weekday name.
+        if (val && !val.open2) {
+          const nextLine = lines[i + 2];
+          if (nextLine !== undefined && !parseDaySegment(nextLine).length) {
+            const second = parseHoursValue(nextLine);
+            if (second && !second.open2) {
+              entry    = { open: val.open, close: val.close, open2: second.open, close2: second.close };
+              consumed = 3;
+            }
+          }
+        }
+        for (const k of keys) openingHours[k] = entry;
+        i += consumed;
       } else {
         i++;
       }

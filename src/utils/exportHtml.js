@@ -21,7 +21,9 @@ function hoursSpan(openingHours, weekdayKey) {
   const h = hoursForDay(openingHours, weekdayKey);
   if (h === 'Closed') return `<span class="hours hours--closed">CLOSED</span>`;
   if (h === '—')      return `<span class="hours hours--unknown">—</span>`;
-  return `<span class="hours hours--open">${esc(h)}</span>`;
+  const entry = openingHours?.[weekdayKey];
+  const text  = entry?.open2 && entry?.close2 ? `${h} · ${entry.open2}–${entry.close2}` : h;
+  return `<span class="hours hours--open">${esc(text)}</span>`;
 }
 
 function renderFlight(direction, flight) {

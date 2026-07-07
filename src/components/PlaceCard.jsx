@@ -18,7 +18,18 @@ function todayWeekdayKey() {
   return JS_DAY_KEYS[new Date().getDay()];
 }
 
+function openMinsOf(hhmm) {
+  const [h, m] = hhmm.split(':').map(Number);
+  return h * 60 + m;
+}
+function closeMinsOf(hhmm) {
+  const [h, m] = hhmm.split(':').map(Number);
+  return (h === 0 && m === 0) ? 24 * 60 : h * 60 + m; // midnight close = end of day
+}
+
 // Returns { label, cls } for the real-time status badge, or null if hours are unknown.
+// Checks a second window (open2/close2 — split hours, e.g. lunch/dinner service)
+// when the first window doesn't currently apply.
 function getStatusBadge(openingHours, todayKey) {
   const entry = openingHours?.[todayKey];
   if (entry === undefined) return null;                                    // unknown
@@ -28,24 +39,44 @@ function getStatusBadge(openingHours, todayKey) {
   const now     = new Date();
   const nowMins = now.getHours() * 60 + now.getMinutes();
 
-  const [openH,  openM]  = entry.open.split(':').map(Number);
-  const [closeH, closeM] = entry.close.split(':').map(Number);
-  const openMins  = openH * 60 + openM;
-  const closeMins = (closeH === 0 && closeM === 0) ? 24 * 60 : closeH * 60 + closeM;
+  let openMins  = openMinsOf(entry.open);
+  let closeMins = closeMinsOf(entry.close);
   const overnight = closeMins < openMins; // e.g. 16:00–01:00; equal times fall through to AND branch (closed)
 
-  const isOpen = overnight
+  let isOpen = overnight
     ? (nowMins >= openMins || nowMins < closeMins)
     : (nowMins >= openMins && nowMins < closeMins);
+
+  if (!isOpen && entry.open2 && entry.close2) {
+    const open2Mins  = openMinsOf(entry.open2);
+    const close2Mins = closeMinsOf(entry.close2);
+    const overnight2 = close2Mins < open2Mins;
+    isOpen = overnight2
+      ? (nowMins >= open2Mins || nowMins < close2Mins)
+      : (nowMins >= open2Mins && nowMins < close2Mins);
+    if (isOpen) { openMins = open2Mins; closeMins = close2Mins; }
+  }
 
   if (isOpen) {
     return { label: 'OPEN', cls: 'hours-readout--open' };
   }
-  if (nowMins < openMins) {
-    const diff = openMins - nowMins;
+
+  // Not open in either window — find the soonest upcoming open time today
+  // (may be the first window if it hasn't started yet, or the second if the
+  // first has already passed).
+  const upcoming = [
+    { mins: openMins, label: entry.open },
+    entry.open2 ? { mins: openMinsOf(entry.open2), label: entry.open2 } : null,
+  ]
+    .filter((c) => c && nowMins < c.mins)
+    .sort((a, b) => a.mins - b.mins);
+
+  if (upcoming.length) {
+    const next = upcoming[0];
+    const diff = next.mins - nowMins;
     return diff <= 15
-      ? { label: `OPENS SOON · ${entry.open}`, cls: 'hours-readout--open'  }
-      : { label: `OPENS ${entry.open}`,         cls: 'hours-readout--steel' };
+      ? { label: `OPENS SOON · ${next.label}`, cls: 'hours-readout--open'  }
+      : { label: `OPENS ${next.label}`,         cls: 'hours-readout--steel' };
   }
   return { label: 'CLOSED TODAY', cls: 'hours-readout--closed' };
 }

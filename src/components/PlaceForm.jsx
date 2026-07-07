@@ -22,6 +22,21 @@ function parseTags(str) {
   return str.split(',').map((t) => t.trim()).filter(Boolean);
 }
 
+// Drops empty-string open2/close2 before saving — the editor initializes them
+// to '' when a split window is added but not yet filled in.
+function sanitizeHours(hours) {
+  return Object.fromEntries(
+    Object.entries(hours).map(([key, h]) => {
+      if (!h) return [key, h];
+      const { open, close, open2, close2 } = h;
+      const entry = { open, close };
+      if (open2)  entry.open2  = open2;
+      if (close2) entry.close2 = close2;
+      return [key, entry];
+    })
+  );
+}
+
 export default function PlaceForm({ initialData, onSave, onClose }) {
   const { placeTypes, venueTraits } = useSettings();
   const isEdit = Boolean(initialData);
@@ -322,6 +337,20 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
     }));
   }
 
+  function addSplitWindow(key) {
+    setHours((h) => ({
+      ...h,
+      [key]: { ...(h[key] || { open: '', close: '' }), open2: '', close2: '' },
+    }));
+  }
+
+  function removeSplitWindow(key) {
+    setHours((h) => {
+      const { open2, close2, ...rest } = h[key] || {};
+      return { ...h, [key]: rest };
+    });
+  }
+
   async function handleSubmit(e) {
     e?.preventDefault();
     if (!name.trim()) { setError('Name is required.'); return; }
@@ -344,7 +373,7 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
       rating:        rating !== '' ? parseFloat(rating) : null,
       tags:          parseTags(tags),
       notes:         notes.trim(),
-      openingHours:  hours,
+      openingHours:  sanitizeHours(hours),
       checkIn,
       checkOut,
     };
@@ -735,8 +764,9 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
 
             <div className="hours-editor">
               {WEEKDAYS.map((w) => {
-                const h      = hours[w.key];
-                const isOpen = h !== null && h !== undefined;
+                const h         = hours[w.key];
+                const isOpen    = h !== null && h !== undefined;
+                const hasSecond = isOpen && h?.open2 !== undefined;
                 return (
                   <div key={w.key} className="hours-row">
                     <span className="hours-day-lbl">{w.label.toUpperCase()}</span>
@@ -771,6 +801,41 @@ export default function PlaceForm({ initialData, onSave, onClose }) {
                           aria-label={`${w.label} closing time`}
                         />
                       </div>
+                    )}
+
+                    {hasSecond && (
+                      <div className="hours-times hours-times--split">
+                        <input
+                          className="form-input form-input--time"
+                          type="time"
+                          value={h?.open2 || ''}
+                          onChange={(e) => setDayTime(w.key, 'open2', e.target.value)}
+                          aria-label={`${w.label} second opening time`}
+                        />
+                        <span className="hours-dash">–</span>
+                        <input
+                          className="form-input form-input--time"
+                          type="time"
+                          value={h?.close2 || ''}
+                          onChange={(e) => setDayTime(w.key, 'close2', e.target.value)}
+                          aria-label={`${w.label} second closing time`}
+                        />
+                        <button
+                          type="button"
+                          className="hours-split-remove"
+                          onClick={() => removeSplitWindow(w.key)}
+                          aria-label={`Remove second window for ${w.label}`}
+                        >✕</button>
+                      </div>
+                    )}
+
+                    {isOpen && !hasSecond && (
+                      <button
+                        type="button"
+                        className="hours-split-add"
+                        onClick={() => addSplitWindow(w.key)}
+                        aria-label={`Add second window for ${w.label}`}
+                      >+ split</button>
                     )}
                   </div>
                 );
